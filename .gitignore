@@ -46,5 +46,7 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ── Vercel ────────────────────────────────────────────────────────────────────
 .vercel
+
+# ── Prompt / Design docs ──────────────────────────────────────────────────────
+*-prompt.md

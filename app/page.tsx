@@ -1,7 +1,11 @@
-import Link from 'next/link';
+import { cookies } from 'next/headers';
 import HeroBackground from '@/components/HeroBackground';
+import UnlockVault from '@/components/UnlockVault';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const isUnlocked  = cookieStore.has('vault_unlocked');
+
   return (
     <section className="hero">
       {/* Decorative background elements */}
@@ -24,9 +28,7 @@ export default function HomePage() {
           and it writes straight to your sheet.
         </p>
 
-        <Link href="/add" className="hero-cta" id="cta-add-movie">
-          Add a Movie →
-        </Link>
+        <UnlockVault isUnlocked={isUnlocked} />
       </div>
     </section>
   );

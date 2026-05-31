@@ -16,7 +16,7 @@ const PILLS: { value: Exclude<Recommend, ''>; label: string; className: string }
 
 export default function RecommendPills({ value, onChange }: RecommendPillsProps) {
   return (
-    <div className="pill-row">
+    <div className="pill-row" role="group" aria-label="Recommendation">
       {PILLS.map(pill => (
         <button
           key={pill.value}
@@ -24,6 +24,7 @@ export default function RecommendPills({ value, onChange }: RecommendPillsProps)
           id={`recommend-${pill.value.toLowerCase()}`}
           onClick={() => onChange(value === pill.value ? '' : pill.value)}
           className={`pill ${pill.className}${value === pill.value ? ' selected' : ''}`}
+          aria-pressed={value === pill.value}
         >
           {pill.label}
         </button>

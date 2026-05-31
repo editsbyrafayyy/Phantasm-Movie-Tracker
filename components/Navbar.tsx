@@ -2,20 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Moon } from 'lucide-react';
 
 const NAV_LINKS = [
-  { label: 'Home',      href: '/'    },
-  { label: 'Add Movie', href: '/add' },
+  { label: 'Home',      href: '/',      protected: false },
+  { label: 'Add Movie', href: '/add',    protected: true },
+  { label: 'Update',    href: '/update', protected: true },
 ];
 
-export default function Navbar() {
+export default function Navbar({ isUnlocked = false }: { isUnlocked?: boolean }) {
   const pathname = usePathname();
+  const visibleLinks = NAV_LINKS.filter(link => !link.protected || isUnlocked);
 
   return (
     <nav className="navbar-pill" aria-label="Main navigation">
       {/* Logo */}
       <Link href="/" className="navbar-pill-logo">
-        <span className="navbar-pill-logo-icon" aria-hidden="true">☽</span>
+        <Moon className="navbar-pill-logo-icon" aria-hidden="true" size={16} strokeWidth={2.5} />
         <span>VAULT</span>
       </Link>
 
@@ -24,7 +27,7 @@ export default function Navbar() {
 
       {/* Nav links */}
       <div className="navbar-pill-links">
-        {NAV_LINKS.map(({ label, href }) => (
+        {visibleLinks.map(({ label, href }) => (
           <Link
             key={href}
             href={href}

@@ -15,7 +15,7 @@ export default function BonusToggle({ value, onChange }: BonusToggleProps) {
         <div className="bonus-desc">Adds +1 to total</div>
       </div>
       <div className="toggle-wrap">
-        <span className="toggle-val">{isOn ? '+1' : '0'}</span>
+        <span key={value} className="toggle-val">{isOn ? '+1' : '0'}</span>
         <button
           id="bonus-toggle"
           type="button"

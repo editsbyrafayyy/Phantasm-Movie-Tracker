@@ -43,3 +43,31 @@ export async function appendRow(
     requestBody:      { values: [values] },
   });
 }
+
+/**
+ * Gets all rows in a range
+ */
+export async function getValues(range: string): Promise<any[][]> {
+  const sheets = await getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.GOOGLE_SHEET_ID,
+    range,
+  });
+  return res.data.values ?? [];
+}
+
+/**
+ * Updates a single row using a 2D array
+ */
+export async function updateRow(
+  range: string,
+  values: (string | number)[],
+): Promise<void> {
+  const sheets = await getSheetsClient();
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: process.env.GOOGLE_SHEET_ID,
+    range,
+    valueInputOption: 'RAW',
+    requestBody: { values: [values] },
+  });
+}

@@ -9,14 +9,14 @@ interface ScoreFieldProps {
 }
 
 export default function ScoreField({ id, label, max, value, onChange }: ScoreFieldProps) {
-  const displayVal = value === '' ? '—' : value.toFixed(1);
+  const displayVal = value === '' ? '—' : Number(value).toString();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value;
     if (raw === '') { onChange(''); return; }
     const n = parseFloat(raw);
     if (isNaN(n))   { onChange(''); return; }
-    onChange(Math.min(max, Math.max(0, Math.round(n * 10) / 10)));
+    onChange(Math.min(max, Math.max(0, Math.round(n * 100) / 100)));
   }
 
   return (
@@ -28,7 +28,7 @@ export default function ScoreField({ id, label, max, value, onChange }: ScoreFie
       <input
         id={id}
         type="number"
-        step={0.1}
+        step={0.01}
         min={0}
         max={max}
         value={value}

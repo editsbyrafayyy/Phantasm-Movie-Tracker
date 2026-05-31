@@ -33,10 +33,22 @@ export default function StarField() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
     function resize() {
-      if (!canvas) return;
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
+      if (!canvas || !ctx) return;
+      const dpr = window.devicePixelRatio || 1;
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      canvas.width  = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
     }
 
     resize();
@@ -44,20 +56,22 @@ export default function StarField() {
     window.addEventListener('resize', resize);
 
     let start: number | null = null;
+    let animationFrameId: number;
 
     function draw(ts: number) {
+      if (document.hidden) return;
       if (!canvas || !ctx) return;
       if (!start) start = ts;
       const t = (ts - start) / 1000;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, width, height);
 
       for (const star of starsRef.current) {
         const alpha = star.opacity * (0.5 + 0.5 * Math.sin(t * star.speed + star.phase));
         ctx.beginPath();
         ctx.arc(
-          star.x * canvas.width,
-          star.y * canvas.height,
+          star.x * width,
+          star.y * height,
           star.radius,
           0,
           Math.PI * 2,
@@ -66,13 +80,29 @@ export default function StarField() {
         ctx.fill();
       }
 
-      frameRef.current = requestAnimationFrame(draw);
+      animationFrameId = requestAnimationFrame(draw);
+      frameRef.current = animationFrameId;
     }
 
-    frameRef.current = requestAnimationFrame(draw);
+    animationFrameId = requestAnimationFrame(draw);
+    frameRef.current = animationFrameId;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        start = null;
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = requestAnimationFrame(draw);
+        frameRef.current = animationFrameId;
+      } else {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('resize', resize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       cancelAnimationFrame(frameRef.current);
     };
   }, []);

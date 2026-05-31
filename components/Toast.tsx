@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 export type ToastType = 'success' | 'error';
 
@@ -26,7 +27,11 @@ export default function Toast({ message, type, onDismiss }: ToastProps) {
       role="alert"
       className={`toast toast-${type}${exiting ? ' toast-exit' : ''}`}
     >
-      <span>{type === 'success' ? '✓' : '✕'}</span>
+      {type === 'success' ? (
+        <CheckCircle2 className="toast-icon" size={18} />
+      ) : (
+        <XCircle className="toast-icon" size={18} />
+      )}
       <span>{message}</span>
     </div>
   );

@@ -1,30 +1,21 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
 import { SUBGENRES, SECONDARY_TAGS, SCORE_FIELDS } from '@/lib/config';
 import type { MovieFormData } from '@/lib/types';
 import type { Recommend } from '@/lib/config';
-import ScoreField      from './ScoreField';
-import RecommendPills  from './RecommendPills';
-import BonusToggle     from './BonusToggle';
-import Toast           from './Toast';
+import ScoreField     from './ScoreField';
+import RecommendPills from './RecommendPills';
+import BonusToggle    from './BonusToggle';
+import Toast          from './Toast';
+import SectionLabel   from './SectionLabel';
 import type { ToastType } from './Toast';
 
-// ── Initial form state ────────────────────────────────────────────────────────
 const EMPTY_FORM: MovieFormData = {
-  title:        '',
-  subgenre:     '',
-  secondaryTag: '',
-  recommend:    '',
-  atmosphere:   '',
-  story:        '',
-  characters:   '',
-  pacing:       '',
-  visuals:      '',
-  thrill:       '',
-  sound:        '',
-  impact:       '',
-  bonus:        0,
+  title: '', subgenre: '', secondaryTag: '', recommend: '',
+  atmosphere: '', story: '', characters: '', pacing: '',
+  visuals: '', thrill: '', sound: '', impact: '', bonus: 0,
 };
 
 function calcTotal(data: MovieFormData): number {
@@ -36,14 +27,13 @@ function calcTotal(data: MovieFormData): number {
   return Math.round((score + data.bonus) * 100) / 100;
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function AddMovieForm() {
-  const [form,    setForm]    = useState<MovieFormData>(EMPTY_FORM);
-  const [loading, setLoading] = useState(false);
-  const [toast,   setToast]   = useState<{ message: string; type: ToastType } | null>(null);
+  const [form,      setForm]      = useState<MovieFormData>(EMPTY_FORM);
+  const [loading,   setLoading]   = useState(false);
+  const [toast,     setToast]     = useState<{ message: string; type: ToastType } | null>(null);
   const [secondary, setSecondary] = useState(false);
 
-  const total = calcTotal(form);
+  const total     = calcTotal(form);
   const hasScores = total > 0;
 
   function set<K extends keyof MovieFormData>(key: K, value: MovieFormData[K]) {
@@ -60,23 +50,16 @@ export default function AddMovieForm() {
     if (!form.subgenre) {
       setToast({ message: 'Please select a subgenre.', type: 'error' }); return;
     }
-
     setLoading(true);
     setToast(null);
-
     try {
       const res  = await fetch('/api/add-movie', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(form),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       });
       const data = await res.json();
-
       if (data.success) {
-        setToast({
-          message: `"${form.title}" added! Total: ${data.total}. Your sheet will sort next time you open it on desktop.`,
-          type:    'success',
-        });
+        setToast({ message: `"${form.title}" added! Total: ${data.total}.`, type: 'success' });
         setForm(EMPTY_FORM);
         setSecondary(false);
       } else {
@@ -90,20 +73,20 @@ export default function AddMovieForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="add-form" noValidate>
+    <form onSubmit={handleSubmit} noValidate style={{ width: '100%', animation: 'fadeUp 0.55s ease 0.15s forwards', opacity: 0 }}>
 
-      {/* ── Movie Info ─────────────────────────────────────────────────────── */}
-      <div className="form-section-label">Movie Info</div>
+      {/* ── Movie Info ── */}
+      <SectionLabel text="Movie Info" />
 
       <div className="form-field">
-        <label htmlFor="title" className="field-label">Title</label>
+        <label htmlFor="title-input" className="field-label">Title</label>
         <input
-          id="title"
+          id="title-input"
           type="text"
           value={form.title}
           onChange={e => set('title', e.target.value)}
           placeholder="e.g. Hereditary"
-          className="field-input"
+          className="field-input title-input-field"
           autoComplete="off"
         />
       </div>
@@ -117,13 +100,11 @@ export default function AddMovieForm() {
           className="field-input field-select"
         >
           <option value="">— Select subgenre —</option>
-          {SUBGENRES.map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
+          {SUBGENRES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
-      {/* Secondary tag — collapsible */}
+      {/* Secondary tag — ghost chip + animated expand */}
       <div className="secondary-wrap">
         <button
           type="button"
@@ -132,35 +113,30 @@ export default function AddMovieForm() {
         >
           {secondary ? '↑ Hide secondary tag' : '+ Add secondary tag (optional)'}
         </button>
-        {secondary && (
-          <div className="form-field" style={{ marginTop: '10px' }}>
-            <label htmlFor="secondaryTag" className="field-label">Secondary Tag</label>
-            <select
-              id="secondaryTag"
-              value={form.secondaryTag}
-              onChange={e => set('secondaryTag', e.target.value)}
-              className="field-input field-select"
-            >
-              <option value="">— None —</option>
-              {SECONDARY_TAGS.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
+        <div className={`secondary-expand${secondary ? ' open' : ''}`}>
+          <div style={{ minHeight: 0 }}>
+            <div className="form-field" style={{ marginTop: '10px' }}>
+              <label htmlFor="secondaryTag" className="field-label">Secondary Tag</label>
+              <select
+                id="secondaryTag"
+                value={form.secondaryTag}
+                onChange={e => set('secondaryTag', e.target.value)}
+                className="field-input field-select"
+              >
+                <option value="">— None —</option>
+                {SECONDARY_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* ── Recommend ─────────────────────────────────────────────────────── */}
-      <div className="form-section-label">Recommend?</div>
-      <RecommendPills
-        value={form.recommend}
-        onChange={(v: Recommend) => set('recommend', v)}
-      />
+      {/* ── Recommend ── */}
+      <SectionLabel text="Recommend?" />
+      <RecommendPills value={form.recommend} onChange={(v: Recommend) => set('recommend', v)} />
 
-      {/* ── Scores ────────────────────────────────────────────────────────── */}
-      <div className="form-section-label">
-        Scores — Atmosphere &amp; Story max 2, others max 1
-      </div>
+      {/* ── Scores ── */}
+      <SectionLabel text="Scores — Atm & Story max 2, others max 1" />
       <div className="score-grid">
         {SCORE_FIELDS.map(f => (
           <ScoreField
@@ -174,38 +150,27 @@ export default function AddMovieForm() {
         ))}
       </div>
 
-      {/* ── Bonus ─────────────────────────────────────────────────────────── */}
-      <BonusToggle
-        value={form.bonus}
-        onChange={v => set('bonus', v)}
-      />
+      {/* ── Bonus ── */}
+      <BonusToggle value={form.bonus} onChange={v => set('bonus', v)} />
 
-      {/* ── Running Total ─────────────────────────────────────────────────── */}
-      <div className="total-bar">
-        <div className="total-label">Running Total</div>
-        <div className="total-num" id="running-total">
+      {/* ── Running Total ── */}
+      <div className="running-total">
+        <div className="running-total-label">Running Total</div>
+        <div key={total} className={`running-total-number${!hasScores ? ' empty' : ''}`}>
           {hasScores ? total.toFixed(2) : '—'}
         </div>
       </div>
 
-      {/* ── Submit ────────────────────────────────────────────────────────── */}
-      <button
-        id="submit-btn"
-        type="submit"
-        disabled={loading}
-        className="btn-submit"
-      >
-        {loading ? 'Adding…' : 'Add to Sheet →'}
+      {/* ── Submit ── */}
+      <button id="submit-btn" type="submit" disabled={loading} className="btn-submit">
+        {loading ? (
+          <><Loader2 className="spinner-icon" size={16} /> Adding…</>
+        ) : (
+          'Add to Sheet →'
+        )}
       </button>
 
-      {/* ── Toast ─────────────────────────────────────────────────────────── */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={dismissToast}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onDismiss={dismissToast} />}
     </form>
   );
 }
