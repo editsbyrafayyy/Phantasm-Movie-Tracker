@@ -16,6 +16,7 @@ dist/
 .env.test.local
 .env.production.local
 *.json.key
+movie-tracker-*.json
 
 # ── Planning / Design Documents (local-only, not for the repo) ────────────────
 PRD.md
