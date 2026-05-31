@@ -12,20 +12,19 @@ export default function HomePage() {
         <p className="hero-eyebrow">Personal Horror Film Vault</p>
 
         <h1 className="hero-headline">
-          <em>Log the</em>
-          {' '}
-          <strong>Horror.</strong>
+          Track the{' '}
+          <em>Horror.</em>
           <br />
-          <em>Rate the</em>
-          {' '}
+          Rate the{' '}
           <strong>Fear.</strong>
         </h1>
 
         <p className="hero-sub">
-          Your mobile-first horror tracker. Add a film, score it, and it goes straight into your sheet.
+          Your personal horror tracker. Add a film, score it across 8 categories,
+          and it writes straight to your sheet.
         </p>
 
-        <Link href="/add" className="hero-cta">
+        <Link href="/add" className="hero-cta" id="cta-add-movie">
           Add a Movie →
         </Link>
       </div>

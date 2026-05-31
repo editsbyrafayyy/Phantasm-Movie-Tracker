@@ -54,154 +54,272 @@ body {
   to   { opacity: 0; transform: translateY(16px); }
 }
 
-/* ── Navbar ──────────────────────────────────────────────────────────────────── */
-.navbar {
+/* ── Navbar — Floating Pill ──────────────────────────────────────────────────── */
+.navbar-pill {
   position:        fixed;
-  top:             0;
-  left:            0;
-  right:           0;
+  top:             20px;
+  left:            50%;
+  transform:       translateX(-50%);
   z-index:         50;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background:      rgba(8, 8, 8, 0.72);
-  border-bottom:   1px solid var(--border);
+  display:         flex;
+  align-items:     center;
+  gap:             0;
+  padding:         0 6px 0 16px;
+  height:          44px;
+  border-radius:   999px;
+  background:      rgba(14, 14, 14, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border:          1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:      0 4px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.05);
+  white-space:     nowrap;
 }
 
-.navbar-inner {
-  max-width:      900px;
-  margin:         0 auto;
-  padding:        0 24px;
-  height:         60px;
-  display:        flex;
-  align-items:    center;
-  justify-content: space-between;
-}
-
-.navbar-logo {
-  font-family:    var(--font-display);
-  font-size:      22px;
-  letter-spacing: 3px;
-  color:          var(--accent);
+.navbar-pill-logo {
+  font-family:     var(--font-display);
+  font-size:       16px;
+  letter-spacing:  3px;
+  color:           var(--accent);
   text-decoration: none;
-  display:        flex;
-  align-items:    center;
-  gap:            8px;
-  transition:     opacity 0.15s;
+  display:         flex;
+  align-items:     center;
+  gap:             7px;
+  transition:      opacity 0.15s;
+  padding-right:   4px;
 }
-.navbar-logo:hover { opacity: 0.75; }
-.navbar-logo span  { color: var(--accent); }
+.navbar-pill-logo:hover { opacity: 0.7; }
 
-.navbar-links {
-  display: flex;
-  gap:     28px;
+.navbar-pill-logo-icon {
+  font-size:   18px;
+  line-height: 1;
+  opacity:     0.85;
 }
 
-.navbar-link {
+.navbar-pill-divider {
+  width:      1px;
+  height:     20px;
+  background: rgba(255, 255, 255, 0.12);
+  margin:     0 14px;
+  flex-shrink: 0;
+}
+
+.navbar-pill-links {
+  display:     flex;
+  align-items: center;
+  gap:         2px;
+}
+
+.navbar-pill-link {
   font-family:     var(--font-sans);
-  font-size:       14px;
+  font-size:       13px;
   font-weight:     500;
-  color:           var(--text-dim);
+  color:           rgba(255, 255, 255, 0.5);
   text-decoration: none;
-  letter-spacing:  0.3px;
-  transition:      color 0.15s;
-  padding-bottom:  2px;
-  border-bottom:   2px solid transparent;
+  letter-spacing:  0.2px;
+  padding:         6px 13px;
+  border-radius:   999px;
+  transition:      color 0.15s, background 0.15s;
 }
-.navbar-link:hover  { color: var(--accent); }
-.navbar-link.active { color: var(--accent); border-bottom-color: var(--accent); }
+.navbar-pill-link:hover {
+  color:       rgba(255, 255, 255, 0.88);
+  background:  rgba(255, 255, 255, 0.06);
+}
+.navbar-pill-link.active {
+  color:       rgba(255, 255, 255, 0.95);
+  background:  rgba(255, 255, 255, 0.10);
+  font-weight: 600;
+}
+
+/* ── Light Beam ──────────────────────────────────────────────────────────────── */
+/*
+  All three beam layers share the same clip-path triangle:
+  origin = bottom-left corner (0%, 100%)
+  sweeps to top-right at ~38 degrees.
+*/
+.beam {
+  position:       absolute;
+  inset:          0;
+  pointer-events: none;
+  z-index:        1;
+  /* Triangle: bottom-left → top-right spread */
+  clip-path: polygon(0% 100%, 0% 58%, 72% 0%, 52% 0%);
+}
+
+/* Wide outer glow — very faint */
+.beam-outer {
+  background: linear-gradient(
+    to top right,
+    rgba(255, 255, 255, 0.042) 0%,
+    rgba(255, 255, 255, 0.018) 40%,
+    transparent 70%
+  );
+  clip-path: polygon(0% 100%, 0% 42%, 80% 0%, 38% 0%);
+}
+
+/* Narrower inner beam — a bit brighter */
+.beam-inner {
+  background: linear-gradient(
+    to top right,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.035) 50%,
+    transparent 72%
+  );
+  clip-path: polygon(0% 100%, 0% 66%, 62% 0%, 46% 0%);
+}
+
+/* Hot-line — razor-thin ultra-bright centre stripe */
+.beam-hotline {
+  background: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.0) 0%,
+    rgba(255, 255, 255, 0.28) 30%,
+    rgba(255, 255, 255, 0.38) 50%,
+    rgba(255, 255, 255, 0.28) 70%,
+    rgba(255, 255, 255, 0.0) 100%
+  );
+  clip-path: polygon(0% 100%, 0% 72%, 56% 0%, 51% 0%);
+  mix-blend-mode: screen;
+}
+
+/* ── Concentric Arcs ─────────────────────────────────────────────────────────── */
+.arcs-container {
+  position:      absolute;
+  bottom:        0;
+  left:          50%;
+  transform:     translateX(-50%);
+  pointer-events: none;
+  z-index:       1;
+  width:         0;
+  height:        0;
+}
+
+.arcs-svg {
+  position:  absolute;
+  bottom:    0;
+  left:      50%;
+  transform: translateX(-50%);
+  width:     1200px;
+  height:    520px;
+  overflow:  visible;
+}
+
+/* Glowing orb at arc origin */
+.arcs-orb {
+  position:     absolute;
+  bottom:       0;
+  left:         50%;
+  transform:    translate(-50%, 50%);
+  width:        14px;
+  height:       14px;
+  border-radius: 50%;
+  background:   #ffffff;
+  box-shadow:
+    0 0  6px  3px rgba(255, 255, 255, 0.90),
+    0 0 20px 10px rgba(255, 255, 255, 0.30),
+    0 0 50px 22px rgba(255, 255, 255, 0.12),
+    0 0 90px 40px rgba(255, 255, 255, 0.05);
+}
 
 /* ── Hero ────────────────────────────────────────────────────────────────────── */
 .hero {
-  position:   relative;
-  min-height: 100vh;
-  display:    flex;
-  flex-direction: column;
-  align-items: center;
+  position:        relative;
+  min-height:      100vh;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
   justify-content: center;
-  text-align:  center;
-  padding:     100px 24px 80px;
-  z-index:     2;
-  overflow:    hidden;
+  text-align:      center;
+  padding:         120px 24px 100px;
+  z-index:         2;
+  overflow:        hidden;
 }
 
 .hero-content {
-  position:   relative;
-  z-index:    3;
-  max-width:  700px;
-  margin:     0 auto;
+  position:  relative;
+  z-index:   3;
+  max-width: 680px;
+  margin:    0 auto;
 }
 
 .hero-eyebrow {
   font-family:     var(--font-sans);
-  font-size:       12px;
+  font-size:       11px;
   font-weight:     500;
-  letter-spacing:  3px;
+  letter-spacing:  4px;
   text-transform:  uppercase;
-  color:           var(--text-muted);
-  margin-bottom:   24px;
-  animation:       fadeUp 0.5s ease forwards;
+  color:           rgba(255, 255, 255, 0.35);
+  margin-bottom:   28px;
+  animation:       fadeUp 0.6s ease forwards;
   opacity:         0;
   animation-delay: 0.1s;
 }
 
 .hero-headline {
-  font-size:       clamp(52px, 10vw, 88px);
-  line-height:     1.05;
+  font-size:       clamp(50px, 9.5vw, 84px);
+  line-height:     1.08;
   font-weight:     300;
   font-family:     var(--font-sans);
   color:           var(--accent);
   margin-bottom:   0;
-  animation:       fadeUp 0.6s ease forwards;
+  animation:       fadeUp 0.65s ease forwards;
   opacity:         0;
-  animation-delay: 0.25s;
+  animation-delay: 0.22s;
+  letter-spacing:  -1px;
 }
 
 .hero-headline em {
-  font-style:  italic;
-  font-family: var(--font-serif);
-  font-weight: 400;
-  color:       var(--text-dim);
+  font-style:      italic;
+  font-family:     var(--font-serif);
+  font-weight:     400;
+  color:           rgba(255, 255, 255, 0.75);
+  letter-spacing:  0px;
 }
 
 .hero-headline strong {
-  font-weight: 700;
-  font-family: var(--font-sans);
-  color:       var(--accent);
+  font-weight:    700;
+  font-family:    var(--font-sans);
+  color:          var(--accent);
+  letter-spacing: -2px;
 }
 
 .hero-sub {
-  margin-top:      20px;
-  font-size:       17px;
-  color:           var(--text-dim);
+  margin-top:      22px;
+  font-size:       16px;
+  line-height:     1.65;
+  color:           rgba(255, 255, 255, 0.4);
   font-weight:     300;
-  animation:       fadeUp 0.6s ease forwards;
+  animation:       fadeUp 0.65s ease forwards;
   opacity:         0;
-  animation-delay: 0.4s;
+  animation-delay: 0.38s;
+  max-width:       480px;
+  margin-left:     auto;
+  margin-right:    auto;
 }
 
 .hero-cta {
-  margin-top:      40px;
+  margin-top:      38px;
   display:         inline-flex;
   align-items:     center;
   gap:             8px;
-  background:      var(--accent);
-  color:           var(--bg);
-  padding:         14px 32px;
+  background:      rgba(255, 255, 255, 0.96);
+  color:           #0a0a0a;
+  padding:         13px 30px;
   border-radius:   999px;
   font-family:     var(--font-sans);
-  font-size:       15px;
+  font-size:       14px;
   font-weight:     600;
   text-decoration: none;
   letter-spacing:  0.3px;
-  transition:      transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-  animation:       fadeUp 0.6s ease forwards;
+  border:          1px solid rgba(255,255,255,0.2);
+  transition:      transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  animation:       fadeUp 0.65s ease forwards;
   opacity:         0;
-  animation-delay: 0.55s;
+  animation-delay: 0.52s;
 }
 .hero-cta:hover {
-  transform:  translateY(-2px);
-  box-shadow: 0 8px 28px rgba(255, 255, 255, 0.15);
-  opacity:    0.9;
+  transform:   translateY(-2px);
+  box-shadow:  0 10px 32px rgba(255, 255, 255, 0.18);
+  background:  #ffffff;
 }
 
 /* ── Add Movie Page ───────────────────────────────────────────────────────────── */
@@ -594,8 +712,10 @@ body {
 
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .add-form   { padding: 22px 18px; }
-  .score-grid { grid-template-columns: 1fr; }
-  .toast      { right: 16px; bottom: 16px; left: 16px; max-width: none; }
-  .navbar-inner { padding: 0 16px; }
+  .add-form       { padding: 22px 18px; }
+  .score-grid     { grid-template-columns: 1fr; }
+  .toast          { right: 16px; bottom: 16px; left: 16px; max-width: none; }
+  .navbar-pill    { top: 12px; padding: 0 4px 0 12px; height: 40px; }
+  .navbar-pill-logo { font-size: 14px; }
+  .navbar-pill-link { font-size: 12px; padding: 5px 10px; }
 }
