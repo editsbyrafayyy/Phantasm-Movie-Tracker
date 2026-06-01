@@ -7,6 +7,7 @@ import StarField from '@/components/StarField';
 export const metadata: Metadata = {
   title:       'Horror Movie Tracker — Vault',
   description: 'Log and rate horror movies from any device. Your personal mobile-first horror film vault.',
+  themeColor:  '#080808',
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
