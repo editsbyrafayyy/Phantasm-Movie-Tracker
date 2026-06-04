@@ -3,7 +3,6 @@ import Link    from 'next/link';
 import { Moon, Play, LogIn } from 'lucide-react';
 import HeroBackground from '@/components/HeroBackground';
 import CategoryRow    from '@/components/browse/CategoryRow';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -22,18 +21,23 @@ const SUBGENRE_ORDER = [
   'Thriller (Non-Horror)',
 ];
 
+import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
+
 async function getOwnerEntries(): Promise<Entry[]> {
-  try {
-    const base = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
-    const res = await fetch(`${base}/api/owner-vault`, { next: { revalidate: 300 } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
+  const OWNER_ID = process.env.OWNER_USER_ID;
+  if (!OWNER_ID) return [];
+
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('entries')
+    .select('*, movie:movies (*)')
+    .eq('user_id', OWNER_ID)
+    .order('created_at', { ascending: false });
+
+  return data ?? [];
 }
+
+export const revalidate = 300;
 
 export const metadata = {
   title: "Vault — Horror Film Tracker",

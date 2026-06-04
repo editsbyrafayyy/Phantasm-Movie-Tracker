@@ -18,18 +18,23 @@ const SUBGENRE_ORDER = [
   'Thriller (Non-Horror)',
 ];
 
+import { createServiceClient } from '@/lib/supabase/server';
+
 async function getOwnerEntries(): Promise<Entry[]> {
-  try {
-    const base = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
-    const res = await fetch(`${base}/api/owner-vault`, { next: { revalidate: 300 } });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
+  const OWNER_ID = process.env.OWNER_USER_ID;
+  if (!OWNER_ID) return [];
+
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('entries')
+    .select('*, movie:movies (*)')
+    .eq('user_id', OWNER_ID)
+    .order('created_at', { ascending: false });
+
+  return data ?? [];
 }
+
+export const revalidate = 300;
 
 export default async function StreamPage() {
   const entries = await getOwnerEntries();
