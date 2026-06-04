@@ -3,9 +3,9 @@ import { NextResponse }       from 'next/server';
 import type { NextRequest }   from 'next/server';
 
 // Routes that require an active Supabase session
-const PROTECTED_PAGES = ['/vault', '/add', '/update', '/stats', '/profile'];
+const PROTECTED_PAGES = ['/add', '/update', '/stats', '/profile', '/stream'];
 // API routes that require auth (omdb-search is excluded — it's a server-side proxy)
-const PROTECTED_API   = ['/api/movies', '/api/add-movie', '/api/stats'];
+const PROTECTED_API   = ['/api/movies', '/api/add-movie', '/api/stats', '/api/stream'];
 // Routes that logged-in users should be bounced away from
 const AUTH_ONLY       = ['/login'];
 

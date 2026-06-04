@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Film, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Film, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SUBGENRE_HEX } from '@/lib/config';
 import type { Entry } from '@/lib/types';
@@ -32,11 +32,11 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
         <h2 className="category-heading">{label}</h2>
       </div>
       
-      <button className="category-scroll-btn left" onClick={() => scroll('left')} aria-label="Scroll left">
+      <button className="category-scroll-btn left" onClick={() => scroll('left')} aria-label="Scroll left" style={{ minWidth: 44, minHeight: 44 }}>
         <ChevronLeft size={24} />
       </button>
 
-      <button className="category-scroll-btn right" onClick={() => scroll('right')} aria-label="Scroll right">
+      <button className="category-scroll-btn right" onClick={() => scroll('right')} aria-label="Scroll right" style={{ minWidth: 44, minHeight: 44 }}>
         <ChevronRight size={24} />
       </button>
 
@@ -76,10 +76,10 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
 
                   <div className="stream-card-overlay" />
 
-                  {/* Info overlay */}
+                  {/* View overlay */}
                   <div className="stream-card-play-btn">
                     <div className="stream-card-play-circle">
-                      <Info size={18} color="white" />
+                      <Eye size={18} color="white" />
                     </div>
                   </div>
 

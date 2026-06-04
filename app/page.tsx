@@ -1,8 +1,8 @@
-import Image   from 'next/image';
 import Link    from 'next/link';
-import { Moon, Play, LogIn } from 'lucide-react';
+import { Moon, LogIn } from 'lucide-react';
 import HeroBackground from '@/components/HeroBackground';
 import CategoryRow    from '@/components/browse/CategoryRow';
+import HeroCarousel   from '@/components/browse/HeroCarousel';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -50,10 +50,11 @@ export default async function HomePage() {
 
   const entries = await getOwnerEntries();
 
-  // Top-rated entry with a backdrop for the hero
-  const featured = entries
+  // Top-rated entries with backdrop for the hero carousel
+  const slides = entries
     .filter(e => e.movie.backdrop_url ?? e.movie.poster_url)
-    .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))[0] ?? null;
+    .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
+    .slice(0, 8);
 
   // Group by subgenre for the category rows
   const bySubgenre: Record<string, Entry[]> = {};
@@ -62,7 +63,6 @@ export default async function HomePage() {
     bySubgenre[entry.subgenre].push(entry);
   }
 
-  const heroBg = featured?.movie.backdrop_url ?? featured?.movie.poster_url ?? null;
   const ownerName = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
 
   return (
@@ -136,90 +136,13 @@ export default async function HomePage() {
         </div>
       </header>
 
-      {/* ── Hero ─────────────────────────────────────── */}
-      <div className="browse-hero" style={{ minHeight: '65vh', marginTop: 0 }}>
-        {heroBg && (
-          <Image
-            src={heroBg}
-            alt={featured?.movie.title ?? 'Featured film'}
-            fill
-            style={{ objectFit:'cover', objectPosition:'center top', zIndex:0 }}
-            unoptimized
-            priority
-          />
-        )}
-        {/* Gradient overlay */}
-        <div style={{
-          position:'absolute', inset:0, zIndex:1,
-          background: heroBg
-            ? 'linear-gradient(to right, rgba(8,8,8,0.96) 28%, rgba(8,8,8,0.55) 62%, transparent 100%), linear-gradient(to top, rgba(8,8,8,0.92) 0%, transparent 52%)'
-            : 'linear-gradient(135deg, #080808 0%, #1a0808 100%)',
-        }} />
-
-        <div className="browse-hero-content" style={{ zIndex:2, paddingTop:90 }}>
-          <p style={{
-            fontFamily:'var(--font-sans)', fontSize:10, fontWeight:700,
-            letterSpacing:'2.5px', textTransform:'uppercase',
-            color:'var(--text-muted)', marginBottom:10,
-          }}>
-            {ownerName}&apos;s Vault · {entries.length} Films Rated
-          </p>
-
-          {featured ? (
-            <>
-              <h1 style={{
-                fontFamily:'var(--font-sans)', fontWeight:700, lineHeight:1.1,
-                fontSize:'clamp(28px,5vw,54px)', color:'#ffffff', marginBottom:10,
-              }}>
-                {featured.movie.title}
-              </h1>
-
-              {featured.total !== null && featured.total > 0 && (
-                <div style={{ display:'flex', alignItems:'baseline', gap:4, marginBottom:16 }}>
-                  <span style={{
-                    fontFamily:'var(--font-display)',
-                    fontSize:'clamp(44px,7vw,68px)',
-                    color:'var(--red)', lineHeight:1,
-                  }}>
-                    {featured.total}
-                  </span>
-                  <span style={{ fontFamily:'var(--font-sans)', fontSize:16, color:'var(--text-muted)' }}>
-                    / 10
-                  </span>
-                </div>
-              )}
-
-              <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-                {featured.movie.omdb_id && (
-                  <Link href={`/stream/${featured.movie.omdb_id}`} className="btn-watch">
-                    <Play size={14} fill="white" color="white" />
-                    Watch Now
-                  </Link>
-                )}
-                <Link href={`/vault/${featured.id}`} className="btn-edit">
-                  View Details
-                </Link>
-              </div>
-            </>
-          ) : (
-            <>
-              <h1 style={{
-                fontFamily:'var(--font-sans)', fontWeight:700, lineHeight:1.1,
-                fontSize:'clamp(32px,5vw,60px)', color:'#ffffff', marginBottom:14,
-              }}>
-                Horror. Rated.
-              </h1>
-              <p style={{ fontSize:15, color:'var(--text-dim)', marginBottom:20, maxWidth:440 }}>
-                A curated collection of horror films scored across atmosphere, story, dread, and more.
-              </p>
-              <Link href="/login" className="btn-watch">
-                <LogIn size={14} />
-                Sign In to Rate
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
+      {/* ── Hero Carousel ───────────────────────────── */}
+      <HeroCarousel
+        slides={slides}
+        isOwner={session?.user?.id === process.env.OWNER_USER_ID}
+        ownerName={ownerName}
+        totalFilms={entries.length}
+      />
 
       {/* ── Category Rows ─────────────────────────────── */}
       <div className="browse-sections">

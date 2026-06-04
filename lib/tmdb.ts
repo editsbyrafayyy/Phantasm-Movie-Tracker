@@ -216,3 +216,58 @@ export async function enrichFromTmdb(
     media_type:   resolvedType,
   };
 }
+
+// ── Horror / Thriller Discovery ───────────────────────────────────────────────
+
+export interface TmdbDiscoverMovie {
+  id:            number;
+  title:         string;
+  poster_path:   string | null;
+  backdrop_path: string | null;
+  vote_average:  number;
+  release_date:  string;
+  overview:      string;
+}
+
+// TMDB genre IDs: Horror = 27, Thriller = 53
+const HORROR_GENRE_IDS = '27,53';
+
+export async function getTrendingHorror(): Promise<TmdbDiscoverMovie[]> {
+  try {
+    const key = getKey();
+    const res = await fetch(
+      `${TMDB_BASE}/discover/movie?api_key=${key}&with_genres=${HORROR_GENRE_IDS}&sort_by=popularity.desc&page=1&language=en-US`,
+      { next: { revalidate: 3600 } }
+    );
+    const data = await res.json();
+    return (data.results ?? []) as TmdbDiscoverMovie[];
+  } catch { return []; }
+}
+
+export async function getTopRatedHorror(): Promise<TmdbDiscoverMovie[]> {
+  try {
+    const key = getKey();
+    const res = await fetch(
+      `${TMDB_BASE}/discover/movie?api_key=${key}&with_genres=${HORROR_GENRE_IDS}&sort_by=vote_average.desc&vote_count.gte=200&page=1&language=en-US`,
+      { next: { revalidate: 3600 } }
+    );
+    const data = await res.json();
+    return (data.results ?? []) as TmdbDiscoverMovie[];
+  } catch { return []; }
+}
+
+export async function getRecentHorror(): Promise<TmdbDiscoverMovie[]> {
+  try {
+    const key = getKey();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const fromDate = sixMonthsAgo.toISOString().slice(0, 10);
+    const res = await fetch(
+      `${TMDB_BASE}/discover/movie?api_key=${key}&with_genres=${HORROR_GENRE_IDS}&sort_by=release_date.desc&primary_release_date.gte=${fromDate}&page=1&language=en-US`,
+      { next: { revalidate: 3600 } }
+    );
+    const data = await res.json();
+    return (data.results ?? []) as TmdbDiscoverMovie[];
+  } catch { return []; }
+}
+

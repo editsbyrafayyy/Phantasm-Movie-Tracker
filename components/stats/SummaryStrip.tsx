@@ -1,23 +1,25 @@
+'use client';
+
 import type { StatsData } from '@/lib/types';
 
-interface SummaryStripProps {
+interface Props {
   stats: StatsData;
 }
 
-export default function SummaryStrip({ stats }: SummaryStripProps) {
-  const items = [
-    { value: stats.totalFilms,                       label: 'Films Logged'       },
-    { value: stats.averageTotal.toFixed(2),           label: 'Avg Score'          },
-    { value: stats.highestScore,                      label: 'Highest Score'      },
-    { value: stats.mostCommonSubgenre || '—',         label: 'Top Subgenre'       },
+export default function SummaryStrip({ stats }: Props) {
+  const tiles = [
+    { label: 'Films Rated',  value: stats.totalFilms },
+    { label: 'Avg Score',    value: stats.averageTotal },
+    { label: 'Peak Score',   value: stats.highestScore },
+    { label: 'Top Genre',    value: stats.mostCommonSubgenre || '—' },
   ];
 
   return (
-    <div className="stats-summary-strip">
-      {items.map((item, i) => (
-        <div key={i} className="stats-summary-card">
-          <span className="stats-summary-value">{item.value}</span>
-          <span className="stats-summary-label">{item.label}</span>
+    <div className="summary-strip">
+      {tiles.map(t => (
+        <div key={t.label} className="summary-tile">
+          <span className="summary-tile-value">{t.value}</span>
+          <span className="summary-tile-label">{t.label}</span>
         </div>
       ))}
     </div>

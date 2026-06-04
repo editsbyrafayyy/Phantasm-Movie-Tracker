@@ -100,8 +100,18 @@ export interface OmdbSearchHit {
 
 // ── Streaming embed info (returned by /api/stream/[imdbId]) ──────────────────
 export interface StreamEmbed {
-  sources:     { name: string; url: string }[];
-  title:       string;
-  type:        'movie' | 'tv';
-  imdbId:      string;
+  sources:       { name: string; url: string }[];
+  title:         string;
+  type:          'movie' | 'tv';
+  imdbId:        string;
+  // optional metadata for sidebar
+  poster_url?:   string | null;
+  backdrop_url?: string | null;
+  plot?:         string | null;
+  cast_list?:    { name: string; profile_path: string | null }[] | string[] | null;
+  genre_tags?:   string[] | null;
+  year?:         number | null;
+  director?:     string | null;
+  runtime_min?:  number | null;
+  imdb_rating?:  number | null;
 }

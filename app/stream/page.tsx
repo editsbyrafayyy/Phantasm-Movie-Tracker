@@ -1,6 +1,10 @@
-import StreamHeroClient from '@/components/stream/StreamHeroClient';
-import CategoryRow      from '@/components/browse/CategoryRow';
-import type { Entry }   from '@/lib/types';
+import { redirect }           from 'next/navigation';
+import StreamHeroClient        from '@/components/stream/StreamHeroClient';
+import CategoryRow             from '@/components/browse/CategoryRow';
+import TmdbRow                 from '@/components/browse/TmdbRow';
+import type { Entry }          from '@/lib/types';
+import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
+import { getTrendingHorror, getTopRatedHorror, getRecentHorror } from '@/lib/tmdb';
 
 const SUBGENRE_ORDER = [
   'Psychological Horror',
@@ -17,8 +21,6 @@ const SUBGENRE_ORDER = [
   'Horror Comedy',
   'Thriller (Non-Horror)',
 ];
-
-import { createServiceClient } from '@/lib/supabase/server';
 
 async function getOwnerEntries(): Promise<Entry[]> {
   const OWNER_ID = process.env.OWNER_USER_ID;
@@ -37,7 +39,18 @@ async function getOwnerEntries(): Promise<Entry[]> {
 export const revalidate = 300;
 
 export default async function StreamPage() {
-  const entries = await getOwnerEntries();
+  // Auth check — streaming is members only
+  const supabase = await createServerSupabaseClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect('/login?next=/stream');
+
+  // Fetch data in parallel
+  const [entries, trending, topRated, recent] = await Promise.all([
+    getOwnerEntries(),
+    getTrendingHorror(),
+    getTopRatedHorror(),
+    getRecentHorror(),
+  ]);
 
   // Top 5 with backdrop for hero carousel
   const featured = entries
@@ -60,6 +73,12 @@ export default async function StreamPage() {
       <StreamHeroClient featured={featured} />
 
       <div style={{ paddingTop: 32, paddingBottom: 60 }}>
+        {/* TMDB discovery rows */}
+        <TmdbRow label="New &amp; Popular"    movies={trending}  />
+        <TmdbRow label="Highly Rated"         movies={topRated}  />
+        <TmdbRow label="Recently Released"    movies={recent}    />
+
+        {/* Owner vault by subgenre */}
         {SUBGENRE_ORDER.map(genre => {
           const genreEntries = bySubgenre[genre];
           if (!genreEntries || genreEntries.length < 2) return null;

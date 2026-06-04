@@ -1,35 +1,25 @@
+import { notFound, redirect } from 'next/navigation';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import VideoPlayerClient from '@/components/stream/VideoPlayerClient';
+import type { StreamEmbed } from '@/lib/types';
 
-export default async function StreamPlayerPage({
-  params,
-}: {
-  params: Promise<{ imdbId: string }>;
-}) {
+type Props = { params: Promise<{ imdbId: string }> };
+
+export default async function WatchPage({ params }: Props) {
   const { imdbId } = await params;
+
+  // Auth check — streaming is members only
+  const supabase = await createServerSupabaseClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect('/login?next=/stream/' + imdbId);
 
   const base = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : 'http://localhost:3000';
 
-  // Default — server figures out movie vs tv from DB
-  let embedData = {
-    sources: [
-      { name: 'Server 1 (VidSrc ME)', url: `https://vidsrc.me/embed/movie?imdb=${imdbId}` },
-      { name: 'Server 2 (AutoEmbed)', url: `https://player.autoembed.cc/embed/movie/${imdbId}` }
-    ],
-    title:       imdbId,
-    type:        'movie' as const,
-  };
+  const res = await fetch(`${base}/api/stream/${imdbId}`, { cache: 'no-store' });
+  if (!res.ok) notFound();
+  const embed: StreamEmbed = await res.json();
 
-  try {
-    const res = await fetch(`${base}/api/stream/${imdbId}`, {
-      next: { revalidate: 3600 },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      embedData = data;
-    }
-  } catch { /* fall through to defaults */ }
-
-  return <VideoPlayerClient {...embedData} />;
+  return <VideoPlayerClient {...embed} />;
 }

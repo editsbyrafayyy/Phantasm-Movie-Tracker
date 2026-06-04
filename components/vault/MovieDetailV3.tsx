@@ -11,19 +11,20 @@ import type { Entry } from '@/lib/types';
 
 type Tab = 'overview' | 'cast' | 'similar';
 
-const RECOMMEND_STYLE: Record<string, { color: string; border: string }> = {
-  Peak:    { color: '#9b59f5', border: '#9b59f5' },
-  Yes:     { color: '#52b044', border: '#52b044' },
-  No:      { color: '#e63232', border: '#e63232' },
-  Garbage: { color: '#6b6b6b', border: '#6b6b6b' },
+const RECOMMEND_STYLE: Record<string, { color: string; border: string; bg: string }> = {
+  Peak:    { color: '#9b59f5', border: '#9b59f5', bg: 'rgba(155,89,245,0.12)' },
+  Yes:     { color: '#52b044', border: '#52b044', bg: 'rgba(82,176,68,0.12)'  },
+  No:      { color: '#e63232', border: '#e63232', bg: 'rgba(230,50,50,0.12)'  },
+  Garbage: { color: '#6b6b6b', border: '#6b6b6b', bg: 'rgba(107,107,107,0.12)' },
 };
 
 interface MovieDetailV3Props {
   entry:   Entry;
   similar: Entry[];
+  isOwner: boolean;
 }
 
-export default function MovieDetailV3({ entry, similar }: MovieDetailV3Props) {
+export default function MovieDetailV3({ entry, similar, isOwner }: MovieDetailV3Props) {
   const router = useRouter();
   const [tab, setTab]               = useState<Tab>('overview');
   const [confirming, setConfirming] = useState(false);
@@ -31,8 +32,8 @@ export default function MovieDetailV3({ entry, similar }: MovieDetailV3Props) {
   const [toast, setToast]           = useState<{ msg: string; ok: boolean } | null>(null);
 
   const { movie } = entry;
-  const bgImg  = movie.backdrop_url ?? movie.poster_url ?? null;
-  const title  = movie.title ?? 'Unknown';
+  const bgImg    = movie.backdrop_url ?? movie.poster_url ?? null;
+  const title    = movie.title ?? 'Unknown';
   const recStyle = entry.recommend ? RECOMMEND_STYLE[entry.recommend] : null;
 
   async function handleDelete() {
@@ -105,47 +106,8 @@ export default function MovieDetailV3({ entry, similar }: MovieDetailV3Props) {
             {entry.secondary_tag && <span className="backdrop-chip">{entry.secondary_tag}</span>}
           </div>
 
-          {/* Score */}
-          {entry.total !== null && entry.total > 0 && (
-            <div className="backdrop-score-row">
-              <span className="backdrop-score-value">{entry.total}</span>
-              <span className="backdrop-score-denom">/ 10</span>
-            </div>
-          )}
-
-          {/* Recommend */}
-          {entry.recommend && recStyle && (
-            <span
-              className="backdrop-recommend"
-              style={{ color: recStyle.color, borderColor: recStyle.border }}
-            >
-              {entry.recommend}
-            </span>
-          )}
-
-          {/* Actions */}
-          <div className="backdrop-actions">
-            {movie.omdb_id && (
-              <Link href={`/stream/${movie.omdb_id}`} className="btn-watch">
-                <Play size={14} fill="white" color="white" />
-                Watch Now
-              </Link>
-            )}
-            <Link href={`/update?id=${entry.id}`} className="btn-edit">
-              <Pencil size={14} />
-              Edit Ratings
-            </Link>
-            <button
-              className="btn-delete-icon"
-              onClick={() => setConfirming(true)}
-              aria-label="Delete entry"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-
-          {/* OMDb meta strip */}
-          <div className="backdrop-meta">
+          {/* OMDb meta strip — moved above score */}
+          <div className="backdrop-meta" style={{ marginBottom: 18 }}>
             {movie.year     && <span>{movie.year}</span>}
             {movie.year && movie.director && <span className="backdrop-meta-sep">·</span>}
             {movie.director && <span>{movie.director}</span>}
@@ -154,10 +116,53 @@ export default function MovieDetailV3({ entry, similar }: MovieDetailV3Props) {
             {movie.runtime_min && movie.imdb_rating && <span className="backdrop-meta-sep">·</span>}
             {movie.imdb_rating && (
               <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <Star size={11} fill="currentColor" /> {movie.imdb_rating}
+                <Star size={11} fill="currentColor" /> {movie.imdb_rating} IMDb
               </span>
             )}
           </div>
+
+          {/* Vault score badge + recommend badge — side by side */}
+          <div className="backdrop-score-recommend-row">
+            {entry.total !== null && entry.total > 0 && (
+              <div className="backdrop-vault-score-badge">
+                <span className="backdrop-vault-score-label">Vault Score</span>
+                <span className="backdrop-score-value">{entry.total}</span>
+                <span className="backdrop-score-denom">/ 10</span>
+              </div>
+            )}
+
+            {entry.recommend && recStyle && (
+              <span
+                className="backdrop-recommend"
+                style={{ color: recStyle.color, borderColor: recStyle.border, background: recStyle.bg }}
+              >
+                {entry.recommend}
+              </span>
+            )}
+          </div>
+
+          {/* Actions — owner-only */}
+          {isOwner && (
+            <div className="backdrop-actions">
+              {movie.omdb_id && (
+                <Link href={`/stream/${movie.omdb_id}`} className="btn-watch">
+                  <Play size={14} fill="white" color="white" />
+                  Watch Now
+                </Link>
+              )}
+              <Link href={`/update?id=${entry.id}`} className="btn-edit">
+                <Pencil size={14} />
+                Edit Ratings
+              </Link>
+              <button
+                className="btn-delete-icon"
+                onClick={() => setConfirming(true)}
+                aria-label="Delete entry"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -198,37 +203,43 @@ export default function MovieDetailV3({ entry, similar }: MovieDetailV3Props) {
               <p className="detail-plot-v3">{movie.plot}</p>
             )}
 
-            <div className="score-bars">
-              {SCORE_FIELDS.map(field => {
-                const val = entry[field.key as keyof Entry] as number | null;
-                const pct = val !== null ? (val / field.max) * 100 : 0;
-                return (
-                  <div key={field.key} className="score-bar-row">
-                    <span className="score-bar-label">{field.label}</span>
-                    <div className="score-bar-track">
-                      <motion.div
-                        className="score-bar-fill"
-                        initial={{ width: '0%' }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-                      />
+            {/* Vault ratings section — labeled clearly for guests */}
+            <div className="vault-ratings-section">
+              <div className="vault-ratings-header">
+                <span className="vault-ratings-label">Vault Ratings</span>
+              </div>
+              <div className="score-bars">
+                {SCORE_FIELDS.map(field => {
+                  const val = entry[field.key as keyof Entry] as number | null;
+                  const pct = val !== null ? (val / field.max) * 100 : 0;
+                  return (
+                    <div key={field.key} className="score-bar-row">
+                      <span className="score-bar-label">{field.label}</span>
+                      <div className="score-bar-track">
+                        <motion.div
+                          className="score-bar-fill"
+                          initial={{ width: '0%' }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                        />
+                      </div>
+                      <span className="score-bar-val">{val ?? '—'}</span>
                     </div>
-                    <span className="score-bar-val">{val ?? '—'}</span>
+                  );
+                })}
+                {/* Bonus */}
+                <div className="score-bar-row">
+                  <span className="score-bar-label">Bonus</span>
+                  <div className="score-bar-track">
+                    <motion.div
+                      className="score-bar-fill"
+                      initial={{ width: '0%' }}
+                      animate={{ width: entry.bonus ? '100%' : '0%' }}
+                      transition={{ duration: 0.5, delay: 0.15 }}
+                    />
                   </div>
-                );
-              })}
-              {/* Bonus */}
-              <div className="score-bar-row">
-                <span className="score-bar-label">Bonus</span>
-                <div className="score-bar-track">
-                  <motion.div
-                    className="score-bar-fill"
-                    initial={{ width: '0%' }}
-                    animate={{ width: entry.bonus ? '100%' : '0%' }}
-                    transition={{ duration: 0.5, delay: 0.15 }}
-                  />
+                  <span className="score-bar-val">{entry.bonus ? '+1' : '0'}</span>
                 </div>
-                <span className="score-bar-val">{entry.bonus ? '+1' : '0'}</span>
               </div>
             </div>
           </motion.div>
@@ -247,18 +258,17 @@ export default function MovieDetailV3({ entry, similar }: MovieDetailV3Props) {
             {movie.cast_list && movie.cast_list.length > 0 ? (
               <div className="cast-row">
                 {movie.cast_list.map((castItem, i) => {
-                  let parsed = castItem;
+                  let parsed: string | { name: string; profile_path?: string | null } = castItem;
                   if (typeof castItem === 'string') {
                     try {
                       parsed = JSON.parse(castItem);
-                    } catch (e) {
+                    } catch {
                       parsed = castItem;
                     }
                   }
                   
-                  const isString = typeof parsed === 'string';
-                  const name = isString ? parsed : (parsed as any).name;
-                  const profilePath = isString ? null : (parsed as any).profile_path;
+                  const name = typeof parsed === 'string' ? parsed : parsed.name;
+                  const profilePath = typeof parsed === 'string' ? null : (parsed.profile_path ?? null);
 
                   return (
                     <div key={i} className="cast-card">
@@ -332,57 +342,59 @@ export default function MovieDetailV3({ entry, similar }: MovieDetailV3Props) {
                 })}
               </div>
             ) : (
-              <p className="cast-empty">No similar films in your vault yet.</p>
+              <p className="cast-empty">No similar films in the vault yet.</p>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Delete Confirm Dialog ─────────────────────────── */}
-      <AnimatePresence>
-        {confirming && (
-          <>
-            <motion.div
-              className="dialog-backdrop"
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)', zIndex: 199 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !deleting && setConfirming(false)}
-            />
-            <div className="dialog-overlay">
+      {/* ── Delete Confirm Dialog (owner-only) ────────────── */}
+      {isOwner && (
+        <AnimatePresence>
+          {confirming && (
+            <>
               <motion.div
-                className="dialog-panel"
-                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
-              >
-                <h2 className="dialog-title">Remove entry?</h2>
-                <p className="dialog-body">
-                  This will permanently delete your rating for <strong>{title}</strong>. This cannot be undone.
-                </p>
-                <div className="dialog-actions">
-                  <button
-                    className="btn-ghost"
-                    onClick={() => setConfirming(false)}
-                    disabled={deleting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn-danger"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                  >
-                    {deleting ? 'Removing…' : 'Remove'}
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          </>
-        )}
-      </AnimatePresence>
+                className="dialog-backdrop"
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)', zIndex: 199 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => !deleting && setConfirming(false)}
+              />
+              <div className="dialog-overlay">
+                <motion.div
+                  className="dialog-panel"
+                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                >
+                  <h2 className="dialog-title">Remove entry?</h2>
+                  <p className="dialog-body">
+                    This will permanently delete your rating for <strong>{title}</strong>. This cannot be undone.
+                  </p>
+                  <div className="dialog-actions">
+                    <button
+                      className="btn-ghost"
+                      onClick={() => setConfirming(false)}
+                      disabled={deleting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="btn-danger"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Removing...' : 'Remove'}
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* ── Toast ─────────────────────────────────────────── */}
       <AnimatePresence>

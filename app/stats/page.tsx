@@ -45,10 +45,15 @@ export default async function StatsPage() {
       <SummaryStrip stats={stats} />
 
       <div className="stats-charts-grid">
-        <GenreDonut      data={stats.bySubgenre} />
-        <RecommendBars   data={stats.byRecommend} />
-        <TopRatedList    data={stats.topRated} />
-        <RatingTimeline  data={stats.ratingOverTime} />
+        {/* Row 1: Genre breakdown (large left) + Recommendation breakdown (right) */}
+        <GenreDonut    data={stats.bySubgenre} />
+        <RecommendBars data={stats.byRecommend} />
+
+        {/* Row 2: Top rated (left) + Score distribution (right) */}
+        <TopRatedList   data={stats.topRated} />
+        <RatingTimeline data={stats.ratingOverTime} />
+
+        {/* Row 3: Score histograms full width */}
         <div className="stats-histograms-full">
           <ScoreHistograms data={stats.scoresByField} />
         </div>

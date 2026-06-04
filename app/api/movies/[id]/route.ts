@@ -8,6 +8,17 @@ import type { MovieFormData } from '@/lib/types';
 
 type Params = { params: Promise<{ id: string }> };
 
+interface MoviePayload {
+  title: string;
+  year?: number | null;
+  poster_url?: string | null;
+  omdb_id?: string | null;
+  tmdb_id?: number | null;
+  backdrop_url?: string | null;
+  cast_list?: string[] | null;
+  media_type?: string;
+}
+
 // ── GET /api/movies/[id] ──────────────────────────────────────────────────────
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id }   = await params;
@@ -58,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   // Cast existing movie properly
-  const movieMeta = (existing as any).movie as { title: string; omdb_id: string | null; media_type: 'movie' | 'tv' | null } | null;
+  const movieMeta = (existing as unknown as { movie: { title: string; omdb_id: string | null; media_type: 'movie' | 'tv' | null } | null }).movie;
 
   const oldTitle = movieMeta?.title;
   const oldOmdbId = movieMeta?.omdb_id;
@@ -90,7 +101,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (finalOmdbId) {
       // 1. Fetch OMDb details
       const omdbData = await fetchOmdbById(finalOmdbId);
-      const moviePayload: Record<string, any> = omdbData
+      const moviePayload: MoviePayload = omdbData
         ? { ...omdbData, title: omdbData.title }
         : { omdb_id: finalOmdbId, title: finalTitle };
 
@@ -143,7 +154,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         resolvedMovieId = existingMovie.id;
       } else {
         // Create a new movie row since it doesn't exist
-        const insertPayload: Record<string, any> = {
+        const insertPayload: MoviePayload = {
           title: normalised,
         };
 

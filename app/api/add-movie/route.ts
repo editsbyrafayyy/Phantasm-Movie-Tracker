@@ -38,6 +38,17 @@ export async function POST(req: NextRequest) {
   // Service client for writes to the shared movies table (bypasses RLS)
   const serviceClient = createServiceClient();
 
+  interface MoviePayload {
+    title: string;
+    year?: number | null;
+    poster_url?: string | null;
+    omdb_id?: string | null;
+    tmdb_id?: number | null;
+    backdrop_url?: string | null;
+    cast_list?: string[] | null;
+    media_type?: string;
+  }
+
   // ── Upsert the movies row ──────────────────────────────────────────────────
   let movieId: string;
 
@@ -45,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Fetch full OMDB record and upsert by omdb_id
     const omdbData = await fetchOmdbById(omdbId);
 
-    const moviePayload: Record<string, any> = omdbData
+    const moviePayload: MoviePayload = omdbData
       ? { ...omdbData, title: omdbData.title }
       : { omdb_id: omdbId, title: title.trim() };
 
@@ -94,7 +105,7 @@ export async function POST(req: NextRequest) {
     if (existing) {
       movieId = existing.id;
     } else {
-      const insertPayload: Record<string, any> = {
+      const insertPayload: MoviePayload = {
         title: normalised,
       };
 

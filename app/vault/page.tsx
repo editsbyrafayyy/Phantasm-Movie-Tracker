@@ -1,23 +1,21 @@
 import type { Metadata } from 'next';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import MovieGrid from '@/components/vault/MovieGrid';
 import type { Entry } from '@/lib/types';
 
 export const metadata: Metadata = {
-  title: 'Your Vault — Horror Movie Tracker',
+  title: 'The Vault — Horror Movie Tracker',
 };
 
 export default async function VaultPage() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const supabase = createServiceClient();
+  const ownerId = process.env.OWNER_USER_ID;
 
-  if (!session) return null; // Middleware handles the redirect
-
-  // Fetch all entries for this user
+  // Fetch all entries for the vault owner using the service client (guests can browse)
   const { data: entries, error } = await supabase
     .from('entries')
     .select('*, movie:movies (*)')
-    .eq('user_id', session.user.id)
+    .eq('user_id', ownerId)
     .order('created_at', { ascending: false });
 
   const safeEntries: Entry[] = (entries ?? []) as Entry[];
@@ -28,7 +26,7 @@ export default async function VaultPage() {
       <header className="vault-header">
         <div className="vault-header-inner">
           <h1 className="vault-heading">
-            <span className="vault-heading-light">Your</span>{' '}
+            <span className="vault-heading-light">The</span>{' '}
             <em className="vault-heading-serif">Vault</em>
           </h1>
           {safeEntries.length > 0 && (
@@ -41,7 +39,7 @@ export default async function VaultPage() {
 
       {error ? (
         <div className="vault-error">
-          <p>Failed to load your vault. Please try refreshing.</p>
+          <p>Failed to load the vault. Please try refreshing.</p>
         </div>
       ) : (
         <MovieGrid entries={safeEntries} />

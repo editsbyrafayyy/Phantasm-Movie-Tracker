@@ -34,7 +34,7 @@ async function main() {
 
   console.log('Existing entry:', JSON.stringify(existing, null, 2));
 
-  const movieMeta = (existing as any).movie;
+  const movieMeta = (existing as unknown as { movie: { title: string; omdb_id: string | null; media_type: 'movie' | 'tv' | null } | null }).movie;
   const oldTitle = movieMeta?.title;
   const oldOmdbId = movieMeta?.omdb_id;
   const mediaType = movieMeta?.media_type || 'movie';
@@ -54,7 +54,7 @@ async function main() {
   console.log('Change checks:', { titleChanged, omdbChanged });
 
   if (titleChanged || omdbChanged) {
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: Record<string, unknown> = {};
 
     if (titleChanged) {
       updatePayload.title = newTitle;

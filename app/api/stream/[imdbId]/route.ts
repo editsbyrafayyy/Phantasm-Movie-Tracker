@@ -13,8 +13,8 @@ function createServiceClient() {
  * GET /api/stream/[imdbId]
  * Resolves streaming embed URLs for a given IMDB ID.
  * Looks up media_type in the movies table so the embed path is correct
- * for both movies and TV series. Returns primary (vidsrc.to) and
- * fallback (embed.su) URLs along with title and type metadata.
+ * for both movies and TV series. Returns sources, title, type, and all
+ * metadata fields so the sidebar can be populated.
  */
 export async function GET(
   _req: NextRequest,
@@ -29,24 +29,35 @@ export async function GET(
   const supabase = createServiceClient();
   const { data: movie } = await supabase
     .from('movies')
-    .select('media_type, title')
+    .select('media_type, title, imdb_rating, poster_url, backdrop_url, plot, cast_list, genre_tags, year, director, runtime_min')
     .eq('omdb_id', imdbId)
     .maybeSingle();
 
   const type: 'movie' | 'tv' = movie?.media_type === 'tv' ? 'tv' : 'movie';
-  
+
   const sources = [
-    { name: 'Server 1 (VidSrc ME)', url: `https://vidsrc.me/embed/${type}?imdb=${imdbId}` },
-    { name: 'Server 2 (VidSrc NET)', url: `https://vidsrc.net/embed/${type}?imdb=${imdbId}` },
-    { name: 'Server 3 (SuperEmbed)', url: type === 'movie' ? `https://multiembed.mov/?video_id=${imdbId}&tmdb=0` : `https://multiembed.mov/?video_id=${imdbId}&tmdb=0` },
-    { name: 'Server 4 (AutoEmbed)', url: `https://player.autoembed.cc/embed/${type}/${imdbId}` }
+    { name: 'VidSrc Pro',    url: `https://vidsrc.me/embed/${type}?imdb=${imdbId}` },
+    { name: 'VidSrc Net',    url: `https://vidsrc.net/embed/${type}?imdb=${imdbId}` },
+    { name: 'VidSrc To',     url: `https://vidsrc.to/embed/${type}/${imdbId}` },
+    { name: 'AutoEmbed',     url: `https://player.autoembed.cc/embed/${type}/${imdbId}` },
+    { name: 'SuperEmbed',    url: `https://multiembed.mov/?video_id=${imdbId}&tmdb=0` },
+    { name: 'EmbedSu',       url: `https://embed.su/embed/${type}/${imdbId}` },
   ];
 
   const payload: StreamEmbed = {
     sources,
-    title:  movie?.title ?? '',
+    title:        movie?.title ?? '',
     type,
     imdbId,
+    poster_url:   movie?.poster_url   ?? null,
+    backdrop_url: movie?.backdrop_url ?? null,
+    plot:         movie?.plot         ?? null,
+    cast_list:    movie?.cast_list    ?? null,
+    genre_tags:   movie?.genre_tags   ?? null,
+    year:         movie?.year         ?? null,
+    director:     movie?.director     ?? null,
+    runtime_min:  movie?.runtime_min  ?? null,
+    imdb_rating:  movie?.imdb_rating  ?? null,
   };
 
   return NextResponse.json(payload);
