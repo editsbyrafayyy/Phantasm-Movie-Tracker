@@ -38,7 +38,8 @@ export async function GET() {
       byRecommend:         [],
       scoresByField:       [],
       topRated:            [],
-      ratingOverTime:      [],
+      scoreDistribution:   [],
+      releaseDecades:      [],
     };
     return NextResponse.json(empty);
   }
@@ -100,12 +101,26 @@ export async function GET() {
       total:  e.total ?? 0,
     }));
 
-  // ── Rating over time ──────────────────────────────────────────────────────
-  const ratingOverTime = entries.map(e => ({
-    date:  e.created_at.slice(0, 10),   // ISO date YYYY-MM-DD
-    total: e.total ?? 0,
-    title: (e as Entry & { movie: { title: string } }).movie?.title ?? 'Unknown',
-  }));
+  // ── Score distribution ───────────────────────────────────────────────────
+  const scoreDistribution = totals.filter(t => t > 0);
+
+  // ── Release decades ──────────────────────────────────────────────────────
+  const decadeCounts = new Map<string, number>();
+  for (const e of entries) {
+    const year = (e as Entry & { movie?: { year?: number | null } | null }).movie?.year ?? null;
+    if (!year) continue;
+    const decade = Math.floor(year / 10) * 10;
+    const label = `${decade}s`;
+    decadeCounts.set(label, (decadeCounts.get(label) ?? 0) + 1);
+  }
+
+  const releaseDecades = [...decadeCounts.entries()]
+    .map(([decade, count]) => ({
+      decade,
+      count,
+      pct: round((count / totalFilms) * 100),
+    }))
+    .sort((a, b) => a.decade.localeCompare(b.decade));
 
   const stats: StatsData = {
     totalFilms,
@@ -116,7 +131,8 @@ export async function GET() {
     byRecommend,
     scoresByField,
     topRated,
-    ratingOverTime,
+    scoreDistribution,
+    releaseDecades,
   };
 
   return NextResponse.json(stats);

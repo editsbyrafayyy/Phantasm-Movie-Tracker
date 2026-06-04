@@ -21,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function VaultEntryPage({ params }: Props) {
   const { id } = await params;
+  const ownerId = process.env.OWNER_USER_ID;
 
   // Use service client to fetch data — allows guests to view any entry
   const supabase = createServiceClient();
@@ -29,22 +30,30 @@ export default async function VaultEntryPage({ params }: Props) {
   const authClient = await createServerSupabaseClient();
   const { data: { session } } = await authClient.auth.getSession();
 
-  const isOwner = session?.user?.id === process.env.OWNER_USER_ID;
+  const sessionUserId = session?.user?.id ?? null;
+  const isOwner = sessionUserId !== null && sessionUserId === ownerId;
 
   // Fetch the specific entry with its joined movie (no user_id filter — guests can view)
   const { data: entry, error } = await supabase
     .from('entries')
-    .select('*, movie:movies (*)')
+    .select('*, movie:movies (*), user_id')
     .eq('id', id)
     .maybeSingle();
 
   if (error || !entry) notFound();
+
+  const isOwnerEntry = ownerId && entry.user_id === ownerId;
+  const isOwnEntry = sessionUserId !== null && entry.user_id === sessionUserId;
+  if (!isOwnerEntry && !isOwnEntry) notFound();
+
+  const similarScopeUserId = isOwnerEntry ? ownerId : sessionUserId;
 
   // Fetch similar entries: same subgenre, excluding the current entry, ordered by score
   const { data: similar } = await supabase
     .from('entries')
     .select('*, movie:movies (*)')
     .eq('subgenre', entry.subgenre)
+    .eq('user_id', similarScopeUserId)
     .neq('id', id)
     .order('total', { ascending: false })
     .limit(10);
@@ -54,6 +63,7 @@ export default async function VaultEntryPage({ params }: Props) {
       entry={entry as Entry}
       similar={(similar ?? []) as Entry[]}
       isOwner={isOwner}
+      canStream={!!session}
     />
   );
 }

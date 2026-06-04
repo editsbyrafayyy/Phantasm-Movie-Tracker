@@ -42,7 +42,7 @@ export default function TmdbRow({ label, movies }: Props) {
         {movies.slice(0, 20).map(movie => (
           <Link
             key={movie.id}
-            href={`/stream/tmdb/${movie.id}`}
+            href={`/stream/${movie.id}`}
             className="stream-card"
             style={{ textDecoration: 'none', display: 'block' }}
           >

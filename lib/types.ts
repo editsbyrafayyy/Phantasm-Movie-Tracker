@@ -14,7 +14,7 @@ export interface Movie {
   plot:         string | null;
   imdb_rating:  number | null;
   genre_tags:   string[] | null;
-  cast_list:    { name: string; profile_path: string | null }[] | null;
+  cast_list:    { name: string; character?: string | null; profile_path: string | null }[] | null;
   media_type:   'movie' | 'tv' | null;  // Determines streaming embed URL pattern
   created_at:   string;
 }
@@ -70,7 +70,8 @@ export interface StatsData {
   byRecommend:         { recommend: string; count: number; pct: number }[];
   scoresByField:       { field: string; values: number[] }[];
   topRated:            { id: string; title: string; poster: string | null; total: number }[];
-  ratingOverTime:      { date: string; total: number; title: string }[];
+  scoreDistribution:   number[];
+  releaseDecades:      { decade: string; count: number; pct: number }[];
 }
 
 // ── Profile ───────────────────────────────────────────────────────────────────

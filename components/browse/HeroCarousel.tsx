@@ -8,7 +8,7 @@ import type { Entry } from '@/lib/types';
 
 interface HeroCarouselProps {
   slides:      Entry[];
-  isOwner:     boolean;   // true = vault owner
+  canStream:   boolean;
   ownerName:   string;
   totalFilms:  number;
 }
@@ -17,7 +17,7 @@ const AUTO_ADVANCE_MS = 6000;
 
 export default function HeroCarousel({
   slides,
-  isOwner,
+  canStream,
   ownerName,
   totalFilms,
 }: HeroCarouselProps) {
@@ -132,7 +132,7 @@ export default function HeroCarousel({
         )}
 
         <div className="hero-actions">
-          {isOwner && movie.omdb_id && (
+          {canStream && movie.omdb_id && (
             <Link href={`/stream/${movie.omdb_id}`} className="btn-watch">
               <Play size={14} fill="white" color="white" />
               Watch Now

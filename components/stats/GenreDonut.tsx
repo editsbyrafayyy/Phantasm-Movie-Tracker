@@ -14,13 +14,19 @@ export default function GenreDonut({ data }: GenreDonutProps) {
   }
 
   const sorted = [...data].sort((a, b) => b.count - a.count);
-  const max = sorted[0]?.count ?? 1;
+  const top = sorted.slice(0, 8);
+  const rest = sorted.slice(8);
+  const restCount = rest.reduce((acc, item) => acc + item.count, 0);
+  const list = restCount > 0
+    ? [...top, { subgenre: 'Other', count: restCount, pct: rest.reduce((acc, item) => acc + item.pct, 0) }]
+    : top;
+  const max = list[0]?.count ?? 1;
 
   return (
     <div className="stat-card">
-      <p className="stat-card-label">Genre Breakdown</p>
+      <p className="stat-card-label">Top Genres</p>
       <div className="genre-bar-list">
-        {sorted.map(item => (
+        {list.map(item => (
           <div key={item.subgenre} className="genre-bar-row">
             <span className="genre-bar-name">{item.subgenre}</span>
             <div className="genre-bar-track">

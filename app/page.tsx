@@ -139,7 +139,7 @@ export default async function HomePage() {
       {/* ── Hero Carousel ───────────────────────────── */}
       <HeroCarousel
         slides={slides}
-        isOwner={session?.user?.id === process.env.OWNER_USER_ID}
+        canStream={!!session}
         ownerName={ownerName}
         totalFilms={entries.length}
       />

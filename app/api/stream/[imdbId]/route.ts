@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getProvidersInOrder } from '@/lib/providers';
 import type { StreamEmbed } from '@/lib/types';
 
 function createServiceClient() {
@@ -9,15 +10,8 @@ function createServiceClient() {
   );
 }
 
-/**
- * GET /api/stream/[imdbId]
- * Resolves streaming embed URLs for a given IMDB ID.
- * Looks up media_type in the movies table so the embed path is correct
- * for both movies and TV series. Returns sources, title, type, and all
- * metadata fields so the sidebar can be populated.
- */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ imdbId: string }> }
 ) {
   const { imdbId } = await params;
@@ -26,26 +20,29 @@ export async function GET(
     return NextResponse.json({ error: 'Missing imdbId' }, { status: 400 });
   }
 
+  const { searchParams } = new URL(req.url);
+  const season = parseInt(searchParams.get('s') ?? '1', 10);
+  const episode = parseInt(searchParams.get('e') ?? '1', 10);
+
   const supabase = createServiceClient();
   const { data: movie } = await supabase
     .from('movies')
-    .select('media_type, title, imdb_rating, poster_url, backdrop_url, plot, cast_list, genre_tags, year, director, runtime_min')
+    .select('id, media_type, title, imdb_rating, poster_url, backdrop_url, plot, cast_list, genre_tags, year, director, runtime_min, tmdb_id')
     .eq('omdb_id', imdbId)
     .maybeSingle();
 
   const type: 'movie' | 'tv' = movie?.media_type === 'tv' ? 'tv' : 'movie';
+  const tmdbIdStr = movie?.tmdb_id ? String(movie.tmdb_id) : undefined;
 
-  const sources = [
-    { name: 'VidSrc Pro',    url: `https://vidsrc.me/embed/${type}?imdb=${imdbId}` },
-    { name: 'VidSrc Net',    url: `https://vidsrc.net/embed/${type}?imdb=${imdbId}` },
-    { name: 'VidSrc To',     url: `https://vidsrc.to/embed/${type}/${imdbId}` },
-    { name: 'AutoEmbed',     url: `https://player.autoembed.cc/embed/${type}/${imdbId}` },
-    { name: 'SuperEmbed',    url: `https://multiembed.mov/?video_id=${imdbId}&tmdb=0` },
-    { name: 'EmbedSu',       url: `https://embed.su/embed/${type}/${imdbId}` },
-  ];
+  const providers = getProvidersInOrder().map(p => ({
+    name: p.name,
+    url: type === 'tv' 
+      ? p.tvUrl(imdbId, season, episode, tmdbIdStr) 
+      : p.movieUrl(imdbId, tmdbIdStr)
+  }));
 
   const payload: StreamEmbed = {
-    sources,
+    sources: providers,
     title:        movie?.title ?? '',
     type,
     imdbId,

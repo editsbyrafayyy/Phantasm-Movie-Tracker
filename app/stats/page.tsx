@@ -6,7 +6,7 @@ import GenreDonut      from '@/components/stats/GenreDonut';
 import RecommendBars   from '@/components/stats/RecommendBars';
 import ScoreHistograms from '@/components/stats/ScoreHistograms';
 import TopRatedList    from '@/components/stats/TopRatedList';
-import RatingTimeline  from '@/components/stats/RatingTimeline';
+import ScoreDistribution from '@/components/stats/ScoreDistribution';
 import type { StatsData, Entry } from '@/lib/types';
 
 export const metadata: Metadata = {
@@ -50,8 +50,8 @@ export default async function StatsPage() {
         <RecommendBars data={stats.byRecommend} />
 
         {/* Row 2: Top rated (left) + Score distribution (right) */}
-        <TopRatedList   data={stats.topRated} />
-        <RatingTimeline data={stats.ratingOverTime} />
+        <TopRatedList data={stats.topRated} />
+        <ScoreDistribution entries={entries as Entry[]} />
 
         {/* Row 3: Score histograms full width */}
         <div className="stats-histograms-full">
@@ -71,7 +71,7 @@ function computeStats(entries: Entry[]): StatsData {
     return {
       totalFilms: 0, averageTotal: 0, highestScore: 0,
       mostCommonSubgenre: '', bySubgenre: [], byRecommend: [],
-      scoresByField: [], topRated: [], ratingOverTime: [],
+      scoresByField: [], topRated: [], scoreDistribution: [], releaseDecades: [],
     };
   }
 
@@ -106,15 +106,28 @@ function computeStats(entries: Entry[]): StatsData {
     .slice(0, 10)
     .map(e => ({ id: e.id, title: e.movie?.title ?? 'Unknown', poster: e.movie?.poster_url ?? null, total: e.total ?? 0 }));
 
-  const ratingOverTime = entries.map(e => ({
-    date:  e.created_at.slice(0, 10),
-    total: e.total ?? 0,
-    title: e.movie?.title ?? 'Unknown',
-  }));
+  const scoreDistribution = totals.filter(t => t > 0);
+
+  const decadeCounts = new Map<string, number>();
+  for (const e of entries) {
+    const year = e.movie?.year ?? null;
+    if (!year) continue;
+    const decade = Math.floor(year / 10) * 10;
+    const label = `${decade}s`;
+    decadeCounts.set(label, (decadeCounts.get(label) ?? 0) + 1);
+  }
+
+  const releaseDecades = [...decadeCounts.entries()]
+    .map(([decade, count]) => ({
+      decade,
+      count,
+      pct: round((count / totalFilms) * 100),
+    }))
+    .sort((a, b) => a.decade.localeCompare(b.decade));
 
   return {
     totalFilms, averageTotal, highestScore,
     mostCommonSubgenre: bySubgenre[0]?.subgenre ?? '',
-    bySubgenre, byRecommend, scoresByField, topRated, ratingOverTime,
+    bySubgenre, byRecommend, scoresByField, topRated, scoreDistribution, releaseDecades,
   };
 }

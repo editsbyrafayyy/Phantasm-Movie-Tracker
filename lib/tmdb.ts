@@ -44,6 +44,14 @@ export interface TmdbCastMember {
 
 export interface TmdbMovieDetail extends TmdbSearchResult {
   runtime?:     number;
+  status?:      string;
+  production_companies?: { name: string; id: number; logo_path: string | null }[];
+  overview?:    string;
+  vote_average?: number;
+  genres?:      { id: number; name: string }[];
+  videos?: {
+    results: { key: string; type: string; site: string }[];
+  };
   credits?: {
     cast: TmdbCastMember[];
   };
@@ -152,7 +160,7 @@ export async function fetchTmdbDetail(
   try {
     const key = getKey();
     const res  = await fetch(
-      `${TMDB_BASE}/${type}/${tmdbId}?api_key=${key}&append_to_response=credits`,
+      `${TMDB_BASE}/${type}/${tmdbId}?api_key=${key}&append_to_response=credits,videos`,
       { next: { revalidate: 86400 } }
     );
     const data = await res.json();
@@ -205,6 +213,7 @@ export async function enrichFromTmdb(
     .slice(0, 8)
     .map(c => ({
       name: c.name,
+      character: c.character,
       profile_path: tmdbProfileUrl(c.profile_path)
     })) ?? null;
 
@@ -264,6 +273,30 @@ export async function getRecentHorror(): Promise<TmdbDiscoverMovie[]> {
     const fromDate = sixMonthsAgo.toISOString().slice(0, 10);
     const res = await fetch(
       `${TMDB_BASE}/discover/movie?api_key=${key}&with_genres=${HORROR_GENRE_IDS}&sort_by=release_date.desc&primary_release_date.gte=${fromDate}&page=1&language=en-US`,
+      { next: { revalidate: 3600 } }
+    );
+    const data = await res.json();
+    return (data.results ?? []) as TmdbDiscoverMovie[];
+  } catch { return []; }
+}
+
+export async function getClassicHorror(): Promise<TmdbDiscoverMovie[]> {
+  try {
+    const key = getKey();
+    const res = await fetch(
+      `${TMDB_BASE}/discover/movie?api_key=${key}&with_genres=${HORROR_GENRE_IDS}&primary_release_date.lte=1999-12-31&sort_by=vote_average.desc&vote_count.gte=150&page=1&language=en-US`,
+      { next: { revalidate: 3600 } }
+    );
+    const data = await res.json();
+    return (data.results ?? []) as TmdbDiscoverMovie[];
+  } catch { return []; }
+}
+
+export async function getHiddenGemsHorror(): Promise<TmdbDiscoverMovie[]> {
+  try {
+    const key = getKey();
+    const res = await fetch(
+      `${TMDB_BASE}/discover/movie?api_key=${key}&with_genres=${HORROR_GENRE_IDS}&vote_average.gte=6.5&vote_count.lte=300&sort_by=vote_average.desc&page=1&language=en-US`,
       { next: { revalidate: 3600 } }
     );
     const data = await res.json();

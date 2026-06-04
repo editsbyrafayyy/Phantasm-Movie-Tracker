@@ -22,9 +22,10 @@ interface MovieDetailV3Props {
   entry:   Entry;
   similar: Entry[];
   isOwner: boolean;
+  canStream: boolean;
 }
 
-export default function MovieDetailV3({ entry, similar, isOwner }: MovieDetailV3Props) {
+export default function MovieDetailV3({ entry, similar, isOwner, canStream }: MovieDetailV3Props) {
   const router = useRouter();
   const [tab, setTab]               = useState<Tab>('overview');
   const [confirming, setConfirming] = useState(false);
@@ -60,6 +61,12 @@ export default function MovieDetailV3({ entry, similar, isOwner }: MovieDetailV3
           <ArrowLeft size={15} />
           Back to Vault
         </Link>
+        {canStream && (movie.omdb_id || movie.tmdb_id) && (
+          <Link href={`/stream/${movie.omdb_id || movie.tmdb_id}`} className="btn-watch btn-watch-compact">
+            <Play size={14} fill="white" color="white" />
+            Watch Now
+          </Link>
+        )}
       </div>
 
       {/* ── Backdrop Hero ─────────────────────────────────── */}
@@ -142,27 +149,29 @@ export default function MovieDetailV3({ entry, similar, isOwner }: MovieDetailV3
           </div>
 
           {/* Actions — owner-only */}
-          {isOwner && (
-            <div className="backdrop-actions">
-              {movie.omdb_id && (
-                <Link href={`/stream/${movie.omdb_id}`} className="btn-watch">
-                  <Play size={14} fill="white" color="white" />
-                  Watch Now
-                </Link>
-              )}
-              <Link href={`/update?id=${entry.id}`} className="btn-edit">
-                <Pencil size={14} />
-                Edit Ratings
+          <div className="backdrop-actions">
+            {canStream && (movie.omdb_id || movie.tmdb_id) && (
+              <Link href={`/stream/${movie.omdb_id || movie.tmdb_id}`} className="btn-watch">
+                <Play size={14} fill="white" color="white" />
+                Watch Now
               </Link>
-              <button
-                className="btn-delete-icon"
-                onClick={() => setConfirming(true)}
-                aria-label="Delete entry"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          )}
+            )}
+            {isOwner && (
+              <>
+                <Link href={`/update?id=${entry.id}`} className="btn-edit">
+                  <Pencil size={14} />
+                  Edit Ratings
+                </Link>
+                <button
+                  className="btn-delete-icon"
+                  onClick={() => setConfirming(true)}
+                  aria-label="Delete entry"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </>
+            )}
+          </div>
         </motion.div>
       </div>
 
@@ -199,48 +208,89 @@ export default function MovieDetailV3({ entry, similar, isOwner }: MovieDetailV3
             exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.22 }}
           >
-            {movie.plot && (
-              <p className="detail-plot-v3">{movie.plot}</p>
-            )}
+            <div className="detail-overview-grid">
+              <div className="detail-overview-main">
+                {movie.plot && (
+                  <p className="detail-plot-v3">{movie.plot}</p>
+                )}
 
-            {/* Vault ratings section — labeled clearly for guests */}
-            <div className="vault-ratings-section">
-              <div className="vault-ratings-header">
-                <span className="vault-ratings-label">Vault Ratings</span>
-              </div>
-              <div className="score-bars">
-                {SCORE_FIELDS.map(field => {
-                  const val = entry[field.key as keyof Entry] as number | null;
-                  const pct = val !== null ? (val / field.max) * 100 : 0;
-                  return (
-                    <div key={field.key} className="score-bar-row">
-                      <span className="score-bar-label">{field.label}</span>
+                {/* Vault ratings section — labeled clearly for guests */}
+                <div className="vault-ratings-section">
+                  <div className="vault-ratings-header">
+                    <span className="vault-ratings-label">Vault Ratings</span>
+                  </div>
+                  <div className="score-bars">
+                    {SCORE_FIELDS.map(field => {
+                      const val = entry[field.key as keyof Entry] as number | null;
+                      const pct = val !== null ? (val / field.max) * 100 : 0;
+                      return (
+                        <div key={field.key} className="score-bar-row">
+                          <span className="score-bar-label">{field.label}</span>
+                          <div className="score-bar-track">
+                            <motion.div
+                              className="score-bar-fill"
+                              initial={{ width: '0%' }}
+                              animate={{ width: `${pct}%` }}
+                              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                            />
+                          </div>
+                          <span className="score-bar-val">{val ?? '—'}</span>
+                        </div>
+                      );
+                    })}
+                    {/* Bonus */}
+                    <div className="score-bar-row">
+                      <span className="score-bar-label">Bonus</span>
                       <div className="score-bar-track">
                         <motion.div
                           className="score-bar-fill"
                           initial={{ width: '0%' }}
-                          animate={{ width: `${pct}%` }}
-                          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+                          animate={{ width: entry.bonus ? '100%' : '0%' }}
+                          transition={{ duration: 0.5, delay: 0.15 }}
                         />
                       </div>
-                      <span className="score-bar-val">{val ?? '—'}</span>
+                      <span className="score-bar-val">{entry.bonus ? '+1' : '0'}</span>
                     </div>
-                  );
-                })}
-                {/* Bonus */}
-                <div className="score-bar-row">
-                  <span className="score-bar-label">Bonus</span>
-                  <div className="score-bar-track">
-                    <motion.div
-                      className="score-bar-fill"
-                      initial={{ width: '0%' }}
-                      animate={{ width: entry.bonus ? '100%' : '0%' }}
-                      transition={{ duration: 0.5, delay: 0.15 }}
-                    />
                   </div>
-                  <span className="score-bar-val">{entry.bonus ? '+1' : '0'}</span>
                 </div>
               </div>
+
+              <aside className="detail-overview-side">
+                <div className="vault-score-card">
+                  <span className="vault-score-label">Vault Score</span>
+                  <div className="vault-score-value">
+                    {entry.total !== null && entry.total > 0 ? entry.total : '—'}
+                  </div>
+                  <span className="vault-score-denom">/ 10</span>
+                  {entry.recommend && recStyle && (
+                    <span
+                      className="vault-score-recommend"
+                      style={{ color: recStyle.color, borderColor: recStyle.border, background: recStyle.bg }}
+                    >
+                      {entry.recommend}
+                    </span>
+                  )}
+                </div>
+
+                <div className="vault-meta-card">
+                  <div className="vault-meta-row">
+                    <span>Year</span>
+                    <span>{movie.year ?? '—'}</span>
+                  </div>
+                  <div className="vault-meta-row">
+                    <span>Runtime</span>
+                    <span>{movie.runtime_min ? `${movie.runtime_min} min` : '—'}</span>
+                  </div>
+                  <div className="vault-meta-row">
+                    <span>Director</span>
+                    <span>{movie.director ?? '—'}</span>
+                  </div>
+                  <div className="vault-meta-row">
+                    <span>IMDb</span>
+                    <span>{movie.imdb_rating ?? '—'}</span>
+                  </div>
+                </div>
+              </aside>
             </div>
           </motion.div>
         )}
