@@ -3,9 +3,10 @@
 interface BonusToggleProps {
   value:    0 | 1;
   onChange: (value: 0 | 1) => void;
+  disabled?: boolean;
 }
 
-export default function BonusToggle({ value, onChange }: BonusToggleProps) {
+export default function BonusToggle({ value, onChange, disabled }: BonusToggleProps) {
   const isOn = value === 1;
 
   return (
@@ -24,6 +25,7 @@ export default function BonusToggle({ value, onChange }: BonusToggleProps) {
           onClick={() => onChange(isOn ? 0 : 1)}
           className={`toggle${isOn ? ' on' : ''}`}
           aria-label="Bonus point toggle"
+          disabled={disabled}
         />
       </div>
     </div>

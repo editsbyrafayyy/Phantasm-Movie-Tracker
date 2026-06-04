@@ -52,7 +52,7 @@ export default function StarField() {
     }
 
     resize();
-    starsRef.current = generateStars(180);
+    starsRef.current = generateStars(80);
     window.addEventListener('resize', resize);
 
     let start: number | null = null;
@@ -66,17 +66,29 @@ export default function StarField() {
 
       ctx.clearRect(0, 0, width, height);
 
+      // Bucket stars by rounded opacity (0.1 steps) to minimize draw calls from 80 to max 10
+      const buckets: Record<string, Star[]> = {};
       for (const star of starsRef.current) {
         const alpha = star.opacity * (0.5 + 0.5 * Math.sin(t * star.speed + star.phase));
+        const alphaKey = (Math.round(alpha * 10) / 10).toFixed(1);
+        if (alphaKey === '0.0') continue; // Skip invisible stars
+        if (!buckets[alphaKey]) buckets[alphaKey] = [];
+        buckets[alphaKey].push(star);
+      }
+
+      for (const [alpha, group] of Object.entries(buckets)) {
         ctx.beginPath();
-        ctx.arc(
-          star.x * width,
-          star.y * height,
-          star.radius,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        for (const star of group) {
+          ctx.moveTo(star.x * width + star.radius, star.y * height);
+          ctx.arc(
+            star.x * width,
+            star.y * height,
+            star.radius,
+            0,
+            Math.PI * 2
+          );
+        }
         ctx.fill();
       }
 

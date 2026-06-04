@@ -22,7 +22,11 @@ movie-tracker-*.json
 PRD.md
 TECH_SPEC.md
 GOOGLE_SHEETS_SETUP.md
-README.md
+FRONTEND.md
+PROJECT_PROGRESS.md
+SECURITY.md
+STREAMING.md
+UI_UPGRADE.md
 
 # ── OS / Editor ───────────────────────────────────────────────────────────────
 .DS_Store

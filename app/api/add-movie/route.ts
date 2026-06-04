@@ -1,92 +1,190 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getColumnValues, appendRow } from '@/lib/sheets';
-import { COL, DATA_START_ROW, SUBGENRES } from '@/lib/config';
+import { revalidatePath } from 'next/cache';
+import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
+import { fetchOmdbById } from '@/lib/omdb';
+import { enrichFromTmdb } from '@/lib/tmdb';
+import { computeTotal, SUBGENRES } from '@/lib/config';
 import type { MovieFormData } from '@/lib/types';
 
-const SHEET_NAME = process.env.GOOGLE_SHEET_NAME ?? 'Movies List';
-
-function toNum(v: number | ''): number | '' {
-  if (v === '' || v === null || v === undefined) return '';
-  const n = parseFloat(String(v));
-  return isNaN(n) ? '' : n;
-}
-
-function calcTotal(data: MovieFormData): number {
-  const keys: Array<keyof MovieFormData> = [
-    'atmosphere', 'story', 'characters', 'pacing',
-    'visuals', 'thrill', 'sound', 'impact',
-  ];
-  const score = keys.reduce((sum, k) => {
-    const v = data[k];
-    return sum + (typeof v === 'number' ? v : 0);
-  }, 0);
-  return Math.round((score + (data.bonus ?? 0)) * 100) / 100;
-}
-
 export async function POST(req: NextRequest) {
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  const supabase = await createServerSupabaseClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const userId = session.user.id;
+
+  // ── Parse + validate body ──────────────────────────────────────────────────
+  let body: MovieFormData;
   try {
-    const body: MovieFormData = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
 
-    // ── 1. Validate required fields ───────────────────────────────────────────
-    if (!body.title?.trim()) {
-      return NextResponse.json(
-        { success: false, error: 'Title is required.' },
-        { status: 400 },
-      );
+  const { title, omdbId, subgenre, secondaryTag, recommend, bonus, ...scores } = body;
+
+  if (!title?.trim()) {
+    return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+  }
+
+  if (!SUBGENRES.includes(subgenre as typeof SUBGENRES[number])) {
+    return NextResponse.json({ error: 'Invalid subgenre' }, { status: 400 });
+  }
+
+  // Service client for writes to the shared movies table (bypasses RLS)
+  const serviceClient = createServiceClient();
+
+  // ── Upsert the movies row ──────────────────────────────────────────────────
+  let movieId: string;
+
+  if (omdbId) {
+    // Fetch full OMDB record and upsert by omdb_id
+    const omdbData = await fetchOmdbById(omdbId);
+
+    const moviePayload: Record<string, any> = omdbData
+      ? { ...omdbData, title: omdbData.title }
+      : { omdb_id: omdbId, title: title.trim() };
+
+    // Fetch TMDB backdrop and cast in real-time
+    const tmdbData = await enrichFromTmdb(
+      moviePayload.title,
+      moviePayload.year || undefined,
+      'movie',
+      omdbId
+    );
+
+    if (tmdbData.tmdb_id) {
+      Object.assign(moviePayload, {
+        tmdb_id:      tmdbData.tmdb_id,
+        backdrop_url: tmdbData.backdrop_url,
+        cast_list:    tmdbData.cast_list,
+        media_type:   tmdbData.media_type || 'movie',
+      });
+      // Fallback poster
+      if (!moviePayload.poster_url && tmdbData.poster_url) {
+        moviePayload.poster_url = tmdbData.poster_url;
+      }
     }
-    if (!SUBGENRES.includes(body.subgenre as typeof SUBGENRES[number])) {
-      return NextResponse.json(
-        { success: false, error: 'Please select a valid subgenre.' },
-        { status: 400 },
-      );
+
+    const { data: movie, error: movieError } = await serviceClient
+      .from('movies')
+      .upsert(moviePayload, { onConflict: 'omdb_id', ignoreDuplicates: false })
+      .select('id')
+      .single();
+
+    if (movieError || !movie) {
+      console.error('movies upsert error', movieError);
+      return NextResponse.json({ error: 'Failed to save movie metadata' }, { status: 500 });
     }
 
-    // ── 2. Duplicate check ────────────────────────────────────────────────────
-    const titlesRange = `'${SHEET_NAME}'!B${DATA_START_ROW}:B`;
-    const existingTitles = await getColumnValues(titlesRange);
-    const titleLower = body.title.trim().toLowerCase();
-    const duplicate = existingTitles.some(t => t.toLowerCase() === titleLower);
-    if (duplicate) {
-      return NextResponse.json(
-        { success: false, error: `"${body.title.trim()}" already exists in the sheet.` },
-        { status: 409 },
-      );
+    movieId = movie.id;
+  } else {
+    // Manual entry — upsert by normalised title
+    const normalised = title.trim();
+    const { data: existing } = await serviceClient
+      .from('movies')
+      .select('id')
+      .ilike('title', normalised)
+      .maybeSingle();
+
+    if (existing) {
+      movieId = existing.id;
+    } else {
+      const insertPayload: Record<string, any> = {
+        title: normalised,
+      };
+
+      // Try searching TMDB with manual title to get backdrop + cast!
+      const tmdbData = await enrichFromTmdb(normalised, undefined, 'movie', null);
+      if (tmdbData.tmdb_id) {
+        Object.assign(insertPayload, {
+          tmdb_id:      tmdbData.tmdb_id,
+          backdrop_url: tmdbData.backdrop_url,
+          cast_list:    tmdbData.cast_list,
+          media_type:   tmdbData.media_type || 'movie',
+        });
+        if (tmdbData.poster_url) {
+          insertPayload.poster_url = tmdbData.poster_url;
+        }
+      }
+
+      const { data: movie, error: movieError } = await serviceClient
+        .from('movies')
+        .insert(insertPayload)
+        .select('id')
+        .single();
+
+      if (movieError || !movie) {
+        console.error('movies insert error', movieError);
+        return NextResponse.json({ error: 'Failed to save movie' }, { status: 500 });
+      }
+
+      movieId = movie.id;
     }
+  }
 
-    // ── 3. Calculate total ────────────────────────────────────────────────────
-    const total = calcTotal(body);
+  // ── Check for duplicate entry ──────────────────────────────────────────────
+  const { data: existing } = await supabase
+    .from('entries')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('movie_id', movieId)
+    .maybeSingle();
 
-    // ── 4. Build row (columns A–O, index 0 = col A = blank) ──────────────────
-    //    We send 15 values; index 0 (col A) is blank.
-    const row: (string | number)[] = new Array(15).fill('');
-
-    row[COL.TITLE         - 1] = body.title.trim();
-    row[COL.SUBGENRE      - 1] = body.subgenre;
-    row[COL.SECONDARY_TAG - 1] = body.secondaryTag || '';
-    row[COL.RECOMMEND     - 1] = body.recommend || '';
-    row[COL.ATMOSPHERE    - 1] = toNum(body.atmosphere) ?? '';
-    row[COL.STORY         - 1] = toNum(body.story)      ?? '';
-    row[COL.CHARACTERS    - 1] = toNum(body.characters) ?? '';
-    row[COL.PACING        - 1] = toNum(body.pacing)     ?? '';
-    row[COL.VISUALS       - 1] = toNum(body.visuals)    ?? '';
-    row[COL.THRILL        - 1] = toNum(body.thrill)     ?? '';
-    row[COL.SOUND         - 1] = toNum(body.sound)      ?? '';
-    row[COL.IMPACT        - 1] = toNum(body.impact)     ?? '';
-    row[COL.TOTAL         - 1] = total !== 0 ? total : '';
-    row[COL.BONUS         - 1] = body.bonus ?? 0;
-
-    // ── 5. Append to sheet ────────────────────────────────────────────────────
-    const appendRange = `'${SHEET_NAME}'!A:O`;
-    await appendRow(appendRange, row);
-
-    return NextResponse.json({ success: true, total });
-
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[add-movie]', message);
+  if (existing) {
     return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 },
+      { error: 'You have already logged this movie. Use the update form to edit your rating.' },
+      { status: 409 }
     );
   }
+
+  // ── Compute total ──────────────────────────────────────────────────────────
+  const total = computeTotal({
+    atmosphere: scores.atmosphere as number | '',
+    story:      scores.story      as number | '',
+    characters: scores.characters as number | '',
+    pacing:     scores.pacing     as number | '',
+    visuals:    scores.visuals    as number | '',
+    thrill:     scores.thrill     as number | '',
+    sound:      scores.sound      as number | '',
+    impact:     scores.impact     as number | '',
+    bonus:      bonus ?? 0,
+  });
+
+  // ── Insert entry ──────────────────────────────────────────────────────────
+  const entryPayload = {
+    user_id:       userId,
+    movie_id:      movieId,
+    subgenre,
+    secondary_tag: secondaryTag || null,
+    recommend:     recommend    || null,
+    atmosphere:    scores.atmosphere !== '' ? scores.atmosphere : null,
+    story:         scores.story      !== '' ? scores.story      : null,
+    characters:    scores.characters !== '' ? scores.characters : null,
+    pacing:        scores.pacing     !== '' ? scores.pacing     : null,
+    visuals:       scores.visuals    !== '' ? scores.visuals    : null,
+    thrill:        scores.thrill     !== '' ? scores.thrill     : null,
+    sound:         scores.sound      !== '' ? scores.sound      : null,
+    impact:        scores.impact     !== '' ? scores.impact     : null,
+    bonus:         bonus ?? 0,
+    total,
+  };
+
+  const { data: entry, error: entryError } = await supabase
+    .from('entries')
+    .insert(entryPayload)
+    .select('id, total')
+    .single();
+
+  if (entryError || !entry) {
+    console.error('entries insert error', entryError);
+    return NextResponse.json({ error: 'Failed to save entry' }, { status: 500 });
+  }
+
+  revalidatePath('/', 'layout');
+  return NextResponse.json({ success: true, entry }, { status: 201 });
 }

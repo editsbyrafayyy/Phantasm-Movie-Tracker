@@ -1,23 +1,23 @@
 import type { Metadata } from 'next';
-import UpdateMovieForm from '@/components/UpdateMovieForm';
-import HeroBackground from '@/components/HeroBackground';
+import { Suspense } from 'react';
+import UpdateMovieForm from '@/components/forms/UpdateMovieForm';
+import Spinner from '@/components/ui/Spinner';
 
 export const metadata: Metadata = {
-  title:       'Revise a Record — Horror Vault',
-  description: 'Select an existing movie to revise its scores or recommendation.',
+  title: 'Edit Ratings — Vault',
 };
 
-export default function UpdateMoviePage() {
+export default function UpdatePage() {
   return (
-    <div className="page">
-      <HeroBackground variant="update" />
-      <h1 className="page-heading">
-        <span className="title-context">Revise a</span>
-        <em className="title-accent">Record.</em>
-      </h1>
-      <p className="title-sub">Find a film in your vault and update its ratings.</p>
+    <div className="page-container form-page">
+      <header className="form-header">
+        <p className="page-label">Revise a</p>
+        <h1 className="page-title-serif">Record.</h1>
+      </header>
 
-      <UpdateMovieForm />
+      <Suspense fallback={<div className="form-loading"><Spinner size={24} /> Loading entry…</div>}>
+        <UpdateMovieForm />
+      </Suspense>
     </div>
   );
 }

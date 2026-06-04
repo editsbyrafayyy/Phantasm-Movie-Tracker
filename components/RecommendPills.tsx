@@ -5,6 +5,7 @@ import type { Recommend } from '@/lib/config';
 interface RecommendPillsProps {
   value:    Recommend;
   onChange: (value: Recommend) => void;
+  disabled?: boolean;
 }
 
 const PILLS: { value: Exclude<Recommend, ''>; label: string; className: string }[] = [
@@ -14,7 +15,7 @@ const PILLS: { value: Exclude<Recommend, ''>; label: string; className: string }
   { value: 'Garbage', label: 'Garbage', className: 'pill-garbage' },
 ];
 
-export default function RecommendPills({ value, onChange }: RecommendPillsProps) {
+export default function RecommendPills({ value, onChange, disabled }: RecommendPillsProps) {
   return (
     <div className="pill-row" role="group" aria-label="Recommendation">
       {PILLS.map(pill => (
@@ -25,6 +26,7 @@ export default function RecommendPills({ value, onChange }: RecommendPillsProps)
           onClick={() => onChange(value === pill.value ? '' : pill.value)}
           className={`pill ${pill.className}${value === pill.value ? ' selected' : ''}`}
           aria-pressed={value === pill.value}
+          disabled={disabled}
         >
           {pill.label}
         </button>

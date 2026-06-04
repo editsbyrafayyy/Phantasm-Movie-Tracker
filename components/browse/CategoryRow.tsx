@@ -1,0 +1,113 @@
+'use client';
+
+import { useRef } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Film, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { SUBGENRE_HEX } from '@/lib/config';
+import type { Entry } from '@/lib/types';
+
+interface CategoryRowProps {
+  label:   string;
+  entries: Entry[];
+}
+
+export default function CategoryRow({ label, entries }: CategoryRowProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  if (entries.length === 0) return null;
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollTo = direction === 'left' ? scrollLeft - clientWidth * 0.75 : scrollLeft + clientWidth * 0.75;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <section className="category-section" style={{ position: 'relative' }}>
+      <div className="category-header">
+        <h2 className="category-heading">{label}</h2>
+      </div>
+      
+      <button className="category-scroll-btn left" onClick={() => scroll('left')} aria-label="Scroll left">
+        <ChevronLeft size={24} />
+      </button>
+
+      <button className="category-scroll-btn right" onClick={() => scroll('right')} aria-label="Scroll right">
+        <ChevronRight size={24} />
+      </button>
+
+      <div className="category-scroll-track" ref={scrollRef}>
+        {entries.map(entry => {
+          const { movie } = entry;
+          const img      = movie.poster_url ?? movie.backdrop_url ?? null;
+          const genreHex = SUBGENRE_HEX[entry.subgenre] ?? '#333333';
+
+          return (
+            <motion.div
+              key={entry.id}
+              className="stream-card"
+              whileHover={{ scale: 1.04, y: -5 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+            >
+              <Link href={`/vault/${entry.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+                <div className="stream-card-poster">
+                  {img ? (
+                    <Image
+                      src={img}
+                      alt={movie.title}
+                      fill
+                      className="stream-card-poster-img"
+                      unoptimized
+                    />
+                  ) : (
+                    <div style={{
+                      height: '100%',
+                      background: `linear-gradient(160deg, #111 0%, ${genreHex}22 100%)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Film size={24} color="rgba(255,255,255,0.12)" />
+                    </div>
+                  )}
+
+                  <div className="stream-card-overlay" />
+
+                  {/* Info overlay */}
+                  <div className="stream-card-play-btn">
+                    <div className="stream-card-play-circle">
+                      <Info size={18} color="white" />
+                    </div>
+                  </div>
+
+                  {/* IMDb badge */}
+                  {movie.imdb_rating && (
+                    <div className="stream-card-imdb">
+                      ★ {movie.imdb_rating}
+                    </div>
+                  )}
+
+                  {/* Vault score */}
+                  {entry.total !== null && entry.total > 0 && (
+                    <span
+                      className="movie-card-score"
+                      style={{ top: 8, right: 8, bottom: 'auto' }}
+                    >
+                      {entry.total}
+                    </span>
+                  )}
+                </div>
+
+                <p className="stream-card-title">{movie.title}</p>
+                {movie.year && <p className="stream-card-year">{movie.year}</p>}
+              </Link>
+            </motion.div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

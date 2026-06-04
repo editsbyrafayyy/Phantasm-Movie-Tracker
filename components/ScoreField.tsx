@@ -6,9 +6,10 @@ interface ScoreFieldProps {
   max:      number;
   value:    number | '';
   onChange: (value: number | '') => void;
+  disabled?: boolean;
 }
 
-export default function ScoreField({ id, label, max, value, onChange }: ScoreFieldProps) {
+export default function ScoreField({ id, label, max, value, onChange, disabled }: ScoreFieldProps) {
   const displayVal = value === '' ? '—' : Number(value).toString();
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -35,6 +36,7 @@ export default function ScoreField({ id, label, max, value, onChange }: ScoreFie
         onChange={handleChange}
         placeholder="—"
         className="score-input"
+        disabled={disabled}
       />
     </div>
   );
