@@ -4,6 +4,7 @@ import './globals.css';
 import { AuthProvider } from '@/components/layout/AuthProvider';
 import Navbar           from '@/components/Navbar';
 import StarField        from '@/components/StarField';
+import MobileBottomNav  from '@/components/layout/MobileBottomNav';
 
 const inter = Inter({
   subsets:  ['latin'],
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <StarField />
           <Navbar />
           <main>{children}</main>
+          <MobileBottomNav />
         </AuthProvider>
       </body>
     </html>

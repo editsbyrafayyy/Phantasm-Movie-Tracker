@@ -64,23 +64,10 @@ export default async function HomePage() {
       <HeroBackground />
 
       {/* ── Top Bar ──────────────────────────────────── */}
-      <header style={{
-        position:       'fixed',
-        top: 0, left: 0, right: 0,
-        zIndex:         100,
-        display:        'flex',
-        alignItems:     'center',
-        justifyContent: 'space-between',
-        padding:        '0 32px',
-        height:         56,
-        background:     'rgba(8,8,8,0.88)',
-        backdropFilter: 'blur(22px)',
-        WebkitBackdropFilter: 'blur(22px)',
-        borderBottom:   '1px solid rgba(255,255,255,0.07)',
-      }}>
+      <header className="home-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/" style={{ display:'flex', alignItems:'center', gap:7, textDecoration:'none' }}>
-            <Moon size={16} color="rgba(255,255,255,0.7)" />
+            <Moon size={16} color="var(--red)" />
             <span style={{ fontFamily:'var(--font-display)', fontSize:16, letterSpacing:3, color:'#f2f2f2' }}>
               VAULT
             </span>
@@ -97,7 +84,7 @@ export default async function HomePage() {
           )}
         </div>
 
-        <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+        <div className="home-header-buttons">
           <Link href="/stream" className="header-nav-btn primary">
             Stream
           </Link>
@@ -130,9 +117,9 @@ export default async function HomePage() {
       <TmdbBrowse />
 
       {/* ── My Vault ──────────────────────────────────── */}
-      <div style={{ padding: '0 32px', marginBottom: 0 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 'bold', margin: 0, color: '#fff' }}>From the Vault</h2>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>Curated films scored and stored by {ownerName}.</p>
+      <div className="home-vault-section">
+        <h2 className="home-vault-heading">From the Vault</h2>
+        <p className="home-vault-sub">Curated films scored and stored by {ownerName}.</p>
       </div>
 
       <VaultFilter entries={entries} subgenreOrder={SUBGENRE_ORDER} />

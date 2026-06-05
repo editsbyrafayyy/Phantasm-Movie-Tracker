@@ -14,9 +14,15 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
-  const pathname              = usePathname();
+  const pathname = usePathname();
   const { user, profile, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Return null on all pages that use StreamRail to avoid double navigation overlays.
+  // The pages that do NOT use StreamRail are '/' and '/login'.
+  if (pathname !== '/' && pathname !== '/login') {
+    return null;
+  }
 
   const isAuthenticated = !!user;
   const visibleLinks    = NAV_LINKS.filter(l => !l.auth || isAuthenticated);

@@ -2467,14 +2467,16 @@ select:focus-visible {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 60px 48px 100px 48px;
+  padding: 80px 48px 60px 48px; /* Offset top with padding, reduce bottom padding */
   max-width: 640px;
-  margin-top: 56px; /* Offset for floating header */
+  margin-top: 0;
+  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
   .hero-content {
-    padding: 32px 20px;
+    padding: 80px 20px 40px 20px; /* Reduced vertical paddings to avoid viewport overflow */
+    margin-top: 0;
   }
 }
 
@@ -2492,7 +2494,7 @@ select:focus-visible {
   font-family: var(--font-sans);
   font-weight: 700;
   line-height: 1.1;
-  font-size: clamp(28px, 5vw, 54px);
+  font-size: clamp(22px, 4.5vw, 42px); /* Scaled down for mobile */
   color: #ffffff;
   margin-bottom: 10px;
 }
@@ -2506,7 +2508,7 @@ select:focus-visible {
 
 .hero-score {
   font-family: var(--font-display);
-  font-size: clamp(44px, 7vw, 68px);
+  font-size: clamp(36px, 6vw, 56px); /* Scaled down for mobile */
   color: var(--red);
   line-height: 1;
 }
@@ -2813,6 +2815,218 @@ select:focus-visible {
   transform: translateY(0);
 }
 
+/* ── Mobile Layout & Navigation ────────────────────────────────────────────────── */
 
+/* Hide mobile nav on desktop by default */
+.mobile-header {
+  display: none;
+}
+.mobile-bottom-nav {
+  display: none;
+}
 
+@media (max-width: 768px) {
+  /* Hide the vertical stream-rail on mobile */
+  .stream-rail {
+    display: none !important;
+  }
 
+  /* Adjust stream layout structure on mobile */
+  .stream-layout {
+    flex-direction: column;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  .stream-main {
+    padding-top: 56px !important; /* Space for the fixed top header */
+    padding-bottom: 64px !important; /* Space for the fixed bottom navigation */
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    width: 100% !important;
+  }
+
+  /* Show mobile header */
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #060606;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0 16px;
+    z-index: 1000;
+  }
+
+  .mobile-header-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #fff;
+  }
+
+  .mobile-header-logo-icon {
+    color: var(--red);
+  }
+
+  .mobile-header-logo-text {
+    font-family: var(--font-display-neue), sans-serif;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    font-weight: bold;
+  }
+
+  .mobile-header-profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  /* Show mobile bottom nav */
+  .mobile-bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #060606;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0 8px;
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom); /* iOS support */
+  }
+
+  .mobile-bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.45);
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    flex: 1;
+    height: 100%;
+    transition: color 0.2s ease;
+  }
+
+  .mobile-bottom-nav-link svg {
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+
+  .mobile-bottom-nav-link.active {
+    color: #fff;
+  }
+
+  .mobile-bottom-nav-link.active svg {
+    color: var(--red);
+    transform: scale(1.05);
+  }
+}
+
+/* ── Moon icon color throughout the app ────────────────────────────────────────── */
+.navbar-pill-logo-icon,
+.stream-rail-logo-icon,
+.mobile-header-logo-icon,
+.login-logo-icon {
+  color: var(--red) !important;
+}
+
+/* ── Landing Page (Home) Header & Layout Spacings ────────────────────────────── */
+.home-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 56px;
+  background: rgba(8, 8, 8, 0.88);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.home-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.home-vault-section {
+  padding: 0 32px;
+  margin-bottom: 0;
+  margin-top: 32px;
+}
+.home-vault-heading {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+  color: #fff;
+}
+.home-vault-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+}
+.home-vault-filters {
+  display: flex;
+  gap: 24px;
+  padding: 0 32px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 768px) {
+  .home-header {
+    padding: 0 16px;
+  }
+  .home-header-buttons {
+    gap: 8px;
+  }
+  .header-nav-btn {
+    padding: 5px 12px;
+    font-size: 11px;
+    white-space: nowrap; /* Prevent wrapping arrow to next line */
+  }
+  .home-vault-section {
+    padding: 0 16px;
+    margin-top: 24px;
+  }
+  .home-vault-filters {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  
+  /* Banners sizing and rounding overrides */
+  .hero-carousel {
+    height: 48vh !important;
+    min-height: 340px !important;
+    border-radius: 12px !important;
+    width: calc(100% - 32px) !important;
+    margin: 16px auto !important;
+  }
+  .stream-hero {
+    height: 240px !important;
+    border-radius: 12px !important;
+    width: calc(100% - 32px) !important;
+    margin: 16px auto !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}

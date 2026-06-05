@@ -54,7 +54,7 @@ export default function VaultFilter({ entries, subgenreOrder }: Props) {
   return (
     <div style={{ marginTop: 0, paddingTop: 16, paddingBottom: 80 }}>
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 24, padding: '0 32px', marginBottom: 32 }}>
+      <div className="home-vault-filters">
         {/* Recommended Filter */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>Recommended</label>

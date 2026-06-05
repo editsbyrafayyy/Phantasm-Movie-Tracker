@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye } from 'lucide-react';
+import { Eye, Search } from 'lucide-react';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
 export default function BrowseGrid() {
@@ -13,34 +13,68 @@ export default function BrowseGrid() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [mediaType, setMediaType] = useState<'movie' | 'tv'>('movie');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeQuery, setActiveQuery] = useState('');
 
-  const fetchMovies = async (pageNum: number, type: 'movie' | 'tv') => {
-    try {
-      if (pageNum === 1) setLoading(true);
-      else setLoadingMore(true);
-
-      const res = await fetch(`/api/tmdb/discover?page=${pageNum}&type=${type}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      
-      const data = await res.json();
-      const newMovies = data.results || [];
-      
-      if (newMovies.length === 0) {
-        setHasMore(false);
-      } else {
-        setMovies(prev => pageNum === 1 ? newMovies : [...prev, ...newMovies]);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+  // Debounce search query and reset page in sync
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setActiveQuery(searchQuery);
+      setPage(1);
+      setHasMore(true);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
-    fetchMovies(page, mediaType);
-  }, [page, mediaType]);
+    let active = true;
+
+    const fetchMovies = async () => {
+      try {
+        if (page === 1) {
+          setLoading(true);
+          setMovies([]); // Clear list on new search/tab
+        } else {
+          setLoadingMore(true);
+        }
+
+        const endpoint = activeQuery
+          ? `/api/tmdb/search?query=${encodeURIComponent(activeQuery)}&page=${page}&type=${mediaType}`
+          : `/api/tmdb/discover?page=${page}&type=${mediaType}`;
+
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error('Failed to fetch');
+        
+        const data = await res.json();
+        if (!active) return;
+
+        const newMovies = data.results || [];
+        
+        if (newMovies.length === 0) {
+          setHasMore(false);
+        } else {
+          setMovies(prev => page === 1 ? newMovies : [...prev, ...newMovies]);
+          // If the total pages returned is equal or less than current page, set hasMore false
+          if (data.total_pages && page >= data.total_pages) {
+            setHasMore(false);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (active) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    };
+
+    fetchMovies();
+
+    return () => {
+      active = false;
+    };
+  }, [page, mediaType, activeQuery]);
 
   const handleTabChange = (type: 'movie' | 'tv') => {
     if (type !== mediaType) {
@@ -52,58 +86,79 @@ export default function BrowseGrid() {
 
   return (
     <div style={{ padding: '40px', minHeight: '100vh', background: 'var(--bg)' }}>
-      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <h1 style={{ fontSize: 32, fontWeight: 'bold', margin: 0, color: '#fff' }}>Discover Horror</h1>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', marginTop: 8 }}>Explore the deepest corners of the horror catalog.</p>
+      {/* Search and Navigation Header */}
+      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <h1 style={{ fontSize: 32, fontWeight: 'bold', margin: 0, color: '#fff' }}>Discover Horror</h1>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', marginTop: 8 }}>Explore the deepest corners of the horror catalog.</p>
+          </div>
+
+          {/* Media Type Tabs */}
+          <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8 }}>
+            <button
+              onClick={() => handleTabChange('movie')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                fontSize: 14,
+                fontWeight: 600,
+                background: mediaType === 'movie' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color: mediaType === 'movie' ? '#fff' : 'rgba(255,255,255,0.5)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Movies
+            </button>
+            <button
+              onClick={() => handleTabChange('tv')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                fontSize: 14,
+                fontWeight: 600,
+                background: mediaType === 'tv' ? 'rgba(255,255,255,0.1)' : 'transparent',
+                color: mediaType === 'tv' ? '#fff' : 'rgba(255,255,255,0.5)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              TV Shows
+            </button>
+          </div>
         </div>
 
-        {/* Media Type Tabs */}
-        <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8 }}>
-          <button
-            onClick={() => handleTabChange('movie')}
+        {/* Global Search Bar */}
+        <div className="search-input-wrap" style={{ maxWidth: '400px', width: '100%' }}>
+          <Search className="search-icon" size={16} style={{ color: 'rgba(255,255,255,0.4)', left: '14px' }} />
+          <input
+            type="text"
+            className="form-input search-input-inner"
+            placeholder={mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search mystery / sci-fi shows...'}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
             style={{
-              padding: '6px 16px',
-              borderRadius: 6,
-              fontSize: 14,
-              fontWeight: 600,
-              background: mediaType === 'movie' ? 'rgba(255,255,255,0.1)' : 'transparent',
-              color: mediaType === 'movie' ? '#fff' : 'rgba(255,255,255,0.5)',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
+              paddingLeft: '40px',
+              height: '42px',
+              fontSize: '14px',
+              borderRadius: '4px',
             }}
-          >
-            Movies
-          </button>
-          <button
-            onClick={() => handleTabChange('tv')}
-            style={{
-              padding: '6px 16px',
-              borderRadius: 6,
-              fontSize: 14,
-              fontWeight: 600,
-              background: mediaType === 'tv' ? 'rgba(255,255,255,0.1)' : 'transparent',
-              color: mediaType === 'tv' ? '#fff' : 'rgba(255,255,255,0.5)',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            TV Shows
-          </button>
+          />
         </div>
       </div>
 
       {loading && page === 1 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '24px 16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '24px 16px' }}>
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} style={{ width: '100%', aspectRatio: '2/3', background: 'rgba(255,255,255,0.05)', borderRadius: 8, animation: 'pulse 2s infinite' }} />
           ))}
         </div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px 16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '24px 16px' }}>
             {movies.map((movie, idx) => (
               <Link
                 key={`${movie.id}-${idx}`}
@@ -145,7 +200,13 @@ export default function BrowseGrid() {
             ))}
           </div>
 
-          {hasMore && (
+          {movies.length === 0 && (
+            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.4)', padding: '60px 0' }}>
+              No items match your search.
+            </div>
+          )}
+
+          {hasMore && movies.length > 0 && (
             <div style={{ textAlign: 'center', marginTop: 48, marginBottom: 40 }}>
               <button
                 onClick={() => setPage(p => p + 1)}
