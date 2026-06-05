@@ -98,41 +98,19 @@ export default async function HomePage() {
         </div>
 
         <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-          <Link href="/stream" style={{
-            fontSize:13, color:'rgba(255,255,255,0.85)',
-            textDecoration:'none', fontFamily:'var(--font-sans)', fontWeight:500,
-            padding:'7px 16px', borderRadius:999,
-            border:'1px solid rgba(255,255,255,0.16)',
-          }}>
+          <Link href="/stream" className="header-nav-btn primary">
             Stream
           </Link>
-          <Link href="/browse" style={{
-            fontSize:13, color:'rgba(255,255,255,0.85)',
-            textDecoration:'none', fontFamily:'var(--font-sans)', fontWeight:500,
-            padding:'7px 16px', borderRadius:999,
-            border:'1px solid rgba(255,255,255,0.16)',
-          }}>
+          <Link href="/browse" className="header-nav-btn primary">
             Browse
           </Link>
           
           {session ? (
-            <Link href="/vault" style={{
-              display:'flex', alignItems:'center', gap:6,
-              fontSize:13, color:'#f2f2f2',
-              textDecoration:'none', fontFamily:'var(--font-sans)', fontWeight:600,
-              padding:'7px 16px', borderRadius:999,
-              border:'1px solid rgba(255,255,255,0.16)',
-            }}>
+            <Link href="/vault" className="header-nav-btn secondary">
               Your Vault →
             </Link>
           ) : (
-            <Link href="/login" style={{
-              display:'flex', alignItems:'center', gap:6,
-              fontSize:13, color:'#f2f2f2',
-              textDecoration:'none', fontFamily:'var(--font-sans)', fontWeight:600,
-              padding:'7px 16px', borderRadius:999,
-              border:'1px solid rgba(255,255,255,0.16)',
-            }}>
+            <Link href="/login" className="header-nav-btn secondary">
               <LogIn size={13} />
               Sign In
             </Link>

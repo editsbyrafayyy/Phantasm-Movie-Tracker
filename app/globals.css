@@ -2602,5 +2602,41 @@ select:focus-visible {
   color: #fff !important;
 }
 
+/* ── Header Navbar Buttons ────────────────────────────────────────────────── */
+.header-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  text-decoration: none;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  transition: all 0.2s ease;
+}
+
+.header-nav-btn.primary {
+  color: rgba(255,255,255,0.85);
+  font-weight: 500;
+}
+
+.header-nav-btn.secondary {
+  color: #f2f2f2;
+  font-weight: 600;
+}
+
+.header-nav-btn:hover {
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.35) !important;
+  background: rgba(255,255,255,0.08) !important;
+  transform: translateY(-1px);
+}
+
+.header-nav-btn:active {
+  transform: translateY(0);
+}
+
+
 
 
