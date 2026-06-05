@@ -49,10 +49,30 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
 
     // Sort
     switch (sort) {
-      case 'az':     result.sort((a, b) => (a.movie?.title ?? '').localeCompare(b.movie?.title ?? '')); break;
-      case 'za':     result.sort((a, b) => (b.movie?.title ?? '').localeCompare(a.movie?.title ?? '')); break;
-      case 'top':    result.sort((a, b) => (b.total ?? 0) - (a.total ?? 0)); break;
-      case 'recent': result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); break;
+      case 'az':
+        result.sort((a, b) => {
+          const tA = (a.movie?.title ?? '').toLowerCase();
+          const tB = (b.movie?.title ?? '').toLowerCase();
+          return tA < tB ? -1 : tA > tB ? 1 : 0;
+        });
+        break;
+      case 'za':
+        result.sort((a, b) => {
+          const tA = (a.movie?.title ?? '').toLowerCase();
+          const tB = (b.movie?.title ?? '').toLowerCase();
+          return tA > tB ? -1 : tA < tB ? 1 : 0;
+        });
+        break;
+      case 'top':
+        result.sort((a, b) => (b.total ?? 0) - (a.total ?? 0));
+        break;
+      case 'recent':
+        result.sort((a, b) => {
+          const tA = a.created_at;
+          const tB = b.created_at;
+          return tA > tB ? -1 : tA < tB ? 1 : 0;
+        });
+        break;
     }
 
     return result;

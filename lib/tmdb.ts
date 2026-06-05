@@ -217,6 +217,13 @@ export async function enrichFromTmdb(
   // 2. Fallback to title & year search
   if (!result) {
     result = await searchTmdb(title, year, type);
+    if (!result && type === 'movie') {
+      const tvResult = await searchTmdb(title, year, 'tv');
+      if (tvResult) {
+        result = tvResult;
+        resolvedType = 'tv';
+      }
+    }
   }
 
   if (!result) return { tmdb_id: null, backdrop_url: null, poster_url: null, cast_list: null, media_type: null };

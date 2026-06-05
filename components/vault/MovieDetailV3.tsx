@@ -61,12 +61,6 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
           <ArrowLeft size={15} />
           Back to Vault
         </Link>
-        {canStream && (movie.omdb_id || movie.tmdb_id) && (
-          <Link href={`/stream/${movie.omdb_id || movie.tmdb_id}`} className="btn-watch btn-watch-compact">
-            <Play size={14} fill="white" color="white" />
-            Watch Now
-          </Link>
-        )}
       </div>
 
       {/* ── Backdrop Hero ─────────────────────────────────── */}

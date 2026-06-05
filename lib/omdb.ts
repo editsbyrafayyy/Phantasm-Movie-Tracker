@@ -32,7 +32,7 @@ interface OmdbMovieDetail {
  * Used by /api/omdb-search to power the autocomplete dropdown.
  */
 export async function searchOmdb(query: string): Promise<OmdbSearchHit[]> {
-  const url  = `${BASE}/?s=${encodeURIComponent(query)}&type=movie&apikey=${KEY}`;
+  const url  = `${BASE}/?s=${encodeURIComponent(query)}&apikey=${KEY}`;
   const res  = await fetch(url, { next: { revalidate: 300 } });
   const data = await res.json();
 

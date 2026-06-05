@@ -1638,55 +1638,77 @@ select:focus-visible {
   margin-bottom:16px;
 }
 .btn-watch {
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:11px 22px;
-  min-height:44px;
-  background:var(--red);
-  color:#ffffff;
-  border:none;
-  border-radius:8px;
-  font-family:var(--font-sans);
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-  text-decoration:none;
-  transition:background 0.15s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  min-height: 44px;
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(230, 50, 50, 0.35);
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
-.btn-watch:hover { background:var(--red-dark); transform:translateY(-1px); }
+.btn-watch:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(230, 50, 50, 0.55);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #f04444 0%, var(--red) 100%);
+}
+.btn-watch:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(230, 50, 50, 0.25);
+}
 .btn-edit {
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:11px 20px;
-  min-height:44px;
-  background:transparent;
-  color:var(--text-dim);
-  border:1.5px solid var(--border-strong);
-  border-radius:8px;
-  font-family:var(--font-sans);
-  font-size:14px;
-  font-weight:500;
-  cursor:pointer;
-  text-decoration:none;
-  transition:all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 20px;
+  min-height: 44px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
 }
-.btn-edit:hover { color:var(--text); border-color:rgba(255,255,255,0.35); }
+.btn-edit:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+  transform: translateY(-1px);
+}
 .btn-delete-icon {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:44px;
-  height:44px;
-  background:transparent;
-  color:rgba(230,50,50,0.6);
-  border:1.5px solid rgba(230,50,50,0.25);
-  border-radius:8px;
-  cursor:pointer;
-  transition:all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  color: rgba(230, 50, 50, 0.6);
+  border: 1px solid rgba(230, 50, 50, 0.25);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.btn-delete-icon:hover { color:var(--red); border-color:rgba(230,50,50,0.5); background:rgba(230,50,50,0.06); }
+.btn-delete-icon:hover {
+  color: var(--red);
+  border-color: rgba(230, 50, 50, 0.5);
+  background: rgba(230, 50, 50, 0.06);
+  transform: translateY(-1px);
+}
 .backdrop-meta {
   font-family:var(--font-sans);
   font-size:12px;
