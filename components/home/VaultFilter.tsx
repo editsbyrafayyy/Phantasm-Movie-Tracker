@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import CategoryRow from '@/components/browse/CategoryRow';
+import CustomSelect from '@/components/ui/CustomSelect';
 import type { Entry } from '@/lib/types';
 
 type Props = {
@@ -57,50 +58,32 @@ export default function VaultFilter({ entries, subgenreOrder }: Props) {
         {/* Recommended Filter */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>Recommended</label>
-          <select 
-            value={recFilter} 
-            onChange={e => setRecFilter(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: '#fff',
-              padding: '8px 12px',
-              borderRadius: 6,
-              fontSize: 14,
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="All" style={{ color: '#000' }}>All Statuses</option>
-            <option value="Peak" style={{ color: '#000' }}>Peak</option>
-            <option value="Yes" style={{ color: '#000' }}>Yes</option>
-            <option value="No" style={{ color: '#000' }}>No</option>
-            <option value="Garbage" style={{ color: '#000' }}>Garbage</option>
-          </select>
+          <CustomSelect
+            value={recFilter}
+            onChange={setRecFilter}
+            options={[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'Peak', label: 'Peak' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+              { value: 'Garbage', label: 'Garbage' },
+            ]}
+            ariaLabel="Filter by recommendation"
+          />
         </div>
 
         {/* Genre Filter */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>Genre</label>
-          <select 
-            value={genreFilter} 
-            onChange={e => setGenreFilter(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: '#fff',
-              padding: '8px 12px',
-              borderRadius: 6,
-              fontSize: 14,
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="All" style={{ color: '#000' }}>All Genres</option>
-            {availableGenres.map(g => (
-              <option key={g} value={g} style={{ color: '#000' }}>{g}</option>
-            ))}
-          </select>
+          <CustomSelect
+            value={genreFilter}
+            onChange={setGenreFilter}
+            options={[
+              { value: 'All', label: 'All Genres' },
+              ...availableGenres.map(g => ({ value: g, label: g })),
+            ]}
+            ariaLabel="Filter by genre"
+          />
         </div>
       </div>
 

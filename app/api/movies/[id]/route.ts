@@ -24,15 +24,15 @@ interface MoviePayload {
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id }   = await params;
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data, error } = await supabase
     .from('entries')
     .select('*, movie:movies (*)')
     .eq('id', id)
-    .eq('user_id', session.user.id)   // belt-and-suspenders on top of RLS
+    .eq('user_id', user.id)   // belt-and-suspenders on top of RLS
     .single();
 
   if (error || !data) {
@@ -46,9 +46,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id }   = await params;
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   let body: Partial<MovieFormData>;
   try {
@@ -62,14 +62,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .from('entries')
     .select('id, user_id, movie_id, movie:movies (title, omdb_id, media_type)')
     .eq('id', id)
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .single();
 
   if (fetchError || !existing) {
     return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
   }
 
-  const guard = guardOwnerEntry(session.user.id, existing.user_id);
+  const guard = guardOwnerEntry(user.id, existing.user_id);
   if (guard) return guard;
 
   // Cast existing movie properly
@@ -130,19 +130,56 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         }
       }
 
-      // Upsert by omdb_id
-      const { data: movie, error: movieError } = await serviceClient
-        .from('movies')
-        .upsert(moviePayload, { onConflict: 'omdb_id', ignoreDuplicates: false })
-        .select('id')
-        .single();
+      // Look up existing movie to avoid unique key constraint violations on tmdb_id or omdb_id
+      let existingMovie = null;
 
-      if (movieError || !movie) {
-        console.error('movies upsert error in PATCH', movieError);
-        return NextResponse.json({ error: 'Failed to update movie metadata' }, { status: 500 });
+      // Check by omdb_id
+      const { data: byOmdb } = await serviceClient
+        .from('movies')
+        .select('id')
+        .eq('omdb_id', finalOmdbId)
+        .maybeSingle();
+
+      if (byOmdb) {
+        existingMovie = byOmdb;
+      } else if (moviePayload.tmdb_id) {
+        // Check by tmdb_id
+        const { data: byTmdb } = await serviceClient
+          .from('movies')
+          .select('id')
+          .eq('tmdb_id', moviePayload.tmdb_id)
+          .maybeSingle();
+        existingMovie = byTmdb;
       }
 
-      resolvedMovieId = movie.id;
+      if (existingMovie) {
+        // Update existing movie metadata
+        const { data: movie, error: movieError } = await serviceClient
+          .from('movies')
+          .update(moviePayload)
+          .eq('id', existingMovie.id)
+          .select('id')
+          .single();
+
+        if (movieError || !movie) {
+          console.error('movies update error in PATCH', movieError);
+          return NextResponse.json({ error: 'Failed to update movie metadata' }, { status: 500 });
+        }
+        resolvedMovieId = movie.id;
+      } else {
+        // Insert new movie
+        const { data: movie, error: movieError } = await serviceClient
+          .from('movies')
+          .insert(moviePayload)
+          .select('id')
+          .single();
+
+        if (movieError || !movie) {
+          console.error('movies insert error in PATCH', movieError);
+          return NextResponse.json({ error: 'Failed to save movie metadata' }, { status: 500 });
+        }
+        resolvedMovieId = movie.id;
+      }
     } else {
       // Manual entry (no omdbId)
       const normalised = finalTitle.trim();
@@ -176,18 +213,45 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           }
         }
 
-        const { data: movie, error: movieError } = await serviceClient
-          .from('movies')
-          .insert(insertPayload)
-          .select('id')
-          .single();
-
-        if (movieError || !movie) {
-          console.error('movies insert error in PATCH', movieError);
-          return NextResponse.json({ error: 'Failed to save manual movie' }, { status: 500 });
+        // Check if tmdb_id already exists to prevent unique key violation
+        let manualExisting = null;
+        if (insertPayload.tmdb_id) {
+          const { data: byTmdb } = await serviceClient
+            .from('movies')
+            .select('id')
+            .eq('tmdb_id', insertPayload.tmdb_id)
+            .maybeSingle();
+          manualExisting = byTmdb;
         }
 
-        resolvedMovieId = movie.id;
+        if (manualExisting) {
+          // Update it
+          const { data: movie, error: movieError } = await serviceClient
+            .from('movies')
+            .update(insertPayload)
+            .eq('id', manualExisting.id)
+            .select('id')
+            .single();
+
+          if (movieError || !movie) {
+            console.error('movies update error in PATCH', movieError);
+            return NextResponse.json({ error: 'Failed to update manual movie' }, { status: 500 });
+          }
+          resolvedMovieId = movie.id;
+        } else {
+          // Insert it
+          const { data: movie, error: movieError } = await serviceClient
+            .from('movies')
+            .insert(insertPayload)
+            .select('id')
+            .single();
+
+          if (movieError || !movie) {
+            console.error('movies insert error in PATCH', movieError);
+            return NextResponse.json({ error: 'Failed to save manual movie' }, { status: 500 });
+          }
+          resolvedMovieId = movie.id;
+        }
       }
     }
   }
@@ -197,7 +261,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { data: duplicateEntry } = await supabase
       .from('entries')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('movie_id', resolvedMovieId)
       .neq('id', id)
       .maybeSingle();
@@ -257,9 +321,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 export async function DELETE(_req: NextRequest, { params }: Params) {
   const { id }   = await params;
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: existing, error: fetchError } = await supabase
     .from('entries')
@@ -271,14 +335,14 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
   }
 
-  const guard = guardOwnerEntry(session.user.id, existing.user_id);
+  const guard = guardOwnerEntry(user.id, existing.user_id);
   if (guard) return guard;
 
   const { error } = await supabase
     .from('entries')
     .delete()
     .eq('id', id)
-    .eq('user_id', session.user.id);
+    .eq('user_id', user.id);
 
   if (error) {
     console.error('DELETE /api/movies/[id] error', error);

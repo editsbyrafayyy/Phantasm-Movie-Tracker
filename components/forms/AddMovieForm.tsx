@@ -99,7 +99,7 @@ export default function AddMovieForm() {
         />
         {form.omdbId && (
           <p className="omdb-selected-note">
-            ✓ OMDB matched — metadata will be saved automatically.{' '}
+            OMDB matched — metadata will be saved automatically.{' '}
             <button type="button" className="link-btn" onClick={() => { set('omdbId', ''); }}>
               Clear match
             </button>

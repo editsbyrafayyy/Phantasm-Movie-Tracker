@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { SUBGENRES } from '@/lib/config';
 import type { Entry } from '@/lib/types';
 
@@ -112,19 +113,13 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
           ))}
         </div>
 
-        <div className="vault-sort-wrap">
-          <SlidersHorizontal size={13} className="vault-sort-icon" aria-hidden="true" />
-          <select
-            className="vault-sort"
-            value={sort}
-            onChange={e => setSort(e.target.value as SortKey)}
-            aria-label="Sort movies"
-          >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
+        <CustomSelect
+          value={sort}
+          options={SORT_OPTIONS}
+          onChange={val => setSort(val as SortKey)}
+          ariaLabel="Sort movies"
+          icon={<SlidersHorizontal size={13} />}
+        />
       </div>
 
       {/* Active filter count */}

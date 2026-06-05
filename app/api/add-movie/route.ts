@@ -10,13 +10,13 @@ import type { MovieFormData } from '@/lib/types';
 export async function POST(req: NextRequest) {
   // ── Auth ────────────────────────────────────────────────────────────────────
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
   if (!rateLimit(ip)) {
@@ -107,18 +107,56 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const { data: movie, error: movieError } = await serviceClient
-      .from('movies')
-      .upsert(moviePayload, { onConflict: 'omdb_id', ignoreDuplicates: false })
-      .select('id')
-      .single();
+    // Look up existing movie to avoid unique key constraint violations on tmdb_id or omdb_id
+    let existingMovie = null;
 
-    if (movieError || !movie) {
-      console.error('movies upsert error', movieError);
-      return NextResponse.json({ error: 'Failed to save movie metadata' }, { status: 500 });
+    // Check by omdb_id
+    const { data: byOmdb } = await serviceClient
+      .from('movies')
+      .select('id')
+      .eq('omdb_id', omdbId)
+      .maybeSingle();
+
+    if (byOmdb) {
+      existingMovie = byOmdb;
+    } else if (moviePayload.tmdb_id) {
+      // Check by tmdb_id
+      const { data: byTmdb } = await serviceClient
+        .from('movies')
+        .select('id')
+        .eq('tmdb_id', moviePayload.tmdb_id)
+        .maybeSingle();
+      existingMovie = byTmdb;
     }
 
-    movieId = movie.id;
+    if (existingMovie) {
+      // Update existing movie metadata
+      const { data: movie, error: movieError } = await serviceClient
+        .from('movies')
+        .update(moviePayload)
+        .eq('id', existingMovie.id)
+        .select('id')
+        .single();
+
+      if (movieError || !movie) {
+        console.error('movies update error', movieError);
+        return NextResponse.json({ error: 'Failed to update movie metadata' }, { status: 500 });
+      }
+      movieId = movie.id;
+    } else {
+      // Insert new movie
+      const { data: movie, error: movieError } = await serviceClient
+        .from('movies')
+        .insert(moviePayload)
+        .select('id')
+        .single();
+
+      if (movieError || !movie) {
+        console.error('movies insert error', movieError);
+        return NextResponse.json({ error: 'Failed to save movie metadata' }, { status: 500 });
+      }
+      movieId = movie.id;
+    }
   } else {
     // Manual entry — upsert by normalised title
     const normalised = title.trim();
@@ -149,18 +187,45 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const { data: movie, error: movieError } = await serviceClient
-        .from('movies')
-        .insert(insertPayload)
-        .select('id')
-        .single();
-
-      if (movieError || !movie) {
-        console.error('movies insert error', movieError);
-        return NextResponse.json({ error: 'Failed to save movie' }, { status: 500 });
+      // Check if tmdb_id already exists to prevent unique key violation
+      let manualExisting = null;
+      if (insertPayload.tmdb_id) {
+        const { data: byTmdb } = await serviceClient
+          .from('movies')
+          .select('id')
+          .eq('tmdb_id', insertPayload.tmdb_id)
+          .maybeSingle();
+        manualExisting = byTmdb;
       }
 
-      movieId = movie.id;
+      if (manualExisting) {
+        // Update it
+        const { data: movie, error: movieError } = await serviceClient
+          .from('movies')
+          .update(insertPayload)
+          .eq('id', manualExisting.id)
+          .select('id')
+          .single();
+
+        if (movieError || !movie) {
+          console.error('movies update error', movieError);
+          return NextResponse.json({ error: 'Failed to update movie' }, { status: 500 });
+        }
+        movieId = movie.id;
+      } else {
+        // Insert it
+        const { data: movie, error: movieError } = await serviceClient
+          .from('movies')
+          .insert(insertPayload)
+          .select('id')
+          .single();
+
+        if (movieError || !movie) {
+          console.error('movies insert error', movieError);
+          return NextResponse.json({ error: 'Failed to save movie' }, { status: 500 });
+        }
+        movieId = movie.id;
+      }
     }
   }
 

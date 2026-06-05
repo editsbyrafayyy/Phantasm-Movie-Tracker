@@ -25,6 +25,16 @@ export default function OmdbSearchInput({
   const [active,   setActive]   = useState(-1);  // keyboard nav index
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    if (active >= 0 && listRef.current) {
+      const activeEl = listRef.current.children[active] as HTMLElement;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [active]);
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) { setResults([]); setOpen(false); return; }
@@ -99,6 +109,7 @@ export default function OmdbSearchInput({
 
       {open && results.length > 0 && (
         <ul
+          ref={listRef}
           id="omdb-dropdown"
           className="omdb-dropdown"
           role="listbox"
