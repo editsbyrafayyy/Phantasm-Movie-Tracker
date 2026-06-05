@@ -28,7 +28,7 @@ export default function StreamRail() {
         <Home size={16} className="stream-rail-icon" />
         <span className="stream-rail-label-text">Home</span>
       </Link>
-      <Link href="/" className={`stream-rail-link${isActive('/')}`}>
+      <Link href="/browse" className={`stream-rail-link${isActive('/browse')}`}>
         <Film size={16} className="stream-rail-icon" />
         <span className="stream-rail-label-text">Browse</span>
       </Link>

@@ -1,19 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   ChevronLeft, 
-  ChevronRight, 
   Play, 
   Plus, 
-  Share2, 
   Download, 
   X,
-  ExternalLink
+  ExternalLink,
+  Check,
+  Maximize2
 } from 'lucide-react';
+import Spinner from '@/components/ui/Spinner';
 
 interface CastMember {
   name: string;
@@ -50,6 +51,16 @@ interface Props {
   currentId:    string;
   season?:      number;
   episode?:     number;
+  seasons?: {
+    air_date?: string;
+    episode_count?: number;
+    id: number;
+    name: string;
+    overview?: string;
+    poster_path?: string | null;
+    season_number: number;
+    vote_average?: number;
+  }[];
 }
 
 // Maps server identifiers or indices to flags, display labels, and sparkles
@@ -75,6 +86,7 @@ export default function VideoPlayerClient({
   genre_tags,
   year,
   imdb_rating,
+  runtime_min,
   status = 'Released',
   production = '',
   aired = '',
@@ -83,12 +95,79 @@ export default function VideoPlayerClient({
   currentId,
   season = 1,
   episode = 1,
+  seasons = [],
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [sourceIdx, setSourceIdx] = useState(0);
   const [showTrailer, setShowTrailer] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  // TV tabbed interface state
+  const [activeTab, setActiveTab] = useState<'overview' | 'episodes' | 'reviews'>('episodes');
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [activeSeason, setActiveSeason] = useState(season);
+  const [watchedEpisodes, setWatchedEpisodes] = useState<Record<string, boolean>>({});
+
+  // Sync activeSeason when season prop changes (e.g. on URL navigation)
+  useEffect(() => {
+    setActiveSeason(season);
+  }, [season]);
+
+  // Fetch episodes for the active season
+  useEffect(() => {
+    if (type !== 'tv' || !tmdbId) return;
+    setEpisodesLoading(true);
+    fetch(`/api/tmdb/tv/${tmdbId}/season/${activeSeason}`)
+      .then(res => res.json())
+      .then(data => {
+        setEpisodes(data.episodes || []);
+        setEpisodesLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setEpisodesLoading(false);
+      });
+  }, [tmdbId, activeSeason, type]);
+
+  // Load watched state from localStorage on mount/id change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(`watched:${tmdbId || imdbId}`);
+      if (stored) {
+        try {
+          setWatchedEpisodes(JSON.parse(stored));
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setWatchedEpisodes({});
+      }
+    }
+  }, [tmdbId, imdbId]);
+
+  const toggleWatched = (s: number, epNum: number) => {
+    const key = `${s}:${epNum}`;
+    const newWatched = { ...watchedEpisodes, [key]: !watchedEpisodes[key] };
+    setWatchedEpisodes(newWatched);
+    localStorage.setItem(`watched:${tmdbId || imdbId}`, JSON.stringify(newWatched));
+  };
+
+  const seasonEpisodesCount = episodes.length;
+  const watchedInSeasonCount = episodes.filter(ep => watchedEpisodes[`${activeSeason}:${ep.episode_number}`]).length;
+  const watchedPercentage = seasonEpisodesCount > 0 ? Math.round((watchedInSeasonCount / seasonEpisodesCount) * 100) : 0;
+  const isAllWatched = seasonEpisodesCount > 0 && episodes.every(ep => watchedEpisodes[`${activeSeason}:${ep.episode_number}`]);
+
+  const toggleSelectAll = () => {
+    const newWatched = { ...watchedEpisodes };
+    episodes.forEach(ep => {
+      newWatched[`${activeSeason}:${ep.episode_number}`] = !isAllWatched;
+    });
+    setWatchedEpisodes(newWatched);
+    localStorage.setItem(`watched:${tmdbId || imdbId}`, JSON.stringify(newWatched));
+  };
 
   const failed = sources.length === 0;
   const currentSource = sources[sourceIdx];
@@ -99,7 +178,6 @@ export default function VideoPlayerClient({
   // Parse playlist positions
   const currentIdx = playlist.indexOf(currentId);
   const prevId = currentIdx > 0 ? playlist[currentIdx - 1] : null;
-  const nextId = currentIdx < playlist.length - 1 ? playlist[currentIdx + 1] : null;
 
   // Parse cast members safely
   const castItems = (cast_list ?? []).slice(0, 8).map(c => {
@@ -109,13 +187,6 @@ export default function VideoPlayerClient({
     }
     return c as CastMember;
   });
-
-  // Action: Copy Share URL
-  function handleShare() {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   return (
     <div className="watch-page">
@@ -148,17 +219,6 @@ export default function VideoPlayerClient({
               </button>
             )}
 
-            {nextId && (
-              <button 
-                onClick={() => { setShowTrailer(false); router.push(`/stream/${nextId}`); }}
-                className="watch-nav-btn right"
-                style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', width: 44, height: 44, borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}
-                aria-label="Next movie"
-              >
-                <ChevronRight size={24} />
-              </button>
-            )}
-
             {/* Video Iframe */}
             {failed ? (
               <div className="watch-unavailable" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
@@ -171,7 +231,6 @@ export default function VideoPlayerClient({
                 className="watch-iframe"
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 allowFullScreen
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
                 referrerPolicy="no-referrer"
                 title={title}
               />
@@ -198,25 +257,16 @@ export default function VideoPlayerClient({
               <h2 style={{ fontSize: 20, margin: 0, fontWeight: 700 }}>{title}</h2>
             </div>
             
-            {/* Buttons: Add, Share, Download */}
+            {/* Buttons: Add, Download */}
             <div style={{ display: 'flex', gap: 8 }}>
               {/* Add to Vault */}
               <Link 
-                href={imdbId ? `/add?omdbId=${imdbId}` : `/add?tmdbId=${tmdbId || ''}`}
+                href={imdbId ? `/add?omdbId=${imdbId}&title=${encodeURIComponent(title)}` : `/add?tmdbId=${tmdbId || ''}&title=${encodeURIComponent(title)}`}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', cursor: 'pointer', textDecoration: 'none' }}
                 title="Add to Vault"
               >
                 <Plus size={18} />
               </Link>
-              
-              {/* Share */}
-              <button 
-                onClick={handleShare}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: 8, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: copied ? 'var(--green)' : '#fff', cursor: 'pointer' }}
-                title="Share stream link"
-              >
-                <Share2 size={18} />
-              </button>
 
               {/* Download */}
               <button 
@@ -229,16 +279,9 @@ export default function VideoPlayerClient({
             </div>
           </div>
 
-          {/* Toast Notification */}
-          {copied && (
-            <div style={{ background: 'var(--green)', color: '#000', padding: '8px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600, display: 'inline-block', marginBottom: 16 }}>
-              Stream link copied to clipboard!
-            </div>
-          )}
-
           {/* Warning banner callout */}
           <div className="watch-warning-banner" style={{ background: 'rgba(230,50,50,0.06)', border: '1px solid rgba(230,50,50,0.15)', padding: '12px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.85)', marginBottom: 24 }}>
-            <span>🚀 Please try different servers if one isn&apos;t working, and consider using ad blockers or the Brave browser 😊.</span>
+            <span>Please try different servers if one isn&apos;t working, and consider using ad blockers or the Brave browser.</span>
           </div>
 
           {/* Server provider grid */}
@@ -273,8 +316,7 @@ export default function VideoPlayerClient({
                       position: 'relative'
                     }}
                   >
-                    <span style={{ fontSize: 14 }}>{meta.flag}</span>
-                    <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src.name.toLowerCase()}</span>
+                    <span style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Server {i + 1}</span>
                     <span 
                       style={{ 
                         width: 6, 
@@ -284,71 +326,296 @@ export default function VideoPlayerClient({
                         display: 'block' 
                       }} 
                     />
-                    {meta.sparkles && (
-                      <span style={{ position: 'absolute', top: -3, right: -3, fontSize: 10 }} title="Recommended Source">✨</span>
-                    )}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* TV Season/Episode Selector */}
+          {/* TV Season/Episode Selector - Custom Tabbed UI */}
           {type === 'tv' && (
-            <div className="watch-tv-selectors" style={{ marginTop: 24, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20 }}>
-              <h3 style={{ fontSize: 13, textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', marginBottom: 16 }}>TV Navigation</h3>
+            <div style={{ marginTop: 24, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20 }}>
               
-              {/* Season tabs */}
-              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, marginBottom: 16 }}>
-                {[1, 2, 3, 4, 5].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => router.push(`/stream/${currentId}?s=${s}&e=1`)}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: 6,
-                      border: season === s ? '1px solid var(--red)' : '1px solid rgba(255,255,255,0.08)',
-                      background: season === s ? 'rgba(230,50,50,0.1)' : 'rgba(255,255,255,0.03)',
-                      color: season === s ? '#fff' : 'var(--text-dim)',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    Season {s}
-                  </button>
-                ))}
+              {/* Stats boxes row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '12px 8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 10, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0, letterSpacing: 1, fontWeight: 700 }}>Studio</p>
+                  <p style={{ fontSize: 12, fontWeight: 700, margin: '6px 0 0', textTransform: 'uppercase', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={production || 'N/A'}>
+                    {production || 'N/A'}
+                  </p>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '12px 8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 10, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0, letterSpacing: 1, fontWeight: 700 }}>Runtime</p>
+                  <p style={{ fontSize: 12, fontWeight: 700, margin: '6px 0 0', textTransform: 'uppercase', color: '#fff' }}>
+                    {runtime_min ? `${runtime_min} Min` : '24 Min'}
+                  </p>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '12px 8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: 10, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', margin: 0, letterSpacing: 1, fontWeight: 700 }}>Rated</p>
+                  <p style={{ fontSize: 12, fontWeight: 700, margin: '6px 0 0', textTransform: 'uppercase', color: '#fff' }}>
+                    {imdb_rating ? `${Number(imdb_rating).toFixed(1)} Rated` : 'N/A'}
+                  </p>
+                </div>
               </div>
 
-              {/* Episodes grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(50px, 1fr))', gap: 8 }}>
-                {Array.from({ length: 16 }).map((_, idx) => {
-                  const epNum = idx + 1;
-                  const isCurrent = episode === epNum;
+              {/* Tabs Bar */}
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
+                {(['overview', 'episodes', 'reviews'] as const).map(t => {
+                  const isActive = activeTab === t;
                   return (
                     <button
-                      key={epNum}
-                      onClick={() => router.push(`/stream/${currentId}?s=${season}&e=${epNum}`)}
+                      key={t}
+                      onClick={() => setActiveTab(t)}
                       style={{
-                        height: 38,
-                        borderRadius: 6,
-                        border: isCurrent ? '1px solid var(--red)' : '1px solid rgba(255,255,255,0.06)',
-                        background: isCurrent ? 'rgba(230,50,50,0.1)' : 'rgba(255,255,255,0.02)',
-                        color: isCurrent ? '#fff' : 'var(--text-dim)',
-                        fontSize: 12,
-                        fontWeight: 600,
+                        flex: 1,
+                        padding: '12px 0',
+                        background: 'transparent',
+                        border: 'none',
+                        borderBottom: isActive ? '2px solid var(--red)' : '2px solid transparent',
+                        color: isActive ? '#fff' : 'rgba(255,255,255,0.4)',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        letterSpacing: 1.5,
+                        textTransform: 'uppercase',
                         cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        transition: 'all 0.2s'
                       }}
                     >
-                      E{epNum}
+                      {t}
                     </button>
                   );
                 })}
               </div>
+
+              {/* Tabs Content */}
+              {activeTab === 'overview' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {plot && (
+                    <div>
+                      <h4 style={{ fontSize: 12, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: 1, margin: '0 0 8px' }}>Overview</h4>
+                      <p style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.5, margin: 0 }}>{plot}</p>
+                    </div>
+                  )}
+                  {genre_tags && genre_tags.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: 12, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: 1, margin: '0 0 8px' }}>Genres</h4>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {genre_tags.map(g => (
+                          <span key={g} style={{ fontSize: 11, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: 6, fontWeight: 600 }}>{g}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {aired && (
+                    <div>
+                      <h4 style={{ fontSize: 12, textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: 1, margin: '0 0 4px' }}>First Aired</h4>
+                      <span style={{ fontSize: 13, color: '#fff' }}>{new Date(aired).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'reviews' && (
+                <div style={{ padding: '24px 0', textAlign: 'center', color: 'rgba(255,255,255,0.4)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 8 }}>
+                  <p style={{ fontSize: 13, margin: 0 }}>No reviews logged for this TV show yet.</p>
+                </div>
+              )}
+
+              {activeTab === 'episodes' && (
+                <div>
+                  {/* Season selector horizontal row */}
+                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 10, marginBottom: 16, scrollbarWidth: 'thin' }}>
+                    {seasons && seasons.length > 0 ? (
+                      seasons.filter(s => s.season_number > 0).map(s => (
+                        <button
+                          key={s.id}
+                          onClick={() => {
+                            setActiveSeason(s.season_number);
+                            router.push(`/stream/${currentId}?s=${s.season_number}&e=1${searchParams.get('type') ? `&type=${searchParams.get('type')}` : ''}`);
+                          }}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 6,
+                            border: activeSeason === s.season_number ? '1px solid var(--red)' : '1px solid rgba(255,255,255,0.08)',
+                            background: activeSeason === s.season_number ? 'rgba(230,50,50,0.1)' : 'rgba(255,255,255,0.03)',
+                            color: activeSeason === s.season_number ? '#fff' : 'var(--text-dim)',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {s.name || `Season ${s.season_number}`}
+                        </button>
+                      ))
+                    ) : (
+                      // Fallback seasons if TMDB didn't return seasons list
+                      [1, 2, 3, 4, 5].map(sNum => (
+                        <button
+                          key={sNum}
+                          onClick={() => {
+                            setActiveSeason(sNum);
+                            router.push(`/stream/${currentId}?s=${sNum}&e=1${searchParams.get('type') ? `&type=${searchParams.get('type')}` : ''}`);
+                          }}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 6,
+                            border: activeSeason === sNum ? '1px solid var(--red)' : '1px solid rgba(255,255,255,0.08)',
+                            background: activeSeason === sNum ? 'rgba(230,50,50,0.1)' : 'rgba(255,255,255,0.03)',
+                            color: activeSeason === sNum ? '#fff' : 'var(--text-dim)',
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          Season {sNum}
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Watched progress */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
+                    <span>{watchedInSeasonCount} OF {seasonEpisodesCount} WATCHED • {watchedPercentage}%</span>
+                  </div>
+
+                  {/* Action bar (Select All / Expand) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px 16px', borderRadius: 999, marginBottom: 16 }}>
+                    <button
+                      onClick={toggleSelectAll}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        background: 'none',
+                        border: 'none',
+                        color: '#fff',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    >
+                      <Check size={14} />
+                      <span>{isAllWatched ? 'Deselect All' : 'Select All'}</span>
+                    </button>
+                    <button
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'rgba(255,255,255,0.4)',
+                        cursor: 'pointer',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      aria-label="Expand player"
+                    >
+                      <Maximize2 size={14} />
+                    </button>
+                  </div>
+
+                  {/* Episodes list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {episodesLoading ? (
+                      <div style={{ padding: '40px 0', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+                        <Spinner size={16} />
+                        <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Loading episodes…</span>
+                      </div>
+                    ) : episodes.length > 0 ? (
+                      episodes.map(ep => {
+                        const isWatched = !!watchedEpisodes[`${activeSeason}:${ep.episode_number}`];
+                        const isCurrentPlaying = season === activeSeason && episode === ep.episode_number;
+                        return (
+                          <div
+                            key={ep.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '12px 16px',
+                              borderRadius: 8,
+                              background: isCurrentPlaying ? 'rgba(230,50,50,0.06)' : 'rgba(255,255,255,0.02)',
+                              border: isCurrentPlaying ? '1px solid rgba(230,50,50,0.2)' : '1px solid rgba(255,255,255,0.04)',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0 }}>
+                              {/* Circle Checkbox */}
+                              <button
+                                onClick={() => toggleWatched(activeSeason, ep.episode_number)}
+                                style={{
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: '50%',
+                                  border: isWatched ? '2px solid var(--red)' : '2px solid rgba(255,255,255,0.3)',
+                                  background: isWatched ? 'var(--red)' : 'transparent',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  color: '#fff',
+                                  flexShrink: 0
+                                }}
+                              >
+                                {isWatched && <Check size={10} strokeWidth={3} />}
+                              </button>
+                              {/* Monospace EP Number */}
+                              <span style={{ fontSize: 12, fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)', fontWeight: 600, flexShrink: 0 }}>
+                                EP {String(ep.episode_number).padStart(2, '0')}
+                              </span>
+                              {/* Episode Title */}
+                              <span style={{ fontSize: 13, color: isCurrentPlaying ? '#fff' : 'var(--text-dim)', fontWeight: isCurrentPlaying ? 700 : 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {ep.name || `Episode ${ep.episode_number}`}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginLeft: 12, flexShrink: 0 }}>
+                              {/* Duration */}
+                              <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                                {ep.runtime ? `${ep.runtime} min` : '24 min'}
+                              </span>
+                              {/* Play Button */}
+                              <button
+                                onClick={() => {
+                                  router.push(`/stream/${currentId}?s=${activeSeason}&e=${ep.episode_number}${searchParams.get('type') ? `&type=${searchParams.get('type')}` : ''}`);
+                                }}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: isCurrentPlaying ? 'var(--red)' : 'rgba(255,255,255,0.7)',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: 24,
+                                  height: 24,
+                                  transition: 'transform 0.15s'
+                                }}
+                                onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                                onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                                title="Play Episode"
+                              >
+                                <Play size={14} fill="currentColor" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div style={{ padding: '24px 0', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+                        No episodes found for this season.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

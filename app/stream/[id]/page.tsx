@@ -8,7 +8,7 @@ import type { Movie } from '@/lib/types';
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ s?: string; e?: string }>;
+  searchParams: Promise<{ s?: string; e?: string; type?: string }>;
 };
 
 export default async function WatchPage({ params, searchParams }: Props) {
@@ -26,7 +26,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
   let movie: Movie | null = null;
   let imdbId = '';
   let tmdbId: number | null = null;
-  let mediaType: 'movie' | 'tv' = 'movie';
+  let mediaType: 'movie' | 'tv' = sParams.type === 'tv' ? 'tv' : 'movie';
   let subgenre: string | null = null;
 
   // 1. Resolve IDs and fetch database entry if it exists
@@ -100,6 +100,9 @@ export default async function WatchPage({ params, searchParams }: Props) {
       || videos.find((v) => v.site === 'YouTube');
     if (trailer) {
       trailerKey = trailer.key;
+    }
+    if (tmdbDetail.external_ids?.imdb_id) {
+      imdbId = tmdbDetail.external_ids.imdb_id;
     }
   }
 
@@ -182,6 +185,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
       currentId={id}
       season={season}
       episode={episode}
+      seasons={tmdbDetail?.seasons ?? undefined}
     />
   );
 }

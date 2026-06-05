@@ -55,6 +55,21 @@ export interface TmdbMovieDetail extends TmdbSearchResult {
   credits?: {
     cast: TmdbCastMember[];
   };
+  external_ids?: {
+    imdb_id?: string | null;
+  };
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  seasons?: {
+    air_date?: string;
+    episode_count?: number;
+    id: number;
+    name: string;
+    overview?: string;
+    poster_path?: string | null;
+    season_number: number;
+    vote_average?: number;
+  }[];
 }
 
 // ── Image URL Helpers ─────────────────────────────────────────────────────────
@@ -160,7 +175,7 @@ export async function fetchTmdbDetail(
   try {
     const key = getKey();
     const res  = await fetch(
-      `${TMDB_BASE}/${type}/${tmdbId}?api_key=${key}&append_to_response=credits,videos`,
+      `${TMDB_BASE}/${type}/${tmdbId}?api_key=${key}&append_to_response=credits,videos,external_ids`,
       { next: { revalidate: 86400 } }
     );
     const data = await res.json();
@@ -230,11 +245,13 @@ export async function enrichFromTmdb(
 
 export interface TmdbDiscoverMovie {
   id:            number;
-  title:         string;
+  title?:        string;
+  name?:         string;
   poster_path:   string | null;
   backdrop_path: string | null;
   vote_average:  number;
-  release_date:  string;
+  release_date?: string;
+  first_air_date?: string;
   overview:      string;
 }
 

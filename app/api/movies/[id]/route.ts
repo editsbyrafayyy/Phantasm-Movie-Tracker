@@ -4,6 +4,7 @@ import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/
 import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
 import { computeTotal } from '@/lib/config';
+import { guardOwnerEntry } from '@/lib/guards';
 import type { MovieFormData } from '@/lib/types';
 
 type Params = { params: Promise<{ id: string }> };
@@ -67,6 +68,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (fetchError || !existing) {
     return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
   }
+
+  const guard = guardOwnerEntry(session.user.id, existing.user_id);
+  if (guard) return guard;
 
   // Cast existing movie properly
   const movieMeta = (existing as unknown as { movie: { title: string; omdb_id: string | null; media_type: 'movie' | 'tv' | null } | null }).movie;
@@ -256,6 +260,19 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('entries')
+    .select('user_id')
+    .eq('id', id)
+    .single();
+
+  if (fetchError || !existing) {
+    return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+  }
+
+  const guard = guardOwnerEntry(session.user.id, existing.user_id);
+  if (guard) return guard;
 
   const { error } = await supabase
     .from('entries')

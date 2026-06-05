@@ -4,6 +4,7 @@ import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/
 import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
 import { computeTotal, SUBGENRES } from '@/lib/config';
+import { rateLimit } from '@/lib/ratelimit';
 import type { MovieFormData } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
@@ -17,22 +18,47 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id;
 
+  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
+  if (!rateLimit(ip)) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+  }
+
   // ── Parse + validate body ──────────────────────────────────────────────────
+  const rawBodyText = await req.text();
+  if (rawBodyText.length > 4096) {
+    return NextResponse.json({ error: 'Payload too large.' }, { status: 413 });
+  }
+
   let body: MovieFormData;
   try {
-    body = await req.json();
+    body = JSON.parse(rawBodyText);
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { title, omdbId, subgenre, secondaryTag, recommend, bonus, ...scores } = body;
+  const { omdbId, subgenre, secondaryTag, recommend, bonus, ...scores } = body;
 
-  if (!title?.trim()) {
+  const title = String(body.title ?? '').trim().slice(0, 200);
+  if (!title) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
   }
 
   if (!SUBGENRES.includes(subgenre as typeof SUBGENRES[number])) {
     return NextResponse.json({ error: 'Invalid subgenre' }, { status: 400 });
+  }
+
+  const SCORE_LIMITS: Record<string, number> = {
+    atmosphere: 2, story: 2,
+    characters: 1, pacing: 1, visuals: 1, thrill: 1, sound: 1, impact: 1,
+  };
+  for (const [field, max] of Object.entries(SCORE_LIMITS)) {
+    const val = (body as any)[field];
+    if (val !== '' && val !== null && val !== undefined) {
+      const n = Number(val);
+      if (isNaN(n) || n < 0 || n > max) {
+        return NextResponse.json({ error: `Invalid value for ${field}.` }, { status: 400 });
+      }
+    }
   }
 
   // Service client for writes to the shared movies table (bypasses RLS)

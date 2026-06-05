@@ -4,7 +4,7 @@ import CategoryRow             from '@/components/browse/CategoryRow';
 import TmdbRow                 from '@/components/browse/TmdbRow';
 import type { Entry }          from '@/lib/types';
 import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
-import { getTrendingHorror, getTopRatedHorror, getRecentHorror } from '@/lib/tmdb';
+import { getTrendingHorror, getTopRatedHorror } from '@/lib/tmdb';
 
 const SUBGENRE_ORDER = [
   'Psychological Horror',
@@ -45,11 +45,10 @@ export default async function StreamPage() {
   if (!session) redirect('/login?next=/stream');
 
   // Fetch data in parallel
-  const [entries, trending, topRated, recent] = await Promise.all([
+  const [entries, trending, topRated] = await Promise.all([
     getOwnerEntries(),
     getTrendingHorror(),
     getTopRatedHorror(),
-    getRecentHorror(),
   ]);
 
   // Top 5 with backdrop for hero carousel
@@ -76,7 +75,6 @@ export default async function StreamPage() {
         {/* TMDB discovery rows */}
         <TmdbRow label="New &amp; Popular"    movies={trending}  />
         <TmdbRow label="Highly Rated"         movies={topRated}  />
-        <TmdbRow label="Recently Released"    movies={recent}    />
 
         {/* Owner vault by subgenre */}
         {SUBGENRE_ORDER.map(genre => {

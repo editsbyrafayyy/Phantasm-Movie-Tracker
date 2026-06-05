@@ -9,7 +9,7 @@ const PROTECTED_API   = ['/api/movies', '/api/add-movie', '/api/stats', '/api/st
 // Routes that logged-in users should be bounced away from
 const AUTH_ONLY       = ['/login'];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const res = NextResponse.next({ request: req });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-url-for-build.supabase.co';
@@ -59,6 +59,11 @@ export async function middleware(req: NextRequest) {
   if (isAuthOnly && session) {
     return NextResponse.redirect(new URL('/vault', req.url));
   }
+
+  // ── Security Headers ──────────────────────────────────────────────────────
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('X-XSS-Protection', '1; mode=block');
 
   return res;
 }

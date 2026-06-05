@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image                   from 'next/image';
 import Link                    from 'next/link';
 import { useRouter as useNextRouter } from 'next/navigation';
@@ -22,6 +22,15 @@ export default function MovieDetail({ entry }: MovieDetailProps) {
   const [showConfirm,    setShowConfirm]    = useState(false);
   const [toast,          setToast]          = useState<{ message: string; type: ToastType } | null>(null);
   const [deleting,       setDeleting]       = useState(false);
+  const [userId,         setUserId]         = useState<string | null>(null);
+
+  useEffect(() => {
+    import('@/lib/supabase/client').then(({ createClient }) => {
+      createClient().auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
+    });
+  }, []);
+
+  const canMutate = userId === entry.user_id;
 
   const recColor  = recommend ? RECOMMEND_COLOR[recommend] : undefined;
   const genreKey  = SUBGENRE_COLOR_KEY[subgenre] ?? '';
@@ -171,16 +180,23 @@ export default function MovieDetail({ entry }: MovieDetailProps) {
 
           {/* Actions */}
           <div className="detail-actions">
-            <a href={`/update?id=${entry.id}`} className="btn-outline">
-              <Pencil size={14} aria-hidden="true" /> Edit Ratings
+            {canMutate && (
+              <>
+                <a href={`/update?id=${entry.id}`} className="btn-outline">
+                  <Pencil size={14} aria-hidden="true" /> Edit Ratings
+                </a>
+                <button
+                  className="btn-outline-danger"
+                  onClick={() => setShowConfirm(true)}
+                  disabled={deleting}
+                >
+                  <Trash2 size={14} aria-hidden="true" /> Remove from Vault
+                </button>
+              </>
+            )}
+            <a href={`/stream/${movie.omdb_id}`} className="btn-outline" style={{ background: '#e63232', color: 'white', borderColor: '#e63232' }}>
+              Watch Now
             </a>
-            <button
-              className="btn-outline-danger"
-              onClick={() => setShowConfirm(true)}
-              disabled={deleting}
-            >
-              <Trash2 size={14} aria-hidden="true" /> Remove from Vault
-            </button>
           </div>
         </section>
       </div>

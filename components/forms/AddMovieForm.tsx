@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import OmdbSearchInput from '@/components/forms/OmdbSearchInput';
 import ScoreField      from '@/components/ScoreField';
 import RecommendPills  from '@/components/RecommendPills';
@@ -29,7 +29,20 @@ const EMPTY: MovieFormData = {
 
 export default function AddMovieForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [form,    setForm]    = useState<MovieFormData>(EMPTY);
+
+  useEffect(() => {
+    const titleParam = searchParams.get('title') ?? '';
+    const omdbIdParam = searchParams.get('omdbId') ?? '';
+    if (titleParam || omdbIdParam) {
+      setForm(prev => ({
+        ...prev,
+        title: titleParam,
+        omdbId: omdbIdParam,
+      }));
+    }
+  }, [searchParams]);
   const [loading, setLoading] = useState(false);
   const [toast,   setToast]   = useState<{ message: string; type: ToastType } | null>(null);
 

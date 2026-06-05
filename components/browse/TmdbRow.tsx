@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
 interface Props {
@@ -25,7 +25,7 @@ export default function TmdbRow({ label, movies }: Props) {
   };
 
   return (
-    <section className="category-section" style={{ position: 'relative' }}>
+    <section className="category-section" style={{ position: 'relative', marginBottom: 8 }}>
       <div className="category-header">
         <h2 className="category-heading">{label}</h2>
       </div>
@@ -43,14 +43,14 @@ export default function TmdbRow({ label, movies }: Props) {
           <Link
             key={movie.id}
             href={`/stream/${movie.id}`}
-            className="stream-card"
-            style={{ textDecoration: 'none', display: 'block' }}
+            className="stream-card group"
+            style={{ textDecoration: 'none', display: 'block', position: 'relative' }}
           >
             <div className="stream-card-poster">
               {movie.poster_path ? (
                 <Image
                   src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                  alt={movie.title}
+                  alt={movie.title || movie.name || 'Unknown'}
                   fill
                   className="stream-card-poster-img"
                   unoptimized
@@ -67,16 +67,20 @@ export default function TmdbRow({ label, movies }: Props) {
                 </div>
               )}
               <div className="stream-card-overlay" />
-              {movie.vote_average > 0 && (
-                <div className="stream-card-imdb">
-                  <Star size={9} fill="currentColor" style={{ display: 'inline' }} />
-                  {' '}{movie.vote_average.toFixed(1)}
+
+              {/* View overlay */}
+              <div className="stream-card-play-btn">
+                <div className="stream-card-play-circle" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                  <Eye size={16} color="white" />
                 </div>
-              )}
+              </div>
             </div>
-            <p className="stream-card-title">{movie.title}</p>
-            {movie.release_date && (
-              <p className="stream-card-year">{movie.release_date.slice(0, 4)}</p>
+
+            <p className="stream-card-title" style={{ color: '#fff', marginTop: 8 }}>{movie.title || movie.name}</p>
+            {(movie.release_date || movie.first_air_date) && (
+              <p className="stream-card-year" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
+                {(movie.release_date || movie.first_air_date)?.slice(0, 4)} • Movie
+              </p>
             )}
           </Link>
         ))}

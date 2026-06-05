@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import AddMovieForm from '@/components/forms/AddMovieForm';
+import Spinner from '@/components/ui/Spinner';
 
 export const metadata: Metadata = {
   title: 'Add a Movie — Vault',
@@ -14,7 +16,9 @@ export default function AddMoviePage() {
         <p className="form-subtitle">Every field except title and subgenre is optional.</p>
       </header>
 
-      <AddMovieForm />
+      <Suspense fallback={<div className="form-loading"><Spinner size={24} /> Loading form…</div>}>
+        <AddMovieForm />
+      </Suspense>
     </div>
   );
 }

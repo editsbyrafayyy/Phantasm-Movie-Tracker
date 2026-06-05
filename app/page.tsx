@@ -1,8 +1,9 @@
 import Link    from 'next/link';
 import { Moon, LogIn } from 'lucide-react';
 import HeroBackground from '@/components/HeroBackground';
-import CategoryRow    from '@/components/browse/CategoryRow';
 import HeroCarousel   from '@/components/browse/HeroCarousel';
+import TmdbBrowse     from '@/components/browse/TmdbBrowse';
+import VaultFilter    from '@/components/home/VaultFilter';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -56,13 +57,6 @@ export default async function HomePage() {
     .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
     .slice(0, 8);
 
-  // Group by subgenre for the category rows
-  const bySubgenre: Record<string, Entry[]> = {};
-  for (const entry of entries) {
-    if (!bySubgenre[entry.subgenre]) bySubgenre[entry.subgenre] = [];
-    bySubgenre[entry.subgenre].push(entry);
-  }
-
   const ownerName = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
 
   return (
@@ -103,12 +97,22 @@ export default async function HomePage() {
           )}
         </div>
 
-        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:16 }}>
           <Link href="/stream" style={{
-            fontSize:13, color:'rgba(255,255,255,0.55)',
+            fontSize:13, color:'rgba(255,255,255,0.85)',
             textDecoration:'none', fontFamily:'var(--font-sans)', fontWeight:500,
+            padding:'7px 16px', borderRadius:999,
+            border:'1px solid rgba(255,255,255,0.16)',
           }}>
             Stream
+          </Link>
+          <Link href="/browse" style={{
+            fontSize:13, color:'rgba(255,255,255,0.85)',
+            textDecoration:'none', fontFamily:'var(--font-sans)', fontWeight:500,
+            padding:'7px 16px', borderRadius:999,
+            border:'1px solid rgba(255,255,255,0.16)',
+          }}>
+            Browse
           </Link>
           
           {session ? (
@@ -144,23 +148,16 @@ export default async function HomePage() {
         totalFilms={entries.length}
       />
 
-      {/* ── Category Rows ─────────────────────────────── */}
-      <div className="browse-sections">
-        {SUBGENRE_ORDER.map(genre => {
-          const genreEntries = bySubgenre[genre];
-          if (!genreEntries || genreEntries.length < 2) return null;
-          return <CategoryRow key={genre} label={genre} entries={genreEntries} />;
-        })}
+      {/* ── Global Library (TMDB) ────────────────────── */}
+      <TmdbBrowse />
 
-        {entries.length === 0 && (
-          <div style={{
-            padding:'80px 48px', textAlign:'center',
-            color:'var(--text-muted)', fontFamily:'var(--font-sans)', fontSize:14,
-          }}>
-            No films in the vault yet.
-          </div>
-        )}
+      {/* ── My Vault ──────────────────────────────────── */}
+      <div style={{ padding: '0 32px', marginBottom: 0 }}>
+        <h2 style={{ fontSize: 24, fontWeight: 'bold', margin: 0, color: '#fff' }}>From the Vault</h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>Curated films scored and stored by {ownerName}.</p>
       </div>
+
+      <VaultFilter entries={entries} subgenreOrder={SUBGENRE_ORDER} />
     </div>
   );
 }

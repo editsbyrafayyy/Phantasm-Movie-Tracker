@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/ratelimit';
 import { SCORE_FIELDS, SUBGENRES } from '@/lib/config';
 import type { StatsData, Entry } from '@/lib/types';
 
@@ -9,7 +10,12 @@ import type { StatsData, Entry } from '@/lib/types';
  * All computation is done in JS after a single DB fetch to keep the
  * Supabase query simple and avoid complex SQL aggregations.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
+  if (!rateLimit(ip)) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+  }
+
   const supabase = await createServerSupabaseClient();
   const { data: { session } } = await supabase.auth.getSession();
 

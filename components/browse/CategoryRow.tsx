@@ -78,31 +78,24 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
 
                   {/* View overlay */}
                   <div className="stream-card-play-btn">
-                    <div className="stream-card-play-circle">
-                      <Eye size={18} color="white" />
+                    <div className="stream-card-play-circle" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                      <Eye size={16} color="white" />
                     </div>
                   </div>
-
-                  {/* IMDb badge */}
-                  {movie.imdb_rating && (
-                    <div className="stream-card-imdb">
-                      ★ {movie.imdb_rating}
-                    </div>
-                  )}
 
                   {/* Vault score */}
                   {entry.total !== null && entry.total > 0 && (
                     <span
                       className="movie-card-score"
-                      style={{ top: 8, right: 8, bottom: 'auto' }}
+                      style={{ top: 8, right: 8, bottom: 'auto', background: 'rgba(0,0,0,0.75)', border: '1px solid rgba(255,255,255,0.1)' }}
                     >
-                      {entry.total}
+                      +{entry.total}
                     </span>
                   )}
                 </div>
 
-                <p className="stream-card-title">{movie.title}</p>
-                {movie.year && <p className="stream-card-year">{movie.year}</p>}
+                <p className="stream-card-title" style={{ color: '#fff', marginTop: 8 }}>{movie.title}</p>
+                {movie.year && <p className="stream-card-year" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{movie.year} • {movie.runtime_min ? `${movie.runtime_min}min` : 'Movie'}</p>}
               </Link>
             </motion.div>
           );

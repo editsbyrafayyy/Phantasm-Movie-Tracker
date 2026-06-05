@@ -41,20 +41,45 @@ export async function GET(
       : p.movieUrl(imdbId, tmdbIdStr)
   }));
 
+  let title = movie?.title ?? '';
+  let poster_url = movie?.poster_url ?? null;
+  let backdrop_url = movie?.backdrop_url ?? null;
+  let plot = movie?.plot ?? null;
+  let year = movie?.year ?? null;
+  let imdb_rating = movie?.imdb_rating ?? null;
+
+  // If not found in DB and ID is numeric (TMDB ID), fetch from TMDB
+  if (!movie && /^\d+$/.test(imdbId) && process.env.TMDB_API_KEY) {
+    try {
+      const tmdbRes = await fetch(`https://api.themoviedb.org/3/movie/${imdbId}?api_key=${process.env.TMDB_API_KEY}`);
+      if (tmdbRes.ok) {
+        const tmdbData = await tmdbRes.json();
+        title = tmdbData.title;
+        poster_url = tmdbData.poster_path ? `https://image.tmdb.org/t/p/w500${tmdbData.poster_path}` : null;
+        backdrop_url = tmdbData.backdrop_path ? `https://image.tmdb.org/t/p/w1280${tmdbData.backdrop_path}` : null;
+        plot = tmdbData.overview;
+        year = tmdbData.release_date ? parseInt(tmdbData.release_date.split('-')[0]) : null;
+        imdb_rating = tmdbData.vote_average;
+      }
+    } catch (err) {
+      console.error("TMDB Fallback fetch error:", err);
+    }
+  }
+
   const payload: StreamEmbed = {
     sources: providers,
-    title:        movie?.title ?? '',
+    title,
     type,
     imdbId,
-    poster_url:   movie?.poster_url   ?? null,
-    backdrop_url: movie?.backdrop_url ?? null,
-    plot:         movie?.plot         ?? null,
+    poster_url,
+    backdrop_url,
+    plot,
     cast_list:    movie?.cast_list    ?? null,
     genre_tags:   movie?.genre_tags   ?? null,
-    year:         movie?.year         ?? null,
+    year,
     director:     movie?.director     ?? null,
     runtime_min:  movie?.runtime_min  ?? null,
-    imdb_rating:  movie?.imdb_rating  ?? null,
+    imdb_rating,
   };
 
   return NextResponse.json(payload);
