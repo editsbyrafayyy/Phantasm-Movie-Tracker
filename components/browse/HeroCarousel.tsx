@@ -43,12 +43,19 @@ export default function HeroCarousel({
     goTo((current + 1) % slides.length);
   }, [current, slides.length, goTo]);
 
+  const nextRef = useRef(next);
+  useEffect(() => {
+    nextRef.current = next;
+  });
+
   // Auto-advance
   useEffect(() => {
     if (slides.length <= 1) return;
-    timerRef.current = setTimeout(next, AUTO_ADVANCE_MS);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [current, next, slides.length]);
+    const timer = setTimeout(() => {
+      nextRef.current();
+    }, AUTO_ADVANCE_MS);
+    return () => clearTimeout(timer);
+  }, [current, slides.length]);
 
   // Touch swipe
   function onTouchStart(e: React.TouchEvent) {

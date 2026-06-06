@@ -1096,13 +1096,16 @@ select.form-input {
 /* Custom Dropdown Select */
 .custom-select-container {
   position: relative;
-  display: inline-block;
+  display: block;
+  width: 100%;
   user-select: none;
 }
 .custom-select-trigger {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  width: 100%;
   padding: 6px 12px;
   background: #090909;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1138,7 +1141,7 @@ select.form-input {
 .custom-select-chevron {
   color: var(--text-muted);
   transition: transform 0.2s ease;
-  margin-left: 4px;
+  margin-left: auto;
 }
 .custom-select-chevron.open {
   transform: rotate(180deg);
@@ -1147,7 +1150,8 @@ select.form-input {
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  min-width: 150px;
+  width: 100%;
+  min-width: 100%;
   background: #090909;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 4px;
@@ -1334,6 +1338,7 @@ select.form-input {
 .summary-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
 .summary-tile { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 24px; display:flex; flex-direction:column; gap:6px; }
 .summary-tile-value { font-family:var(--font-display); font-size:36px; color:var(--text); line-height:1; }
+.summary-tile-value.text-value { font-size:20px; font-family:var(--font-sans); font-weight:700; text-transform:none; line-height:1.2; }
 .summary-tile-label { font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
 /* stat-card base (used by GenreDonut, RatingTimeline/ScoreDistribution) */
@@ -2844,6 +2849,7 @@ select:focus-visible {
     padding-left: 16px !important;
     padding-right: 16px !important;
     width: 100% !important;
+    margin-left: 0 !important; /* Reset margin-left on mobile to prevent overflow */
   }
 
   /* Show mobile header */
@@ -3018,15 +3024,75 @@ select:focus-visible {
   .hero-carousel {
     height: 48vh !important;
     min-height: 340px !important;
-    border-radius: 12px !important;
-    width: calc(100% - 32px) !important;
-    margin: 16px auto !important;
+    border-radius: 0 !important; /* Full width touches viewport edges */
+    width: 100% !important;
+    margin: 0 auto !important;
+    border-left: none !important;
+    border-right: none !important;
   }
   .stream-hero {
     height: 240px !important;
-    border-radius: 12px !important;
-    width: calc(100% - 32px) !important;
-    margin: 16px auto !important;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0 !important; /* Full width touches viewport edges */
+    width: calc(100% + 32px) !important; /* Outward stretch to offset 16px main padding */
+    margin-left: -16px !important;
+    margin-right: -16px !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+  .backdrop-hero {
+    border-radius: 0 !important; /* Full width touches viewport edges */
+    width: calc(100% + 32px) !important; /* Outward stretch to offset 16px main padding */
+    margin-left: -16px !important;
+    margin-right: -16px !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+  
+  /* Grid movie card spacing fix */
+  .browse-grid .stream-card {
+    width: 100% !important;
+  }
+
+  /* Stats Page Fitting & Overflows */
+  .summary-strip {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+  }
+  .summary-tile {
+    padding: 12px 14px !important; /* Reduced padding on mobile to expand inner width */
+    gap: 4px !important;
+  }
+  .summary-tile-value {
+    font-size: 28px !important;
+  }
+  .summary-tile-value.text-value {
+    font-size: 14px !important; /* Scale text down to fit summary tile on mobile */
+  }
+  .histograms-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .stat-card {
+    padding: 16px !important;
+    border-radius: 10px !important;
+  }
+  .chart-card {
+    padding: 16px !important;
+    border-radius: 10px !important;
+  }
+  .score-dist-chart {
+    gap: 8px !important;
+  }
+  .score-dist-chart span {
+    font-size: 9px !important;
+  }
+  .recommend-bar-list > div {
+    grid-template-columns: 70px 1fr 28px !important;
+    gap: 8px !important;
+  }
+  .recommend-bar-list span {
+    font-size: 11px !important;
   }
 }
+

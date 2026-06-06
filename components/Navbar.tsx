@@ -18,9 +18,8 @@ export default function Navbar() {
   const { user, profile, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Return null on all pages that use StreamRail to avoid double navigation overlays.
-  // The pages that do NOT use StreamRail are '/' and '/login'.
-  if (pathname !== '/' && pathname !== '/login') {
+  // Return null on all pages except the login page to avoid double navigation overlaps.
+  if (pathname !== '/login') {
     return null;
   }
 

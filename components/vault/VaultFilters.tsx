@@ -23,10 +23,10 @@ interface VaultFiltersProps {
 }
 
 export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps) {
-  const [search,       setSearch]       = useState('');
-  const [selectedGenres, setGenres]     = useState<string[]>([]);
-  const [selectedRec,  setRec]          = useState('');
-  const [sort,         setSort]         = useState<SortKey>('recent');
+  const [search,        setSearch]       = useState('');
+  const [selectedGenre, setGenre]        = useState('All');
+  const [selectedRec,   setRec]          = useState('All');
+  const [sort,          setSort]         = useState<SortKey>('recent');
 
   const filtered = useMemo(() => {
     let result = [...entries];
@@ -37,13 +37,13 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
       result = result.filter(e => e.movie?.title?.toLowerCase().includes(q));
     }
 
-    // Subgenre filter (multi-select — any match)
-    if (selectedGenres.length > 0) {
-      result = result.filter(e => selectedGenres.includes(e.subgenre));
+    // Subgenre filter (single-select)
+    if (selectedGenre !== 'All') {
+      result = result.filter(e => e.subgenre === selectedGenre);
     }
 
     // Recommend filter
-    if (selectedRec) {
+    if (selectedRec !== 'All') {
       result = result.filter(e => e.recommend === selectedRec);
     }
 
@@ -76,18 +76,14 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
     }
 
     return result;
-  }, [entries, search, selectedGenres, selectedRec, sort]);
+  }, [entries, search, selectedGenre, selectedRec, sort]);
 
   // Propagate filtered results to parent whenever they change
   useEffect(() => {
     onFiltered(filtered);
   }, [filtered, onFiltered]);
 
-  function toggleGenre(g: string) {
-    setGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
-  }
-
-  const activeFilterCount = selectedGenres.length + (selectedRec ? 1 : 0);
+  const activeFilterCount = (selectedGenre !== 'All' ? 1 : 0) + (selectedRec !== 'All' ? 1 : 0);
 
   return (
     <div className="vault-filters">
@@ -104,49 +100,52 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
         />
       </div>
 
-      {/* Subgenre pills */}
-      <div className="vault-genre-pills" role="group" aria-label="Filter by subgenre">
-        {SUBGENRES.map(g => (
-          <button
-            key={g}
-            className={`vault-filter-pill${selectedGenres.includes(g) ? ' active' : ''}`}
-            onClick={() => toggleGenre(g)}
-            aria-pressed={selectedGenres.includes(g)}
-          >
-            {g}
-          </button>
-        ))}
-      </div>
-
-      {/* Recommend + Sort row */}
-      <div className="vault-filter-row">
-        <div className="vault-rec-pills" role="group" aria-label="Filter by recommendation">
-          {RECOMMEND_OPTIONS.map(r => (
-            <button
-              key={r}
-              className={`vault-filter-pill vault-rec-pill vault-rec-pill-${r.toLowerCase()}${selectedRec === r ? ' active' : ''}`}
-              onClick={() => setRec(prev => prev === r ? '' : r)}
-              aria-pressed={selectedRec === r}
-            >
-              {r}
-            </button>
-          ))}
+      {/* Selects Row */}
+      <div className="vault-selects-row" style={{ display: 'flex', gap: 12, width: '100%', flexWrap: 'wrap', marginTop: 12 }}>
+        <div style={{ flex: 1, minWidth: '120px' }}>
+          <CustomSelect
+            value={selectedGenre}
+            onChange={setGenre}
+            options={[
+              { value: 'All', label: 'All Genres' },
+              ...SUBGENRES.map(g => ({ value: g, label: g })),
+            ]}
+            ariaLabel="Filter by genre"
+          />
         </div>
 
-        <CustomSelect
-          value={sort}
-          options={SORT_OPTIONS}
-          onChange={val => setSort(val as SortKey)}
-          ariaLabel="Sort movies"
-          icon={<SlidersHorizontal size={13} />}
-        />
+        <div style={{ flex: 1, minWidth: '120px' }}>
+          <CustomSelect
+            value={selectedRec}
+            onChange={setRec}
+            options={[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'Peak', label: 'Peak' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+              { value: 'Garbage', label: 'Garbage' },
+            ]}
+            ariaLabel="Filter by recommendation"
+          />
+        </div>
+
+        <div style={{ flex: 1, minWidth: '120px' }}>
+          <CustomSelect
+            value={sort}
+            options={SORT_OPTIONS}
+            onChange={val => setSort(val as SortKey)}
+            ariaLabel="Sort movies"
+            icon={<SlidersHorizontal size={13} />}
+          />
+        </div>
       </div>
 
-      {/* Active filter count */}
+      {/* Active filter count / Clear */}
       {activeFilterCount > 0 && (
         <button
           className="vault-clear-filters"
-          onClick={() => { setGenres([]); setRec(''); }}
+          onClick={() => { setGenre('All'); setRec('All'); }}
+          style={{ marginTop: 12 }}
         >
           Clear {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}
         </button>
