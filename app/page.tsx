@@ -2,7 +2,7 @@ import Link    from 'next/link';
 import { Moon, LogIn } from 'lucide-react';
 import HeroBackground from '@/components/HeroBackground';
 import HeroCarousel   from '@/components/browse/HeroCarousel';
-import TmdbBrowse     from '@/components/browse/TmdbBrowse';
+import CategoryRow from '@/components/browse/CategoryRow';
 import VaultFilter    from '@/components/home/VaultFilter';
 import type { Entry } from '@/lib/types';
 
@@ -59,13 +59,16 @@ export default async function HomePage() {
 
   const ownerName = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
 
+  // Filter owner's recommendations
+  const recommendedEntries = entries.filter(e => e.owner_recommended === true);
+
   return (
     <div className="browse-page">
       <HeroBackground />
 
       {/* ── Top Bar ──────────────────────────────────── */}
       <header className="home-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="home-header-logo-wrap" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/" style={{ display:'flex', alignItems:'center', gap:7, textDecoration:'none' }}>
             <Moon size={16} color="var(--red)" />
             <span style={{ fontFamily:'var(--font-display)', fontSize:16, letterSpacing:3, color:'#f2f2f2' }}>
@@ -113,8 +116,12 @@ export default async function HomePage() {
         totalFilms={entries.length}
       />
 
-      {/* ── Global Library (TMDB) ────────────────────── */}
-      <TmdbBrowse />
+      {/* ── Rafay's Recommendations ────────────────────── */}
+      {recommendedEntries.length > 0 && (
+        <div style={{ marginTop: 48 }}>
+          <CategoryRow label="Rafay's Recommendations" entries={recommendedEntries} />
+        </div>
+      )}
 
       {/* ── My Vault ──────────────────────────────────── */}
       <div className="home-vault-section">

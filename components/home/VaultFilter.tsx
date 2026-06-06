@@ -83,11 +83,11 @@ export default function VaultFilter({ entries, subgenreOrder }: Props) {
               ...availableGenres.map(g => ({ value: g, label: g })),
             ]}
             ariaLabel="Filter by genre"
+            align="right"
           />
         </div>
       </div>
 
-      {/* Filter Results */}
       {subgenreOrder.map(genre => {
         const genreEntries = bySubgenre[genre];
         // If they filtered specifically by a genre, don't enforce the length < 2 rule so they can see their single movie

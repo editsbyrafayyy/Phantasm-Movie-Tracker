@@ -4,6 +4,7 @@ import { useState, Suspense, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Moon } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 
 function LoginForm() {
   const router       = useRouter();
@@ -101,11 +102,13 @@ function LoginForm() {
     </section>
   );
 }
-
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="form-loading">Loading…</div>}>
-      <LoginForm />
-    </Suspense>
+    <>
+      <Navbar />
+      <Suspense fallback={<div className="form-loading">Loading…</div>}>
+        <LoginForm />
+      </Suspense>
+    </>
   );
 }

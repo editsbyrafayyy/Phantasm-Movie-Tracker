@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Inter, Bebas_Neue } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/layout/AuthProvider';
-import Navbar           from '@/components/Navbar';
 import StarField        from '@/components/StarField';
 import MobileBottomNav  from '@/components/layout/MobileBottomNav';
 
@@ -56,7 +55,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           <StarField />
-          <Navbar />
           <main>{children}</main>
           <MobileBottomNav />
         </AuthProvider>

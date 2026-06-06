@@ -37,6 +37,7 @@ export interface Entry {
   impact:        number | null;
   bonus:         0 | 1;
   total:         number | null;
+  owner_recommended?: boolean;
   created_at:    string;
   updated_at:    string;
   movie:         Movie;              // joined from movies table

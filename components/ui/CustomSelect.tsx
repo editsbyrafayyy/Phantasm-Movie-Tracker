@@ -14,6 +14,7 @@ interface CustomSelectProps {
   onChange: (value: string) => void;
   ariaLabel?: string;
   icon?: React.ReactNode;
+  align?: 'left' | 'right';
 }
 
 export default function CustomSelect({
@@ -22,6 +23,7 @@ export default function CustomSelect({
   onChange,
   ariaLabel,
   icon,
+  align = 'left',
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -102,7 +104,7 @@ export default function CustomSelect({
       </button>
 
       {isOpen && (
-        <ul className="custom-select-dropdown" role="listbox">
+        <ul className={`custom-select-dropdown align-${align}`} role="listbox">
           {options.map((option, idx) => {
             const isSelected = option.value === value;
             const isFocused = idx === focusedIndex;

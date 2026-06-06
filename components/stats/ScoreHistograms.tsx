@@ -29,7 +29,7 @@ export default function ScoreHistograms({ data }: ScoreHistogramsProps) {
           return (
             <div key={field} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 8, padding: 16 }}>
               <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-light)', marginBottom: 12 }}>{field}</p>
-              <div style={{ display: 'flex', alignItems: 'flex-end', height: 80, gap: 4, paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <div className="histogram-bars-container">
                 {buckets.map(b => {
                   const heightPct = (b.count / maxCount) * 80;
                   return (

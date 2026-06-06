@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Play, Pencil, Trash2, Star, Film } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, Trash2, Star, Film, Pin } from 'lucide-react';
 import { SCORE_FIELDS } from '@/lib/config';
 import type { Entry } from '@/lib/types';
 
@@ -31,8 +31,38 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting]     = useState(false);
   const [toast, setToast]           = useState<{ msg: string; ok: boolean } | null>(null);
+  const [isRecommended, setIsRecommended] = useState(!!entry.owner_recommended);
+  const [togglingRec, setTogglingRec] = useState(false);
 
   const { movie } = entry;
+
+  async function toggleRecommendation() {
+    setTogglingRec(true);
+    const nextVal = !isRecommended;
+    setIsRecommended(nextVal);
+    
+    try {
+      const res = await fetch(`/api/movies/${entry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner_recommended: nextVal }),
+      });
+      
+      if (!res.ok) throw new Error('Toggle failed');
+      
+      setToast({
+        msg: nextVal ? "Pinned to Rafay's Recommendations" : "Removed from Rafay's Recommendations",
+        ok: true
+      });
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      setIsRecommended(!nextVal);
+      setToast({ msg: 'Failed to update recommendation. Try again.', ok: false });
+    } finally {
+      setTogglingRec(false);
+    }
+  }
   const bgImg    = movie.backdrop_url ?? movie.poster_url ?? null;
   const title    = movie.title ?? 'Unknown';
   const recStyle = entry.recommend ? RECOMMEND_STYLE[entry.recommend] : null;
@@ -152,6 +182,15 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
             )}
             {isOwner && (
               <>
+                <button
+                  onClick={toggleRecommendation}
+                  className={`btn-edit${isRecommended ? ' active-rec' : ''}`}
+                  disabled={togglingRec}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Pin size={14} fill={isRecommended ? 'currentColor' : 'none'} />
+                  {isRecommended ? 'Recommended' : 'Recommend'}
+                </button>
                 <Link href={`/update?id=${entry.id}`} className="btn-edit">
                   <Pencil size={14} />
                   Edit Ratings

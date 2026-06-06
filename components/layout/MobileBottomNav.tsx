@@ -2,20 +2,45 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Home, Film, Star, Plus, BarChart3, LogIn } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  const [optimisticLoggedIn, setOptimisticLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const cached = localStorage.getItem('vault_has_session');
+    if (cached === 'true') {
+      setOptimisticLoggedIn(true);
+    } else if (cached === 'false') {
+      setOptimisticLoggedIn(false);
+    }
+  }, []);
+
+  // Sync with actual auth state once loaded
+  useEffect(() => {
+    if (!loading) {
+      const hasSession = !!user;
+      setOptimisticLoggedIn(hasSession);
+      localStorage.setItem('vault_has_session', hasSession ? 'true' : 'false');
+    }
+  }, [user, loading]);
 
   function isActive(path: string) {
     return pathname === path ? ' active' : '';
   }
 
+  // Use actual state if loaded, otherwise fallback to optimistic state, default to false (guest)
+  const showLoggedIn = optimisticLoggedIn !== null ? optimisticLoggedIn : false;
+
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-      <Link href="/stream" className={`mobile-bottom-nav-link${isActive('/stream')}`}>
+      <Link href="/" className={`mobile-bottom-nav-link${isActive('/')}`}>
         <Home size={20} />
         <span>Home</span>
       </Link>
@@ -23,28 +48,26 @@ export default function MobileBottomNav() {
         <Film size={20} />
         <span>Browse</span>
       </Link>
-      {!loading && (
-        user ? (
-          <>
-            <Link href="/add" className={`mobile-bottom-nav-link${isActive('/add')}`}>
-              <Plus size={20} />
-              <span>Log Film</span>
-            </Link>
-            <Link href="/vault" className={`mobile-bottom-nav-link${isActive('/vault')}`}>
-              <Star size={20} />
-              <span>Ratings</span>
-            </Link>
-            <Link href="/stats" className={`mobile-bottom-nav-link${isActive('/stats')}`}>
-              <BarChart3 size={20} />
-              <span>Stats</span>
-            </Link>
-          </>
-        ) : (
-          <Link href="/login" className={`mobile-bottom-nav-link${isActive('/login')}`}>
-            <LogIn size={20} />
-            <span>Sign In</span>
+      {showLoggedIn ? (
+        <>
+          <Link href="/add" className={`mobile-bottom-nav-link${isActive('/add')}`}>
+            <Plus size={20} />
+            <span>Log Film</span>
           </Link>
-        )
+          <Link href="/vault" className={`mobile-bottom-nav-link${isActive('/vault')}`}>
+            <Star size={20} />
+            <span>Ratings</span>
+          </Link>
+          <Link href="/stats" className={`mobile-bottom-nav-link${isActive('/stats')}`}>
+            <BarChart3 size={20} />
+            <span>Stats</span>
+          </Link>
+        </>
+      ) : (
+        <Link href="/login" className={`mobile-bottom-nav-link${isActive('/login')}`}>
+          <LogIn size={20} />
+          <span>Sign In</span>
+        </Link>
       )}
     </nav>
   );

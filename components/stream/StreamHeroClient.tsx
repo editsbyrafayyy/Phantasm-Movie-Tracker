@@ -1,24 +1,77 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Entry } from '@/lib/types';
+
+const AUTO_ADVANCE_MS = 6000;
 
 export default function StreamHeroClient({ featured }: { featured: Entry[] }) {
   const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
-  // Auto-cycle
-  // (using useEffect would need "use client" at top which is already set)
-  const entry = featured[current];
-  const bg    = entry?.movie.backdrop_url ?? entry?.movie.poster_url ?? null;
+  const goTo = useCallback((idx: number) => {
+    if (animating || idx === current) return;
+    setAnimating(true);
+    setCurrent(idx);
+    setTimeout(() => setAnimating(false), 500);
+  }, [animating, current]);
+
+  const prev = useCallback(() => {
+    goTo((current - 1 + featured.length) % featured.length);
+  }, [current, featured.length, goTo]);
+
+  const next = useCallback(() => {
+    goTo((current + 1) % featured.length);
+  }, [current, featured.length, goTo]);
+
+  const nextRef = useRef(next);
+  useEffect(() => {
+    nextRef.current = next;
+  });
+
+  // Auto-advance
+  useEffect(() => {
+    if (featured.length <= 1) return;
+    const timer = setTimeout(() => {
+      nextRef.current();
+    }, AUTO_ADVANCE_MS);
+    return () => clearTimeout(timer);
+  }, [current, featured.length]);
+
+  // Touch swipe
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  
+  function onTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 40) {
+      if (delta < 0) {
+        next();
+      } else {
+        prev();
+      }
+    }
+    touchStartX.current = null;
+  }
 
   if (featured.length === 0) return null;
 
+  const entry = featured[current];
+  const bg    = entry?.movie.backdrop_url ?? entry?.movie.poster_url ?? null;
+
   return (
-    <div className="stream-hero">
+    <div 
+      className="stream-hero"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Background image */}
       <AnimatePresence mode="sync">
         {bg && (
@@ -44,6 +97,28 @@ export default function StreamHeroClient({ featured }: { featured: Entry[] }) {
 
       <div className="stream-hero-gradient" />
 
+      {/* Slide Navigation Arrows */}
+      {featured.length > 1 && (
+        <>
+          <button
+            className="hero-arrow hero-arrow-left"
+            onClick={prev}
+            aria-label="Previous film"
+            style={{ zIndex: 10 }}
+          >
+            <ChevronLeft size={22} />
+          </button>
+          <button
+            className="hero-arrow hero-arrow-right"
+            onClick={next}
+            aria-label="Next film"
+            style={{ zIndex: 10 }}
+          >
+            <ChevronRight size={22} />
+          </button>
+        </>
+      )}
+
       <div className="stream-hero-content">
         {/* Dots */}
         {featured.length > 1 && (
@@ -52,7 +127,7 @@ export default function StreamHeroClient({ featured }: { featured: Entry[] }) {
               <button
                 key={i}
                 className={`stream-hero-dot${i === current ? ' active' : ''}`}
-                onClick={() => setCurrent(i)}
+                onClick={() => goTo(i)}
                 aria-label={`Go to slide ${i + 1}`}
               />
             ))}

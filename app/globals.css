@@ -1149,8 +1149,8 @@ select.form-input {
 .custom-select-dropdown {
   position: absolute;
   top: calc(100% + 4px);
-  right: 0;
-  width: 100%;
+  left: 0;
+  width: max-content !important;
   min-width: 100%;
   background: #090909;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1160,6 +1160,10 @@ select.form-input {
   list-style: none;
   z-index: 100;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+.custom-select-dropdown.align-right {
+  left: auto !important;
+  right: 0 !important;
 }
 .custom-select-option {
   padding: 8px 14px;
@@ -1338,7 +1342,7 @@ select.form-input {
 .summary-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
 .summary-tile { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 24px; display:flex; flex-direction:column; gap:6px; }
 .summary-tile-value { font-family:var(--font-display); font-size:36px; color:var(--text); line-height:1; }
-.summary-tile-value.text-value { font-size:20px; font-family:var(--font-sans); font-weight:700; text-transform:none; line-height:1.2; }
+.summary-tile-value.text-value { font-size:20px; font-family:var(--font-sans); font-weight:700; text-transform:none; line-height:1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }
 .summary-tile-label { font-family:var(--font-sans); font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
 /* stat-card base (used by GenreDonut, RatingTimeline/ScoreDistribution) */
@@ -1370,6 +1374,14 @@ select.form-input {
 .histograms-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:16px; }
 @media (max-width:768px) { .histograms-grid { grid-template-columns:repeat(2,1fr); } }
 .histogram-label { font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px; }
+.histogram-bars-container {
+  display: flex;
+  align-items: flex-end;
+  height: 80px;
+  gap: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
 .top-rated-list { list-style:none; }
 .top-rated-item { display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:6px;transition:background .1s; }
 .top-rated-item.alt { background:var(--surface-2); }
@@ -1694,6 +1706,11 @@ select:focus-visible {
   border-color: rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.03);
   transform: translateY(-1px);
+}
+.btn-edit.active-rec {
+  border-color: var(--red) !important;
+  background: rgba(230, 50, 50, 0.12) !important;
+  color: #fff !important;
 }
 .btn-delete-icon {
   display: inline-flex;
@@ -2136,7 +2153,6 @@ select:focus-visible {
 .category-scroll-btn.right { right: 16px; }
 @media (max-width:768px) { .category-scroll-btn { display: none; } }
 
-/* ── Stream Card ─────────────────────────────────────────────────────────── */
 .stream-card {
   flex-shrink:0;
   width:160px;
@@ -2144,6 +2160,33 @@ select:focus-visible {
   cursor:pointer;
   text-decoration:none;
   display:block;
+}
+
+.browse-container {
+  padding: 40px;
+  min-height: 100vh;
+  background: var(--bg);
+}
+@media (max-width:768px) {
+  .browse-container {
+    padding: 24px 16px 60px 16px;
+  }
+}
+
+.browse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 24px 16px;
+}
+@media (max-width:768px) {
+  .browse-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 16px 12px;
+  }
+}
+
+.browse-grid .stream-card {
+  width: 100% !important;
 }
 .stream-card-poster {
   position:relative;
@@ -2430,11 +2473,10 @@ select:focus-visible {
   border: 1px solid rgba(255,255,255,0.1);
   width: 100%;
   height: 70vh;
-  min-height: calc(100svh - 56px); /* Mobile viewport height adaptation */
+  min-height: 460px;
   overflow: hidden;
   background: #080808;
 }
-
 @media (min-width: 1024px) {
   .hero-carousel {
     height: 70vh;
@@ -2480,7 +2522,7 @@ select:focus-visible {
 
 @media (max-width: 640px) {
   .hero-content {
-    padding: 80px 20px 40px 20px; /* Reduced vertical paddings to avoid viewport overflow */
+    padding: 56px 20px 72px 20px; /* 72px bottom clears the dots row (20px bottom + 8px dot + gap) */
     margin-top: 0;
   }
 }
@@ -2588,7 +2630,7 @@ select:focus-visible {
   .hero-dots {
     right: auto;
     left: 20px;
-    bottom: 20px;
+    bottom: 28px;
   }
 }
 
@@ -2819,6 +2861,11 @@ select:focus-visible {
 .header-nav-btn:active {
   transform: translateY(0);
 }
+.header-nav-btn.active {
+  border-color: var(--red) !important;
+  background: rgba(230, 50, 50, 0.12) !important;
+  color: #fff !important;
+}
 
 /* ── Mobile Layout & Navigation ────────────────────────────────────────────────── */
 
@@ -2841,15 +2888,22 @@ select:focus-visible {
     flex-direction: column;
     min-height: 100vh;
     display: flex;
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
   }
 
   .stream-main {
     padding-top: 56px !important; /* Space for the fixed top header */
-    padding-bottom: 64px !important; /* Space for the fixed bottom navigation */
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important; /* Space for the fixed bottom navigation */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
     width: 100% !important;
     margin-left: 0 !important; /* Reset margin-left on mobile to prevent overflow */
+  }
+
+  .page-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   /* Show mobile header */
@@ -2871,9 +2925,10 @@ select:focus-visible {
   .mobile-header-logo {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     text-decoration: none;
-    color: #fff;
+    color: var(--accent);
+    flex-shrink: 0;
   }
 
   .mobile-header-logo-icon {
@@ -2906,15 +2961,15 @@ select:focus-visible {
     justify-content: space-around;
     align-items: center;
     position: fixed;
-    bottom: 0;
+    bottom: -10px !important; /* Shift down to hide viewport safe gaps */
     left: 0;
     right: 0;
-    height: 64px;
-    background: #060606;
+    height: calc(74px + env(safe-area-inset-bottom)) !important; /* Extend height down */
+    background: #060606 !important;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 0 8px;
     z-index: 1000;
-    padding-bottom: env(safe-area-inset-bottom); /* iOS support */
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important; /* Push up contents iOS support + viewport expansion hack */
   }
 
   .mobile-bottom-nav-link {
@@ -3022,8 +3077,9 @@ select:focus-visible {
   
   /* Banners sizing and rounding overrides */
   .hero-carousel {
-    height: 48vh !important;
-    min-height: 340px !important;
+    height: 520px !important;
+    min-height: unset !important;
+    max-height: none !important;
     border-radius: 0 !important; /* Full width touches viewport edges */
     width: 100% !important;
     margin: 0 auto !important;
@@ -3048,10 +3104,6 @@ select:focus-visible {
     border-right: none !important;
   }
   
-  /* Grid movie card spacing fix */
-  .browse-grid .stream-card {
-    width: 100% !important;
-  }
 
   /* Stats Page Fitting & Overflows */
   .summary-strip {
@@ -3094,5 +3146,81 @@ select:focus-visible {
   .recommend-bar-list span {
     font-size: 11px !important;
   }
-}
 
+  /* Mobile header nav buttons */
+  .mobile-header-nav {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mobile-header-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    text-decoration: none;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .mobile-header-nav-btn.active {
+    color: #fff;
+    border-color: var(--red);
+    background: rgba(230, 50, 50, 0.12);
+  }
+  .mobile-header-nav-btn:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* Stats Grid constraint to avoid right edge overflow */
+  .stats-charts-grid {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    grid-template-columns: 1fr !important;
+  }
+  .stats-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  .stat-card,
+  .chart-card {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  .histogram-bars-container {
+    gap: 2px !important;
+  }
+  .stats-histograms-full {
+    grid-column: auto !important;
+  }
+  .stats-histograms-full > .stat-card {
+    grid-column: auto !important;
+  }
+  .genre-bar-row {
+    grid-template-columns: 100px 1fr 28px !important;
+    gap: 8px !important;
+  }
+
+  /* Fix bottom nav seeping content */
+  .mobile-bottom-nav {
+    background: #060606 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  /* Keep home header logo visible on all screen sizes */
+}

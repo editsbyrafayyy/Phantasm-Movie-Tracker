@@ -136,6 +136,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
             onChange={val => setSort(val as SortKey)}
             ariaLabel="Sort movies"
             icon={<SlidersHorizontal size={13} />}
+            align="right"
           />
         </div>
       </div>

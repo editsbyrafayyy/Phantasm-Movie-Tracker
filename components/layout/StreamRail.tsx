@@ -25,7 +25,7 @@ export default function StreamRail() {
 
         {/* Media */}
         <p className="stream-rail-section-heading">Media</p>
-        <Link href="/stream" className={`stream-rail-link${isActive('/stream')}`}>
+        <Link href="/" className={`stream-rail-link${isActive('/')}`}>
           <Home size={16} className="stream-rail-icon" />
           <span className="stream-rail-label-text">Home</span>
         </Link>
@@ -82,15 +82,24 @@ export default function StreamRail() {
           <Moon size={16} className="mobile-header-logo-icon" />
           <span className="mobile-header-logo-text">VAULT</span>
         </Link>
-        {user ? (
-          <Link href="/profile" className="mobile-header-profile" aria-label="Profile">
-            <User size={16} />
+        
+        <div className="home-header-buttons">
+          <Link href="/stream" className={`header-nav-btn primary${isActive('/stream')}`}>
+            Stream
           </Link>
-        ) : (
-          <Link href="/login" className="mobile-header-profile" aria-label="Sign In">
-            <LogIn size={16} />
+          <Link href="/browse" className={`header-nav-btn primary${isActive('/browse')}`}>
+            Browse
           </Link>
-        )}
+          {user ? (
+            <Link href="/vault" className={`header-nav-btn secondary${isActive('/vault')}`}>
+              Your Vault →
+            </Link>
+          ) : (
+            <Link href="/login" className={`header-nav-btn secondary${isActive('/login')}`}>
+              Sign In
+            </Link>
+          )}
+        </div>
       </header>
     </>
   );

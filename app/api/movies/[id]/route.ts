@@ -4,7 +4,7 @@ import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/
 import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
 import { computeTotal } from '@/lib/config';
-import { guardOwnerEntry } from '@/lib/guards';
+import { guardOwnerEntry, OWNER_ID } from '@/lib/guards';
 import type { MovieFormData } from '@/lib/types';
 
 type Params = { params: Promise<{ id: string }> };
@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let body: Partial<MovieFormData>;
+  let body: Partial<MovieFormData> & { owner_recommended?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -71,6 +71,27 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const guard = guardOwnerEntry(user.id, existing.user_id);
   if (guard) return guard;
+
+  // Quick toggle logic if only updating owner_recommended
+  if (body.owner_recommended !== undefined && Object.keys(body).every(k => k === 'owner_recommended')) {
+    if (user.id !== OWNER_ID) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    const { data, error } = await supabase
+      .from('entries')
+      .update({ owner_recommended: body.owner_recommended })
+      .eq('id', id)
+      .select('*, movie:movies (*)')
+      .single();
+
+    if (error || !data) {
+      console.error('PATCH /api/movies/[id] owner_recommended error', error);
+      return NextResponse.json({ error: 'Failed to update recommendation' }, { status: 500 });
+    }
+
+    revalidatePath('/', 'layout');
+    return NextResponse.json({ success: true, entry: data });
+  }
 
   // Cast existing movie properly
   const movieMeta = (existing as unknown as { movie: { title: string; omdb_id: string | null; media_type: 'movie' | 'tv' | null } | null }).movie;
@@ -303,6 +324,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       impact:        body.impact     !== '' ? body.impact     : null,
       bonus:         body.bonus      ?? 0,
       total,
+      owner_recommended: (body.owner_recommended !== undefined && user.id === OWNER_ID) ? body.owner_recommended : undefined,
     })
     .eq('id', id)
     .select('*, movie:movies (*)')

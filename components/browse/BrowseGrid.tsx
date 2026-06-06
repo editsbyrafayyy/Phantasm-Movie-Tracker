@@ -85,7 +85,7 @@ export default function BrowseGrid() {
   };
 
   return (
-    <div style={{ padding: '40px', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="browse-container">
       {/* Search and Navigation Header */}
       <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
@@ -151,14 +151,14 @@ export default function BrowseGrid() {
       </div>
 
       {loading && page === 1 ? (
-        <div className="browse-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '24px 16px' }}>
+        <div className="browse-grid">
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} style={{ width: '100%', aspectRatio: '2/3', background: 'rgba(255,255,255,0.05)', borderRadius: 8, animation: 'pulse 2s infinite' }} />
           ))}
         </div>
       ) : (
         <>
-          <div className="browse-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '24px 16px' }}>
+          <div className="browse-grid">
             {movies.map((movie, idx) => (
               <Link
                 key={`${movie.id}-${idx}`}
