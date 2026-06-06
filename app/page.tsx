@@ -1,9 +1,9 @@
 import Link    from 'next/link';
-import { Moon, LogIn } from 'lucide-react';
 import HeroBackground from '@/components/HeroBackground';
 import HeroCarousel   from '@/components/browse/HeroCarousel';
 import CategoryRow from '@/components/browse/CategoryRow';
 import VaultFilter    from '@/components/home/VaultFilter';
+import StreamRail     from '@/components/layout/StreamRail';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -66,47 +66,7 @@ export default async function HomePage() {
     <div className="browse-page">
       <HeroBackground />
 
-      {/* ── Top Bar ──────────────────────────────────── */}
-      <header className="home-header">
-        <div className="home-header-logo-wrap" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/" style={{ display:'flex', alignItems:'center', gap:7, textDecoration:'none' }}>
-            <Moon size={16} color="var(--red)" />
-            <span style={{ fontFamily:'var(--font-display)', fontSize:16, letterSpacing:3, color:'#f2f2f2' }}>
-              VAULT
-            </span>
-          </Link>
-          {!session && (
-            <span style={{
-              fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
-              textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              padding: '2px 6px', borderRadius: 4, marginLeft: 4
-            }}>
-              Guest View
-            </span>
-          )}
-        </div>
-
-        <div className="home-header-buttons">
-          <Link href="/stream" className="header-nav-btn primary">
-            Stream
-          </Link>
-          <Link href="/browse" className="header-nav-btn primary">
-            Browse
-          </Link>
-          
-          {session ? (
-            <Link href="/vault" className="header-nav-btn secondary">
-              Your Vault →
-            </Link>
-          ) : (
-            <Link href="/login" className="header-nav-btn secondary">
-              <LogIn size={13} />
-              Sign In
-            </Link>
-          )}
-        </div>
-      </header>
+      <StreamRail />
 
       {/* ── Hero Carousel ───────────────────────────── */}
       <HeroCarousel

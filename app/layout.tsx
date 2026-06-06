@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Bebas_Neue } from 'next/font/google';
+import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { AuthProvider } from '@/components/layout/AuthProvider';
 import StarField        from '@/components/StarField';
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <NextTopLoader showSpinner={false} color="#e63232" height={3} />
         <AuthProvider>
           <StarField />
           <main>{children}</main>

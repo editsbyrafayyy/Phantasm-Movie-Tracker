@@ -57,7 +57,7 @@ export async function proxy(req: NextRequest) {
   // ── Auth-only routes: redirect logged-in users away from /login ───────────
   const isAuthOnly = AUTH_ONLY.some(p => pathname.startsWith(p));
   if (isAuthOnly && session) {
-    return NextResponse.redirect(new URL('/vault', req.url));
+    return NextResponse.redirect(new URL('/', req.url));
   }
 
   // ── Security Headers ──────────────────────────────────────────────────────

@@ -53,7 +53,7 @@ export default function MovieDetail({ entry }: MovieDetailProps) {
 
   return (
     <div className="detail-page">
-      <Link href="/vault" className="back-link">
+      <Link href="/" className="back-link">
         <ArrowLeft size={14} aria-hidden="true" /> Back to Vault
       </Link>
       {/* Two-column layout */}

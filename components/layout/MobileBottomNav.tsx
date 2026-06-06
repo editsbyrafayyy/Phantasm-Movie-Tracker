@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Home, Film, Star, Plus, BarChart3, LogIn } from 'lucide-react';
+import { Home, Film, Play, Plus, User } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function MobileBottomNav() {
@@ -32,7 +32,10 @@ export default function MobileBottomNav() {
   }, [user, loading]);
 
   function isActive(path: string) {
-    return pathname === path ? ' active' : '';
+    if (path === '/') {
+      return pathname === '/' ? ' active' : '';
+    }
+    return pathname.startsWith(path) ? ' active' : '';
   }
 
   // Use actual state if loaded, otherwise fallback to optimistic state, default to false (guest)
@@ -40,35 +43,28 @@ export default function MobileBottomNav() {
 
   return (
     <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-      <Link href="/" className={`mobile-bottom-nav-link${isActive('/')}`}>
+      <Link href="/" className={`mobile-bottom-nav-link${isActive('/')}`} prefetch={true}>
         <Home size={20} />
-        <span>Home</span>
+        <span>Vault</span>
       </Link>
-      <Link href="/browse" className={`mobile-bottom-nav-link${isActive('/browse')}`}>
+      <Link href="/browse" className={`mobile-bottom-nav-link${isActive('/browse')}`} prefetch={true}>
         <Film size={20} />
         <span>Browse</span>
       </Link>
-      {showLoggedIn ? (
-        <>
-          <Link href="/add" className={`mobile-bottom-nav-link${isActive('/add')}`}>
-            <Plus size={20} />
-            <span>Log Film</span>
-          </Link>
-          <Link href="/vault" className={`mobile-bottom-nav-link${isActive('/vault')}`}>
-            <Star size={20} />
-            <span>Ratings</span>
-          </Link>
-          <Link href="/stats" className={`mobile-bottom-nav-link${isActive('/stats')}`}>
-            <BarChart3 size={20} />
-            <span>Stats</span>
-          </Link>
-        </>
-      ) : (
-        <Link href="/login" className={`mobile-bottom-nav-link${isActive('/login')}`}>
-          <LogIn size={20} />
-          <span>Sign In</span>
+      <Link href="/stream" className={`mobile-bottom-nav-link${isActive('/stream')}`} prefetch={true}>
+        <Play size={20} />
+        <span>Stream</span>
+      </Link>
+      {showLoggedIn && (
+        <Link href="/add" className={`mobile-bottom-nav-link${isActive('/add')}`} prefetch={true}>
+          <Plus size={20} />
+          <span>Log Film</span>
         </Link>
       )}
+      <Link href="/profile" className={`mobile-bottom-nav-link${isActive('/profile')}`} prefetch={true}>
+        <User size={20} />
+        <span>Profile</span>
+      </Link>
     </nav>
   );
 }

@@ -4,12 +4,11 @@ import { useState, Suspense, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Moon } from 'lucide-react';
-import Navbar from '@/components/Navbar';
 
 function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const next         = searchParams.get('next') ?? '/vault';
+  const next         = searchParams.get('next') ?? '/';
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
@@ -104,11 +103,8 @@ function LoginForm() {
 }
 export default function LoginPage() {
   return (
-    <>
-      <Navbar />
-      <Suspense fallback={<div className="form-loading">Loading…</div>}>
-        <LoginForm />
-      </Suspense>
-    </>
+    <Suspense fallback={<div className="form-loading">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

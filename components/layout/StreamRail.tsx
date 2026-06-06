@@ -1,106 +1,108 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Moon, Home, Film, Star, Plus, BarChart3, User, LogIn, LogOut } from 'lucide-react';
+import { Moon, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function StreamRail() {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   function isActive(path: string) {
-    return pathname === path ? ' active' : '';
+    if (path === '/') {
+      return pathname === '/' ? ' active' : '';
+    }
+    return pathname.startsWith(path) ? ' active' : '';
   }
 
+  const initial = profile?.display_name?.[0] ?? profile?.username?.[0] ?? user?.email?.[0] ?? '?';
+  const displayName = profile?.display_name ?? profile?.username ?? user?.email ?? '';
+
   return (
-    <>
-      {/* Desktop Sidebar Navigation */}
-      <nav className="stream-rail" aria-label="Streaming navigation">
+    <header className="unified-top-navbar" aria-label="Main navigation">
+      <div className="navbar-container">
         {/* Logo */}
-        <Link href="/" className="stream-rail-logo">
-          <Moon size={18} className="stream-rail-logo-icon" />
-          <span className="stream-rail-logo-text">VAULT</span>
+        <Link href="/" className="navbar-logo" prefetch={true}>
+          <Moon size={18} className="navbar-logo-icon" />
+          <span className="navbar-logo-text">VAULT</span>
         </Link>
 
-        {/* Media */}
-        <p className="stream-rail-section-heading">Media</p>
-        <Link href="/" className={`stream-rail-link${isActive('/')}`}>
-          <Home size={16} className="stream-rail-icon" />
-          <span className="stream-rail-label-text">Home</span>
-        </Link>
-        <Link href="/browse" className={`stream-rail-link${isActive('/browse')}`}>
-          <Film size={16} className="stream-rail-icon" />
-          <span className="stream-rail-label-text">Browse</span>
-        </Link>
-
-        {/* Vault (auth required) */}
-        {user && (
-          <>
-            <p className="stream-rail-section-heading">Vault</p>
-            <Link href="/vault" className={`stream-rail-link${isActive('/vault')}`}>
-              <Star size={16} className="stream-rail-icon" />
-              <span className="stream-rail-label-text">My Ratings</span>
-            </Link>
-            <Link href="/add" className={`stream-rail-link${isActive('/add')}`}>
-              <Plus size={16} className="stream-rail-icon" />
-              <span className="stream-rail-label-text">Log a Film</span>
-            </Link>
-            <Link href="/stats" className={`stream-rail-link${isActive('/stats')}`}>
-              <BarChart3 size={16} className="stream-rail-icon" />
-              <span className="stream-rail-label-text">My Stats</span>
-            </Link>
-          </>
-        )}
-
-        {/* Account */}
-        <div style={{ flex: 1 }} />
-        <p className="stream-rail-section-heading">Account</p>
-
-        {user ? (
-          <>
-            <Link href="/profile" className={`stream-rail-link${isActive('/profile')}`}>
-              <User size={16} className="stream-rail-icon" />
-              <span className="stream-rail-label-text">Profile</span>
-            </Link>
-            <button className="stream-rail-link" onClick={signOut} style={{ borderLeft: '2px solid transparent' }}>
-              <LogOut size={16} className="stream-rail-icon" />
-              <span className="stream-rail-label-text">Sign Out</span>
-            </button>
-          </>
-        ) : (
-          <Link href="/login" className={`stream-rail-link${isActive('/login')}`}>
-            <LogIn size={16} className="stream-rail-icon" />
-            <span className="stream-rail-label-text">Sign In</span>
+        {/* Desktop Navigation Links */}
+        <nav className="navbar-links-desktop" aria-label="Desktop navigation">
+          <Link href="/" className={`navbar-link${isActive('/')}`} prefetch={true}>
+            Rafay's Movies
           </Link>
-        )}
-      </nav>
-
-      {/* Mobile Fixed Top Header */}
-      <header className="mobile-header">
-        <Link href="/" className="mobile-header-logo">
-          <Moon size={16} className="mobile-header-logo-icon" />
-          <span className="mobile-header-logo-text">VAULT</span>
-        </Link>
-        
-        <div className="home-header-buttons">
-          <Link href="/stream" className={`header-nav-btn primary${isActive('/stream')}`}>
-            Stream
-          </Link>
-          <Link href="/browse" className={`header-nav-btn primary${isActive('/browse')}`}>
+          <Link href="/browse" className={`navbar-link${isActive('/browse')}`} prefetch={true}>
             Browse
           </Link>
-          {user ? (
-            <Link href="/vault" className={`header-nav-btn secondary${isActive('/vault')}`}>
-              Your Vault →
+          <Link href="/stream" className={`navbar-link${isActive('/stream')}`} prefetch={true}>
+            Stream
+          </Link>
+          {user && (
+            <Link href="/vault" className={`navbar-link${isActive('/vault')}`} prefetch={true}>
+              Your Vault
             </Link>
+          )}
+        </nav>
+
+        {/* Right side: Auth area */}
+        <div className="navbar-auth-desktop">
+          {user ? (
+            <div className="navbar-profile-dropdown-container">
+              <button
+                className="navbar-profile-btn"
+                onClick={() => setDropdownOpen(o => !o)}
+                aria-expanded={dropdownOpen}
+                aria-haspopup="true"
+                aria-label="User menu"
+              >
+                <span className="navbar-profile-avatar" aria-hidden="true">
+                  {initial.toUpperCase()}
+                </span>
+                <span className="navbar-profile-username">{displayName}</span>
+                <ChevronDown size={14} className={`navbar-profile-chevron${dropdownOpen ? ' open' : ''}`} aria-hidden="true" />
+              </button>
+
+              {dropdownOpen && (
+                <>
+                  <div
+                    className="navbar-dropdown-backdrop"
+                    onClick={() => setDropdownOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div className="navbar-dropdown" role="menu">
+                    <Link
+                      href="/profile"
+                      className="navbar-dropdown-item"
+                      role="menuitem"
+                      onClick={() => setDropdownOpen(false)}
+                      prefetch={true}
+                    >
+                      <User size={14} aria-hidden="true" />
+                      Profile
+                    </Link>
+                    <button
+                      className="navbar-dropdown-item navbar-dropdown-signout"
+                      role="menuitem"
+                      onClick={() => { setDropdownOpen(false); signOut(); }}
+                    >
+                      <LogOut size={14} aria-hidden="true" />
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
-            <Link href="/login" className={`header-nav-btn secondary${isActive('/login')}`}>
+            <Link href="/login" className={`navbar-link${isActive('/login')}`} prefetch={true}>
               Sign In
             </Link>
           )}
         </div>
-      </header>
-    </>
+      </div>
+    </header>
   );
 }
