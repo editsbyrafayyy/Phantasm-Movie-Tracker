@@ -57,6 +57,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
+  // Score validation
+  const SCORE_LIMITS: Record<string, number> = {
+    atmosphere: 2, story: 2,
+    characters: 1, pacing: 1, visuals: 1, thrill: 1, sound: 1, impact: 1,
+  };
+  for (const [field, max] of Object.entries(SCORE_LIMITS)) {
+    const val = (body as any)[field];
+    if (val !== '' && val !== null && val !== undefined) {
+      const n = Number(val);
+      if (isNaN(n) || n < 0 || n > max) {
+        return NextResponse.json({ error: `Invalid value for ${field}. Maximum allowed is ${max}.` }, { status: 400 });
+      }
+    }
+  }
+
   // Verify the entry belongs to this user (extra check on top of RLS)
   const { data: existing, error: fetchError } = await supabase
     .from('entries')

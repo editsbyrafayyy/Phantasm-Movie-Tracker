@@ -3139,15 +3139,15 @@ select:focus-visible {
     justify-content: space-around;
     align-items: center;
     position: fixed;
-    bottom: -10px !important; /* Shift down to hide viewport safe gaps */
+    bottom: -20px !important; /* Shift down aggressively to hide any viewport gaps */
     left: 0;
     right: 0;
-    height: calc(74px + env(safe-area-inset-bottom)) !important; /* Extend height down */
+    height: calc(84px + env(safe-area-inset-bottom)) !important; /* Extend height down */
     background: #060606 !important;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 0 8px;
     z-index: 1000;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important; /* Push up contents iOS support + viewport expansion hack */
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important; /* Push up contents */
   }
 
   .mobile-bottom-nav-link {

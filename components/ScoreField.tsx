@@ -23,7 +23,9 @@ export default function ScoreField({ id, label, max, value, onChange, disabled }
   return (
     <div className="score-field">
       <div className="score-field-header">
-        <label htmlFor={id} className="score-label">{label}</label>
+        <label htmlFor={id} className="score-label">
+          {label} <span style={{ opacity: 0.5, fontSize: '0.85em', marginLeft: 4 }}>(max {max})</span>
+        </label>
         <span className="score-val">{displayVal}</span>
       </div>
       <input

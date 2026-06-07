@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     if (val !== '' && val !== null && val !== undefined) {
       const n = Number(val);
       if (isNaN(n) || n < 0 || n > max) {
-        return NextResponse.json({ error: `Invalid value for ${field}.` }, { status: 400 });
+        return NextResponse.json({ error: `Invalid value for ${field}. Maximum allowed is ${max}.` }, { status: 400 });
       }
     }
   }

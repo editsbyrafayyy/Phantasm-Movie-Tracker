@@ -289,7 +289,7 @@ export default function VideoPlayerClient({
                 className="watch-iframe"
                 style={{ width: '100%', height: '100%', border: 'none' }}
                 allowFullScreen
-                referrerPolicy="no-referrer"
+                referrerPolicy="origin"
                 title={title}
               />
             )}
@@ -337,11 +337,7 @@ export default function VideoPlayerClient({
           </div>
 
           {/* Under player controls */}
-          <div className="watch-actions-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 12 }}>
-            <div>
-              <p style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.05em', margin: 0 }}>Now Playing</p>
-              <h2 style={{ fontSize: 20, margin: 0, fontWeight: 700 }}>{title}</h2>
-            </div>
+          <div className="watch-actions-row" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 16, marginBottom: 12 }}>
             
             {/* Buttons: Add, Download */}
             <div style={{ display: 'flex', gap: 8 }}>
@@ -380,6 +376,7 @@ export default function VideoPlayerClient({
                 const isActive = sourceIdx === i && !showTrailer;
                 return (
                   <button
+                    type="button"
                     key={src.id}
                     className={`watch-server-btn${isActive ? ' active' : ''}`}
                     onClick={() => {
