@@ -3,7 +3,6 @@ import HeroBackground from '@/components/HeroBackground';
 import HeroCarousel   from '@/components/browse/HeroCarousel';
 import CategoryRow from '@/components/browse/CategoryRow';
 import VaultFilter    from '@/components/home/VaultFilter';
-import StreamRail     from '@/components/layout/StreamRail';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -22,23 +21,8 @@ const SUBGENRE_ORDER = [
   'Thriller (Non-Horror)',
 ];
 
-import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
-
-async function getOwnerEntries(): Promise<Entry[]> {
-  const OWNER_ID = process.env.OWNER_USER_ID;
-  if (!OWNER_ID) return [];
-
-  const supabase = createServiceClient();
-  const { data } = await supabase
-    .from('entries')
-    .select('*, movie:movies (*)')
-    .eq('user_id', OWNER_ID)
-    .order('created_at', { ascending: false });
-
-  return data ?? [];
-}
-
-export const revalidate = 300;
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { getOwnerEntries } from '@/lib/data';
 
 export const metadata = {
   title: "Vault — Horror Film Tracker",
@@ -46,10 +30,13 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const authPromise = createServerSupabaseClient().then(s => s.auth.getSession());
+  const entriesPromise = getOwnerEntries();
 
-  const entries = await getOwnerEntries();
+  const [{ data: { session } }, entries] = await Promise.all([
+    authPromise,
+    entriesPromise
+  ]);
 
   // Top-rated entries with backdrop for the hero carousel
   const slides = entries
@@ -66,8 +53,6 @@ export default async function HomePage() {
     <div className="browse-page">
       <HeroBackground />
 
-      <StreamRail />
-
       {/* ── Hero Carousel ───────────────────────────── */}
       <HeroCarousel
         slides={slides}
@@ -75,6 +60,18 @@ export default async function HomePage() {
         ownerName={ownerName}
         totalFilms={entries.length}
       />
+
+      {/* ── Guest Notice ───────────────────────────── */}
+      {!session && (
+        <div className="guest-notice-banner">
+          <p className="guest-notice-text">
+            You are browsing as a guest. This is {ownerName}'s personal horror vault.
+          </p>
+          <Link href="/login" className="guest-notice-link" prefetch={true}>
+            Sign in →
+          </Link>
+        </div>
+      )}
 
       {/* ── Rafay's Recommendations ────────────────────── */}
       {recommendedEntries.length > 0 && (

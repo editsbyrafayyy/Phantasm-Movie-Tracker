@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
 import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
@@ -89,6 +89,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Failed to update recommendation' }, { status: 500 });
     }
 
+    if (user.id === OWNER_ID) {
+      revalidateTag('owner-entries', 'max');
+    }
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, entry: data });
   }
@@ -335,6 +338,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 });
   }
 
+  if (user.id === OWNER_ID) {
+    revalidateTag('owner-entries', 'max');
+  }
+
   revalidatePath('/', 'layout');
   return NextResponse.json({ success: true, entry: data });
 }
@@ -369,6 +376,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   if (error) {
     console.error('DELETE /api/movies/[id] error', error);
     return NextResponse.json({ error: 'Failed to delete entry' }, { status: 500 });
+  }
+
+  if (user.id === OWNER_ID) {
+    revalidateTag('owner-entries', 'max');
   }
 
   revalidatePath('/', 'layout');

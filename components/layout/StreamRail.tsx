@@ -97,9 +97,12 @@ export default function StreamRail() {
               )}
             </div>
           ) : (
-            <Link href="/login" className={`navbar-link${isActive('/login')}`} prefetch={true}>
-              Sign In
-            </Link>
+            <div className="flex items-center gap-3">
+              <span className="navbar-guest-label">Guest</span>
+              <Link href="/login" className="navbar-signin-btn" prefetch={true}>
+                Sign In
+              </Link>
+            </div>
           )}
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Film, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SUBGENRE_HEX } from '@/lib/config';
@@ -15,6 +16,7 @@ interface CategoryRowProps {
 
 export default function CategoryRow({ label, entries }: CategoryRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   if (entries.length === 0) return null;
 
@@ -53,6 +55,7 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
               whileHover={{ scale: 1.04, y: -5 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+              onMouseEnter={() => router.prefetch(`/vault/${entry.id}`)}
             >
               <Link href={`/vault/${entry.id}`} style={{ textDecoration: 'none', display: 'block' }}>
                 <div className="stream-card-poster">
@@ -62,7 +65,9 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
                       alt={movie.title}
                       fill
                       className="stream-card-poster-img"
-                      unoptimized
+                      sizes="(max-width: 640px) 33vw, 160px"
+                      placeholder="blur"
+                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
                     />
                   ) : (
                     <div style={{

@@ -35,9 +35,9 @@ export default function TmdbBrowse() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 20, paddingLeft: 32 }}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} style={{ width: 180, height: 270, background: 'rgba(255,255,255,0.05)', borderRadius: 8, flexShrink: 0, animation: 'pulse 2s infinite' }} />
+            <div key={i} className="skeleton" style={{ width: 180, height: 270, flexShrink: 0, animationDelay: `${i * 100}ms` }} />
           ))}
         </div>
       ) : (

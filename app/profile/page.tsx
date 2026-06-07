@@ -23,23 +23,26 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  // Fetch user profile from Supabase server-side
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
-    .single();
+  // Parallelize profile and entries fetching
+  const [profileResult, entriesResult] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single(),
+    supabase
+      .from('entries')
+      .select('*, movie:movies (id, title, poster_url)')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: true })
+  ]);
 
-  if (profileError || !profile) {
+  const profile = profileResult.data;
+  const entries = entriesResult.data;
+
+  if (profileResult.error || !profile) {
     redirect('/login');
   }
-
-  // Fetch movie entries for statistics computation
-  const { data: entries, error: entriesError } = await supabase
-    .from('entries')
-    .select('*, movie:movies (id, title, poster_url)')
-    .eq('user_id', session.user.id)
-    .order('created_at', { ascending: true });
 
   const typedProfile = profile as Profile;
   const typedEntries = (entries ?? []) as Entry[];
@@ -53,7 +56,7 @@ export default async function ProfilePage() {
   const stats = computeStats(typedEntries);
 
   return (
-    <div className="profile-page page-container" style={{ maxWidth: 1200, margin: '0 auto' }}>
+    <div className="profile-page page-container profile-bg-glow" style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Profile Details Card - centered & constrained to 560px for a clean layout */}
       <div style={{ maxWidth: 560, margin: '0 auto 48px auto' }}>
         <header className="form-header">

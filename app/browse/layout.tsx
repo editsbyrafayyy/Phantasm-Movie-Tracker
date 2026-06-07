@@ -9,7 +9,6 @@ export const metadata = {
 export default function BrowseLayout({ children }: { children: ReactNode }) {
   return (
     <div className="stream-layout">
-      <StreamRail />
       <main className="stream-main">
         {children}
       </main>

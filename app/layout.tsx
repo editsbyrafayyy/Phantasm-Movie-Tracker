@@ -3,6 +3,7 @@ import { Inter, Bebas_Neue } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { AuthProvider } from '@/components/layout/AuthProvider';
+import StreamRail     from '@/components/layout/StreamRail';
 import StarField        from '@/components/StarField';
 import MobileBottomNav  from '@/components/layout/MobileBottomNav';
 
@@ -56,6 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <NextTopLoader showSpinner={false} color="#e63232" height={3} />
         <AuthProvider>
+          <StreamRail />
           <StarField />
           <main>{children}</main>
           <MobileBottomNav />

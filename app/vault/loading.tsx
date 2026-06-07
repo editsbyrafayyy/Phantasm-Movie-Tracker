@@ -1,9 +1,14 @@
-import Spinner from '@/components/ui/Spinner';
+import { VaultSkeleton } from '@/components/vault/VaultSkeleton';
 
 export default function Loading() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: 'var(--text-muted)' }}>
-      <Spinner size={28} />
+    <div className="vault-page" style={{ paddingTop: 20 }}>
+      <header className="vault-header">
+        <div className="vault-header-inner">
+          <div className="skeleton h-10 w-48 rounded" />
+        </div>
+      </header>
+      <VaultSkeleton count={12} />
     </div>
   );
 }

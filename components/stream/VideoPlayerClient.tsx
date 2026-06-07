@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -12,7 +12,8 @@ import {
   X,
   ExternalLink,
   Check,
-  Maximize2
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import Spinner from '@/components/ui/Spinner';
 
@@ -99,10 +100,55 @@ export default function VideoPlayerClient({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const [sourceIdx, setSourceIdx] = useState(0);
   const [showTrailer, setShowTrailer] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Fullscreen event listeners
+  useEffect(() => {
+    const handler = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handler);
+    document.addEventListener('webkitfullscreenchange', handler);
+    document.addEventListener('mozfullscreenchange', handler);
+    document.addEventListener('msfullscreenchange', handler);
+    return () => {
+      document.removeEventListener('fullscreenchange', handler);
+      document.removeEventListener('webkitfullscreenchange', handler);
+      document.removeEventListener('mozfullscreenchange', handler);
+      document.removeEventListener('msfullscreenchange', handler);
+    };
+  }, []);
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const el = playerContainerRef.current;
+      if (!el) return;
+      if (el.requestFullscreen) {
+        el.requestFullscreen();
+      } else if ((el as any).webkitRequestFullscreen) {
+        (el as any).webkitRequestFullscreen();
+      } else if ((el as any).mozRequestFullScreen) {
+        (el as any).mozRequestFullScreen();
+      } else if ((el as any).msRequestFullscreen) {
+        (el as any).msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+    }
+  }
 
   // TV tabbed interface state
   const [activeTab, setActiveTab] = useState<'overview' | 'episodes' | 'reviews'>('episodes');
@@ -110,6 +156,14 @@ export default function VideoPlayerClient({
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [activeSeason, setActiveSeason] = useState(season);
   const [watchedEpisodes, setWatchedEpisodes] = useState<Record<string, boolean>>({});
+  const [showFallback, setShowFallback] = useState(false);
+
+  // Fallback timer for server sources
+  useEffect(() => {
+    setShowFallback(false);
+    const t = setTimeout(() => setShowFallback(true), 4000);
+    return () => clearTimeout(t);
+  }, [sourceIdx, showTrailer]);
 
   // Sync activeSeason when season prop changes (e.g. on URL navigation)
   useEffect(() => {
@@ -205,7 +259,11 @@ export default function VideoPlayerClient({
           </div>
 
           {/* 16:9 Video Player Wrap */}
-          <div className="watch-iframe-container" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+          <div 
+            ref={playerContainerRef}
+            className="watch-iframe-container" 
+            style={{ position: 'relative', width: '100%', aspectRatio: '16/9', background: '#000', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+          >
             
             {/* Playlist Nav Chevrons */}
             {prevId && (
@@ -234,6 +292,34 @@ export default function VideoPlayerClient({
                 referrerPolicy="no-referrer"
                 title={title}
               />
+            )}
+
+            {/* Fullscreen Toggle Button */}
+            {!failed && !showTrailer && (
+              <button
+                onClick={toggleFullscreen}
+                className="watch-fullscreen-btn"
+                style={{
+                  position: 'absolute',
+                  right: 16,
+                  bottom: 16,
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.6)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 10,
+                  transition: 'all 0.2s'
+                }}
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              >
+                {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+              </button>
             )}
 
             {/* Trailer overlay header */}
@@ -330,6 +416,12 @@ export default function VideoPlayerClient({
                 );
               })}
             </div>
+
+            {showFallback && !showTrailer && (
+              <p style={{ marginTop: 12, fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
+                Not working? Try an alternate server source above.
+              </p>
+            )}
           </div>
 
           {/* TV Season/Episode Selector - Custom Tabbed UI */}
@@ -505,6 +597,7 @@ export default function VideoPlayerClient({
                       <span>{isAllWatched ? 'Deselect All' : 'Select All'}</span>
                     </button>
                     <button
+                      onClick={toggleFullscreen}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -514,9 +607,9 @@ export default function VideoPlayerClient({
                         display: 'flex',
                         alignItems: 'center'
                       }}
-                      aria-label="Expand player"
+                      aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
                     >
-                      <Maximize2 size={14} />
+                      {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                     </button>
                   </div>
 
@@ -628,7 +721,15 @@ export default function VideoPlayerClient({
           <div className="watch-sidebar-poster-card" style={{ display: 'flex', gap: 16 }}>
             <div style={{ position: 'relative', width: 90, height: 130, borderRadius: 8, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
               {poster_url ? (
-                <Image src={poster_url} alt={title} fill style={{ objectFit: 'cover' }} unoptimized />
+                <Image
+                  src={poster_url}
+                  alt={title}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  sizes="120px"
+                  placeholder="blur"
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
+                />
               ) : (
                 <div style={{ height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
               )}
@@ -721,7 +822,13 @@ export default function VideoPlayerClient({
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ position: 'relative', width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', flexShrink: 0 }}>
                       {c.profile_path ? (
-                        <Image src={c.profile_path} alt={c.name} fill style={{ objectFit: 'cover' }} unoptimized />
+                        <Image
+                          src={c.profile_path}
+                          alt={c.name}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                          sizes="48px"
+                        />
                       ) : (
                         <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>
                           {c.name.charAt(0)}

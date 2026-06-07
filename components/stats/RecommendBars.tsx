@@ -1,5 +1,3 @@
-'use client';
-
 import { RECOMMEND_COLOR } from '@/lib/config';
 import type { StatsData } from '@/lib/types';
 

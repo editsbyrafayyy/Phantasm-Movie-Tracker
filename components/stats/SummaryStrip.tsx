@@ -1,5 +1,3 @@
-'use client';
-
 import type { StatsData } from '@/lib/types';
 
 interface Props {

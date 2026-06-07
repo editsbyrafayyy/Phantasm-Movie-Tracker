@@ -133,7 +133,8 @@ export default function OmdbSearchInput({
                     width={28}
                     height={40}
                     className="omdb-thumb-img"
-                    unoptimized
+                    placeholder="blur"
+                    blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
                   />
                 ) : (
                   <div className="omdb-thumb-fallback">

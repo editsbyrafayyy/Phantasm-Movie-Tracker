@@ -1,33 +1,28 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse }       from 'next/server';
-import type { NextRequest }   from 'next/server';
-
-// Routes that require an active Supabase session
-const PROTECTED_PAGES = ['/add', '/update', '/stats', '/profile', '/stream'];
-// API routes that require auth (omdb-search is excluded — it's a server-side proxy)
-const PROTECTED_API   = ['/api/movies', '/api/add-movie', '/api/stats', '/api/stream'];
-// Routes that logged-in users should be bounced away from
-const AUTH_ONLY       = ['/login'];
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function proxy(req: NextRequest) {
-  const res = NextResponse.next({ request: req });
+  let res = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-url-for-build.supabase.co';
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key-for-build';
-
-  // Build a Supabase client that can read/refresh cookies inside middleware
   const supabase = createServerClient(
-    url,
-    anonKey,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
           return req.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            req.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => req.cookies.set(name, value));
+          res = NextResponse.next({
+            request: {
+              headers: req.headers,
+            },
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
             res.cookies.set(name, value, options)
           );
@@ -36,33 +31,37 @@ export async function proxy(req: NextRequest) {
     }
   );
 
-  // Refresh session (keeps JWT from going stale)
   const { data: { session } } = await supabase.auth.getSession();
-  const { pathname }          = req.nextUrl;
+  const { pathname } = req.nextUrl;
 
-  // ── Protected pages → redirect to /login ─────────────────────────────────
-  const isProtectedPage = PROTECTED_PAGES.some(p => pathname.startsWith(p));
-  if (isProtectedPage && !session) {
+  // ── Session Hardening ──────────────────────────────────────────────────────
+  // Explicit session expiry handling
+  if (session?.expires_at && session.expires_at * 1000 < Date.now()) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  // Auth-only routes: redirect logged-in users away from /login
+  if (pathname === '/login' && session) {
+    return NextResponse.redirect(new URL('/', req.url));
+  }
+
+  // Redirect-loop guard: don't redirect /login → /login
+  if (pathname === '/login' && !session) {
+    return res;
+  }
+
+  // Members only routes: /add, /update, /profile, /vault (private), /api/add-movie, /api/stats
+  const membersOnly = ['/add', '/update', '/profile', '/api/add-movie', '/api/stats'];
+  if (membersOnly.some(p => pathname.startsWith(p)) && !session) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // ── Protected API routes → 401 ────────────────────────────────────────────
-  const isProtectedApi = PROTECTED_API.some(p => pathname.startsWith(p));
-  if (isProtectedApi && !session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // ── Auth-only routes: redirect logged-in users away from /login ───────────
-  const isAuthOnly = AUTH_ONLY.some(p => pathname.startsWith(p));
-  if (isAuthOnly && session) {
-    return NextResponse.redirect(new URL('/', req.url));
-  }
-
   // ── Security Headers ──────────────────────────────────────────────────────
   res.headers.set('X-Content-Type-Options', 'nosniff');
-  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('X-Frame-Options', 'SAMEORIGIN');
   res.headers.set('X-XSS-Protection', '1; mode=block');
 
   return res;
@@ -70,7 +69,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match everything except Next.js internals and static assets
-    '/((?!_next/static|_next/image|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

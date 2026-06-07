@@ -26,21 +26,25 @@ export default async function VaultEntryPage({ params }: Props) {
   // Use service client to fetch data — allows guests to view any entry
   const supabase = createServiceClient();
 
-  // Use auth client only to determine session (for isOwner check)
-  const authClient = await createServerSupabaseClient();
-  const { data: { session } } = await authClient.auth.getSession();
-
-  const sessionUserId = session?.user?.id ?? null;
-  const isOwner = sessionUserId !== null && sessionUserId === ownerId;
-
-  // Fetch the specific entry with its joined movie (no user_id filter — guests can view)
-  const { data: entry, error } = await supabase
+  // Parallelize session check and main entry fetch
+  const authClientPromise = createServerSupabaseClient();
+  const entryPromise = supabase
     .from('entries')
     .select('*, movie:movies (*), user_id')
     .eq('id', id)
     .maybeSingle();
 
+  const [authClient, { data: entry, error }] = await Promise.all([
+    authClientPromise,
+    entryPromise
+  ]);
+
+  const { data: { session } } = await authClient.auth.getSession();
+
   if (error || !entry) notFound();
+
+  const sessionUserId = session?.user?.id ?? null;
+  const isOwner = sessionUserId !== null && sessionUserId === ownerId;
 
   const isOwnerEntry = ownerId && entry.user_id === ownerId;
   const isOwnEntry = sessionUserId !== null && entry.user_id === sessionUserId;

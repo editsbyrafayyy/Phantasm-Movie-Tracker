@@ -67,7 +67,8 @@ export default function MovieDetail({ entry }: MovieDetailProps) {
                 alt={`${movie.title} poster`}
                 fill
                 className="detail-poster-img"
-                unoptimized
+                placeholder="blur"
+                blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
               />
             ) : (
               <div className="detail-poster-fallback" aria-hidden="true">

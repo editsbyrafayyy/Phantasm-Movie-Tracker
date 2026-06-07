@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
 import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
@@ -285,6 +285,11 @@ export async function POST(req: NextRequest) {
   if (entryError || !entry) {
     console.error('entries insert error', entryError);
     return NextResponse.json({ error: 'Failed to save entry' }, { status: 500 });
+  }
+
+  const OWNER_ID = process.env.OWNER_USER_ID;
+  if (userId === OWNER_ID) {
+    revalidateTag('owner-entries', 'max');
   }
 
   revalidatePath('/', 'layout');

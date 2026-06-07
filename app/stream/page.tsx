@@ -3,7 +3,8 @@ import StreamHeroClient        from '@/components/stream/StreamHeroClient';
 import CategoryRow             from '@/components/browse/CategoryRow';
 import TmdbRow                 from '@/components/browse/TmdbRow';
 import type { Entry }          from '@/lib/types';
-import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { getOwnerEntries }     from '@/lib/data';
 import { getTrendingHorror, getTopRatedHorror } from '@/lib/tmdb';
 
 const SUBGENRE_ORDER = [
@@ -21,22 +22,6 @@ const SUBGENRE_ORDER = [
   'Horror Comedy',
   'Thriller (Non-Horror)',
 ];
-
-async function getOwnerEntries(): Promise<Entry[]> {
-  const OWNER_ID = process.env.OWNER_USER_ID;
-  if (!OWNER_ID) return [];
-
-  const supabase = createServiceClient();
-  const { data } = await supabase
-    .from('entries')
-    .select('*, movie:movies (*)')
-    .eq('user_id', OWNER_ID)
-    .order('created_at', { ascending: false });
-
-  return data ?? [];
-}
-
-export const revalidate = 300;
 
 export default async function StreamPage() {
   // Auth check — streaming is members only

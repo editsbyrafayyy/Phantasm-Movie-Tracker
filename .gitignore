@@ -2,6 +2,7 @@
 node_modules/
 .pnp
 .pnp.js
+.agents/
 
 # ── Build outputs ─────────────────────────────────────────────────────────────
 .next/
@@ -18,17 +19,10 @@ dist/
 *.json.key
 movie-tracker-*.json
 
-# ── Planning / Design Documents (local-only, not for the repo) ────────────────
-PRD.md
-TECH_SPEC.md
-GOOGLE_SHEETS_SETUP.md
-FRONTEND.md
-PROJECT_PROGRESS.md
-SECURITY.md
-STREAMING.md
-STREAMING_SPEC.md
-UI_UPGRADE.md
-
+# ── Documentation and Planning ────────────────────────────────────────────────
+*.md
+Screenshots/
+Claude Skills/
 # ── OS / Editor ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
@@ -52,6 +46,3 @@ pnpm-debug.log*
 next-env.d.ts
 
 .vercel
-
-# ── Prompt / Design docs ──────────────────────────────────────────────────────
-*-prompt.md

@@ -106,8 +106,10 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
                 alt={`${title} backdrop`}
                 fill
                 style={{ objectFit: 'cover', objectPosition: 'center top' }}
-                unoptimized
+                sizes="100vw"
                 priority
+                placeholder="blur"
+                blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
               />
             </motion.div>
           </>
@@ -280,7 +282,7 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
                             alt={name}
                             fill
                             style={{ objectFit: 'cover' }}
-                            unoptimized
+                            sizes="48px"
                           />
                         ) : (
                           name.charAt(0).toUpperCase()
@@ -317,7 +319,7 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
                             alt={e.movie.title}
                             fill
                             style={{ objectFit: 'cover' }}
-                            unoptimized
+                            sizes="(max-width: 640px) 33vw, 120px"
                           />
                     ) : (
                       <div style={{

@@ -100,8 +100,10 @@ export default function HeroCarousel({
               alt={s.movie.title}
               fill
               style={{ objectFit: 'cover', objectPosition: 'center top' }}
-              unoptimized
+              sizes="100vw"
               priority={i === 0}
+              placeholder="blur"
+              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
             />
           </div>
         ) : null;

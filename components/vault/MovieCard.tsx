@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Film, Play } from 'lucide-react';
+import { Film, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { RECOMMEND_COLOR, SUBGENRE_HEX } from '@/lib/config';
 import { staggerItem, cardSpring } from '@/lib/motion';
@@ -44,9 +44,10 @@ export default function MovieCard({ entry }: MovieCardProps) {
               src={imgSrc}
               alt={`${title} poster`}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 20vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
               className="movie-card-img"
-              unoptimized
+              placeholder="blur"
+              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
             />
           ) : (
             /* Tier 3: genre color gradient */
@@ -80,10 +81,10 @@ export default function MovieCard({ entry }: MovieCardProps) {
             />
           )}
 
-          {/* Play overlay — CSS-driven hover reveal */}
+          {/* Eye overlay — CSS-driven hover reveal */}
           <div className="movie-card-play" aria-hidden="true">
             <div className="movie-card-play-icon">
-              <Play size={18} fill="white" color="white" />
+              <Eye size={18} color="white" />
             </div>
           </div>
 

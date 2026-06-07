@@ -1,5 +1,3 @@
-'use client';
-
 import type { Entry } from '@/lib/types';
 
 interface ScoreDistributionProps {

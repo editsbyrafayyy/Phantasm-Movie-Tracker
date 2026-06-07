@@ -803,7 +803,7 @@ Replace any raw `<img>` tags in `MovieCard.tsx`, `StreamCard.tsx`, and `MovieDet
   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 160px"
   className="object-cover"
   placeholder="blur"
-  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
 />
 ```
 

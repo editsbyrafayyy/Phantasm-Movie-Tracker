@@ -1,5 +1,3 @@
-'use client';
-
 interface GenreDonutProps {
   data: { subgenre: string; count: number; pct: number }[];
 }

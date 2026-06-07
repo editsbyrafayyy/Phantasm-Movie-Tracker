@@ -153,7 +153,7 @@ export default function BrowseGrid() {
       {loading && page === 1 ? (
         <div className="browse-grid">
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} style={{ width: '100%', aspectRatio: '2/3', background: 'rgba(255,255,255,0.05)', borderRadius: 8, animation: 'pulse 2s infinite' }} />
+            <div key={i} className="skeleton" style={{ width: '100%', aspectRatio: '2/3', animationDelay: `${i * 50}ms` }} />
           ))}
         </div>
       ) : (
@@ -173,7 +173,9 @@ export default function BrowseGrid() {
                       alt={movie.title || movie.name || 'Unknown'}
                       fill
                       style={{ objectFit: 'cover' }}
-                      unoptimized
+                      sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 160px"
+                      placeholder="blur"
+                      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
                     />
                   ) : (
                     <div style={{ height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
