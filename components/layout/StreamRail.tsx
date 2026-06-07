@@ -23,17 +23,17 @@ export default function StreamRail() {
 
   return (
     <header className="unified-top-navbar" aria-label="Main navigation">
-      <div className="navbar-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: 'none', padding: 0 }}>
+      <div className="navbar-container unified-navbar-container">
         {/* Left group: Logo + Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+        <div className="navbar-left-group">
           {/* Logo */}
-          <Link href="/" className="navbar-logo" prefetch={true} style={{ paddingLeft: '32px' }}>
+          <Link href="/" className="navbar-logo" prefetch={true}>
             <Moon size={18} className="navbar-logo-icon" />
             <span className="navbar-logo-text">VAULT</span>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="navbar-links-desktop" aria-label="Desktop navigation" style={{ marginLeft: 0 }}>
+          <nav className="navbar-links-desktop" aria-label="Desktop navigation">
             <Link href="/" className={`navbar-link${isActive('/')}`} prefetch={true}>
               Rafay's Movies
             </Link>
@@ -52,7 +52,7 @@ export default function StreamRail() {
         </div>
 
         {/* Right side: Auth area */}
-        <div className="navbar-auth-desktop" style={{ paddingRight: '32px', marginLeft: 0 }}>
+        <div className="navbar-auth-desktop">
           {user ? (
             <div className="navbar-profile-dropdown-container">
               <button
