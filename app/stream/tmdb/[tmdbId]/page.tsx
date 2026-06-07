@@ -1,28 +1,29 @@
-import { redirect, notFound } from 'next/navigation';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
+import { fetchTmdbDetail } from '@/lib/tmdb';
+import StreamDetailV3 from '@/components/stream/StreamDetailV3';
 
-type Props = { params: Promise<{ tmdbId: string }> };
+type Props = { 
+  params: Promise<{ tmdbId: string }>;
+  searchParams: Promise<{ type?: string }>;
+};
 
-export default async function TmdbRedirectPage({ params }: Props) {
+export default async function TmdbDetailPage({ params, searchParams }: Props) {
   const { tmdbId } = await params;
+  const sParams = await searchParams;
+  const id = parseInt(tmdbId, 10);
+  if (isNaN(id)) notFound();
 
-  // Auth check — streaming is members only
-  const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect('/login?next=/stream/tmdb/' + tmdbId);
+  const type = sParams.type === 'tv' ? 'tv' : 'movie';
+  const movie = await fetchTmdbDetail(id, type);
+  if (!movie) notFound();
 
-  const key = process.env.TMDB_API_KEY;
-  if (!key) notFound();
+  const imdbId = movie.external_ids?.imdb_id ?? null;
 
-  const res = await fetch(
-    `https://api.themoviedb.org/3/movie/${tmdbId}/external_ids?api_key=${key}`,
-    { cache: 'no-store' }
+  return (
+    <StreamDetailV3 
+      movie={movie} 
+      imdbId={imdbId} 
+      mediaType={type}
+    />
   );
-  if (!res.ok) notFound();
-
-  const data = await res.json();
-  const imdbId = data.imdb_id as string | null;
-
-  if (!imdbId) notFound();
-  redirect(`/stream/${imdbId}`);
 }

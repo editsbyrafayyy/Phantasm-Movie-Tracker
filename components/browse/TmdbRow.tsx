@@ -44,10 +44,10 @@ export default function TmdbRow({ label, movies }: Props) {
         {movies.slice(0, 20).map(movie => (
           <Link
             key={movie.id}
-            href={`/stream/${movie.id}`}
+            href={`/stream/tmdb/${movie.id}`}
             className="stream-card group"
             style={{ textDecoration: 'none', display: 'block', position: 'relative' }}
-            onMouseEnter={() => router.prefetch(`/stream/${movie.id}`)}
+            onMouseEnter={() => router.prefetch(`/stream/tmdb/${movie.id}`)}
           >
             <div className="stream-card-poster">
               {movie.poster_path ? (

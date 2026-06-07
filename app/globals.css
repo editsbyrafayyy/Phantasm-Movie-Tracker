@@ -3073,8 +3073,7 @@ select:focus-visible {
 }
 
 /* ── Mobile Layout & Navigation ────────────────────────────────────────────────── */
-.mobile-header,
-.mobile-bottom-nav {
+.mobile-header {
   display: none !important;
 }
 
@@ -3103,8 +3102,21 @@ select:focus-visible {
   }
 
   .page-container {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Movie detail mobile padding fix */
+  .detail-back-bar,
+  .backdrop-hero-content,
+  .detail-overview-grid,
+  .detail-overview-main,
+  .detail-overview-side,
+  .detail-subsection {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    box-sizing: border-box !important;
   }
 
   .mobile-bottom-nav {
@@ -3177,17 +3189,17 @@ select:focus-visible {
   .stream-hero {
     height: 420px !important;
     border-radius: 0 !important; /* Full width touches viewport edges */
-    width: calc(100% + 32px) !important; /* Outward stretch to offset 16px main padding */
-    margin-left: -16px !important;
-    margin-right: -16px !important;
+    width: calc(100% + 40px) !important; /* Outward stretch to offset 20px main padding */
+    margin-left: -20px !important;
+    margin-right: -20px !important;
     border-left: none !important;
     border-right: none !important;
   }
   .backdrop-hero {
     border-radius: 0 !important; /* Full width touches viewport edges */
-    width: calc(100% + 32px) !important; /* Outward stretch to offset 16px main padding */
-    margin-left: -16px !important;
-    margin-right: -16px !important;
+    width: calc(100% + 40px) !important; /* Outward stretch to offset 20px main padding */
+    margin-left: -20px !important;
+    margin-right: -20px !important;
     border-left: none !important;
     border-right: none !important;
   }

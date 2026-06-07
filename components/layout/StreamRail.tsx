@@ -23,33 +23,36 @@ export default function StreamRail() {
 
   return (
     <header className="unified-top-navbar" aria-label="Main navigation">
-      <div className="navbar-container">
-        {/* Logo */}
-        <Link href="/" className="navbar-logo" prefetch={true}>
-          <Moon size={18} className="navbar-logo-icon" />
-          <span className="navbar-logo-text">VAULT</span>
-        </Link>
+      <div className="navbar-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: 'none', padding: 0 }}>
+        {/* Left group: Logo + Links */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          {/* Logo */}
+          <Link href="/" className="navbar-logo" prefetch={true} style={{ paddingLeft: '32px' }}>
+            <Moon size={18} className="navbar-logo-icon" />
+            <span className="navbar-logo-text">VAULT</span>
+          </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="navbar-links-desktop" aria-label="Desktop navigation">
-          <Link href="/" className={`navbar-link${isActive('/')}`} prefetch={true}>
-            Rafay's Movies
-          </Link>
-          <Link href="/browse" className={`navbar-link${isActive('/browse')}`} prefetch={true}>
-            Browse
-          </Link>
-          <Link href="/stream" className={`navbar-link${isActive('/stream')}`} prefetch={true}>
-            Stream
-          </Link>
-          {user && (
-            <Link href="/vault" className={`navbar-link${isActive('/vault')}`} prefetch={true}>
-              Your Vault
+          {/* Desktop Navigation Links */}
+          <nav className="navbar-links-desktop" aria-label="Desktop navigation" style={{ marginLeft: 0 }}>
+            <Link href="/" className={`navbar-link${isActive('/')}`} prefetch={true}>
+              Rafay's Movies
             </Link>
-          )}
-        </nav>
+            <Link href="/browse" className={`navbar-link${isActive('/browse')}`} prefetch={true}>
+              Browse
+            </Link>
+            <Link href="/stream" className={`navbar-link${isActive('/stream')}`} prefetch={true}>
+              Stream
+            </Link>
+            {user && (
+              <Link href="/vault" className={`navbar-link${isActive('/vault')}`} prefetch={true}>
+                Your Vault
+              </Link>
+            )}
+          </nav>
+        </div>
 
         {/* Right side: Auth area */}
-        <div className="navbar-auth-desktop">
+        <div className="navbar-auth-desktop" style={{ paddingRight: '32px', marginLeft: 0 }}>
           {user ? (
             <div className="navbar-profile-dropdown-container">
               <button

@@ -162,7 +162,7 @@ export default function BrowseGrid() {
             {movies.map((movie, idx) => (
               <Link
                 key={`${movie.id}-${idx}`}
-                href={`/stream/${movie.id}?type=${mediaType}`}
+                href={`/stream/tmdb/${movie.id}?type=${mediaType}`}
                 className="stream-card group"
                 style={{ textDecoration: 'none', display: 'block', position: 'relative' }}
               >

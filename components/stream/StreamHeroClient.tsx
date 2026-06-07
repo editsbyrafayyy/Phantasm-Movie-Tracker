@@ -163,8 +163,8 @@ export default function StreamHeroClient({ featured }: { featured: Entry[] }) {
             )}
 
             <div className="stream-hero-btns">
-              {entry.movie.omdb_id && (
-                <Link href={`/stream/${entry.movie.omdb_id}`} className="btn-watch">
+              {entry.id && (
+                <Link href={`/vault/${entry.id}`} className="btn-watch">
                   <Play size={14} fill="white" color="white" />
                   Watch Now
                 </Link>
