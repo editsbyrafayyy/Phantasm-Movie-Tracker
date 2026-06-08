@@ -927,6 +927,10 @@ select:focus-visible {
 .btn-outline-danger:disabled { opacity:.4;cursor:not-allowed; }
 .btn-danger { padding:10px 20px;min-height:44px;background:#CC0000;color:#fff;border:none;border-radius:8px;font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;transition:background .15s; }
 .btn-danger:hover { background:#a30000; }
+.btn-logout { display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;min-height:48px;background:rgba(230,50,50,0.1);color:var(--red);border:1px solid rgba(230,50,50,0.25);border-radius:8px;font-family:var(--font-sans);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1); }
+.btn-logout:hover:not(:disabled) { background:rgba(230,50,50,0.25);border-color:rgba(230,50,50,0.45);color:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(230,50,50,0.15); }
+.btn-logout:active:not(:disabled) { transform:translateY(0);box-shadow:none; }
+.btn-logout:disabled { opacity:.5;cursor:not-allowed; }
 .link-btn { background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:inherit;text-decoration:underline;padding:0; }
 
 /* ── Form Inputs ─────────────────────────────────────────────────────────── */
@@ -997,9 +1001,6 @@ select.form-input {
 /* ── Login Page ──────────────────────────────────────────────────────────── */
 .login-page { min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 24px;position:relative;z-index:2; }
 .login-container { width:100%;max-width:400px; }
-.login-logo { display:flex;align-items:center;gap:8px;margin-bottom:36px; }
-.login-logo-icon { opacity:.7; }
-.login-logo-text { font-family:var(--font-display);font-size:18px;letter-spacing:4px;color:var(--text); }
 .login-header { margin-bottom:32px; }
 .login-sub { font-size:13px;color:var(--text-muted);margin-top:8px; }
 .login-form { display:flex;flex-direction:column;gap:16px; }
@@ -3156,17 +3157,19 @@ select:focus-visible {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.35);
     text-decoration: none;
     font-size: 10px;
     font-weight: 500;
     flex: 1;
     height: 100%;
-    transition: color 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .mobile-bottom-nav-link svg {
-    transition: transform 0.2s ease, color 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .mobile-bottom-nav-link.active {
@@ -3175,7 +3178,8 @@ select:focus-visible {
 
   .mobile-bottom-nav-link.active svg {
     color: var(--red);
-    transform: scale(1.05);
+    transform: translateY(-1px) scale(1.08);
+    filter: drop-shadow(0 0 8px rgba(230, 50, 50, 0.45));
   }
 
   .home-vault-section {

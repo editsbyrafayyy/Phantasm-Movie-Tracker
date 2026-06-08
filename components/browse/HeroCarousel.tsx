@@ -141,13 +141,13 @@ export default function HeroCarousel({
         )}
 
         <div className="hero-actions">
-          {canStream && entry.id && (
-            <Link href={`/vault/${entry.id}`} className="btn-watch">
+          {entry.id && (
+            <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-watch">
               <Play size={14} fill="white" color="white" />
               Watch Now
             </Link>
           )}
-          <Link href={`/vault/${entry.id}`} className="btn-edit">
+          <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-edit">
             View Details
           </Link>
         </div>

@@ -9,6 +9,9 @@ import ScoreHistograms from '@/components/stats/ScoreHistograms';
 import TopRatedList    from '@/components/stats/TopRatedList';
 import ScoreDistribution from '@/components/stats/ScoreDistribution';
 import ProfileEdit     from '@/components/profile/ProfileEdit';
+import PasswordReset   from '@/components/profile/PasswordReset';
+import AdminPanel      from '@/components/profile/AdminPanel';
+import SignOutButton   from '@/components/profile/SignOutButton';
 import type { StatsData, Entry, Profile } from '@/lib/types';
 
 export const metadata: Metadata = {
@@ -46,6 +49,8 @@ export default async function ProfilePage() {
 
   const typedProfile = profile as Profile;
   const typedEntries = (entries ?? []) as Entry[];
+  
+  const isOwner = typedProfile.role === 'owner' || session.user.id === process.env.OWNER_USER_ID;
 
   const memberSince = new Date(typedProfile.created_at).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -65,21 +70,36 @@ export default async function ProfilePage() {
         </header>
 
         <div className="profile-card">
-          {/* Avatar */}
-          <div className="profile-avatar" aria-hidden="true">
-            {(typedProfile.display_name?.[0] ?? typedProfile.username[0]).toUpperCase()}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+            {/* Avatar */}
+            <div className="profile-avatar" aria-hidden="true" style={{ marginBottom: 0, flexShrink: 0 }}>
+              {(typedProfile.display_name?.[0] ?? typedProfile.username[0]).toUpperCase()}
+            </div>
+
+            <div className="profile-info" style={{ marginBottom: 0 }}>
+              {/* Edit display name client side form - now acts as the main H2 header */}
+              <ProfileEdit profile={typedProfile} />
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <p className="profile-username" style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 500, margin: 0 }}>
+                  @{typedProfile.username}
+                </p>
+                <p className="profile-meta" style={{ margin: 0 }}>
+                  Member since {memberSince}
+                  {isOwner && <span className="profile-role-badge">Owner</span>}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="profile-info">
-            <p className="profile-username">@{typedProfile.username}</p>
-            <p className="profile-meta">
-              Member since {memberSince}
-              {typedProfile.role === 'owner' && <span className="profile-role-badge">Owner</span>}
-            </p>
-          </div>
+          {/* Password reset form */}
+          <PasswordReset />
 
-          {/* Edit display name client side form */}
-          <ProfileEdit profile={typedProfile} />
+          {/* Admin panel for owner */}
+          {isOwner && <AdminPanel />}
+
+          {/* Sign Out Button */}
+          <SignOutButton />
         </div>
       </div>
 

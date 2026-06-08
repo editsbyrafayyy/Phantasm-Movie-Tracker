@@ -51,11 +51,10 @@ export async function proxy(req: NextRequest) {
     return res;
   }
 
-  // Members only routes: /add, /update, /profile, /vault (private), /api/add-movie, /api/stats
-  const membersOnly = ['/add', '/update', '/profile', '/api/add-movie', '/api/stats'];
+  // Members only routes: /add, /update, /profile, /vault, /browse, /stream, /stats, /api/add-movie, /api/stats
+  const membersOnly = ['/add', '/update', '/profile', '/vault', '/browse', '/stream', '/stats', '/api/add-movie', '/api/stats'];
   if (membersOnly.some(p => pathname.startsWith(p)) && !session) {
     const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);
   }
 

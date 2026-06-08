@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Toast, { type ToastType } from '@/components/ui/Toast';
+import { Pencil } from 'lucide-react';
 import type { Profile } from '@/lib/types';
 
 interface ProfileEditProps {
@@ -37,10 +38,9 @@ export default function ProfileEdit({ profile }: ProfileEditProps) {
   }
 
   return (
-    <div className="form-section" style={{ width: '100%' }}>
-      <p className="section-label">Display Name</p>
+    <div style={{ marginBottom: 4 }}>
       {editing ? (
-        <form onSubmit={handleSave} className="profile-edit-form">
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
           <input
             type="text"
             className="form-input"
@@ -49,32 +49,53 @@ export default function ProfileEdit({ profile }: ProfileEditProps) {
             placeholder={profile.display_name ?? profile.username}
             disabled={saving}
             autoFocus
+            style={{ fontSize: 20, fontWeight: 600, padding: '8px 12px' }}
           />
-          <div className="profile-edit-actions">
-            <button type="submit" className="btn-primary" disabled={saving || !displayName.trim()}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="submit" className="btn-primary" disabled={saving || !displayName.trim()} style={{ minHeight: 32, padding: '6px 16px', fontSize: 13, width: 'auto' }}>
               {saving ? 'Saving…' : 'Save'}
             </button>
-            <button type="button" className="btn-ghost" onClick={() => setEditing(false)}>
+            <button type="button" className="btn-ghost" onClick={() => setEditing(false)} style={{ minHeight: 32, padding: '6px 12px', fontSize: 13, width: 'auto', marginTop: 0 }}>
               Cancel
             </button>
           </div>
         </form>
       ) : (
-        <div className="profile-display-name-row">
-          <span className="profile-display-name">
-            {profile.display_name ?? <span className="text-muted">Not set</span>}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text)', lineHeight: 1.2 }}>
+            {profile.display_name ?? profile.username}
+          </h2>
           <button
-            className="btn-ghost profile-edit-btn"
             onClick={() => { setDisplayName(profile.display_name ?? ''); setEditing(true); }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 4,
+              borderRadius: 4,
+              transition: 'all 0.2s',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.color = 'var(--text)';
+              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.color = 'var(--text-muted)';
+              e.currentTarget.style.background = 'none';
+            }}
+            aria-label="Edit display name"
           >
-            Edit
+            <Pencil size={14} />
           </button>
         </div>
       )}
 
       {toast && (
-        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
     </div>
   );

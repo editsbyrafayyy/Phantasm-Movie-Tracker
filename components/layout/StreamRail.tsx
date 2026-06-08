@@ -37,16 +37,18 @@ export default function StreamRail() {
             <Link href="/" className={`navbar-link${isActive('/')}`} prefetch={true}>
               Rafay's Movies
             </Link>
-            <Link href="/browse" className={`navbar-link${isActive('/browse')}`} prefetch={true}>
-              Browse
-            </Link>
-            <Link href="/stream" className={`navbar-link${isActive('/stream')}`} prefetch={true}>
-              Stream
-            </Link>
             {user && (
-              <Link href="/vault" className={`navbar-link${isActive('/vault')}`} prefetch={true}>
-                Your Vault
-              </Link>
+              <>
+                <Link href="/browse" className={`navbar-link${isActive('/browse')}`} prefetch={true}>
+                  Browse
+                </Link>
+                <Link href="/stream" className={`navbar-link${isActive('/stream')}`} prefetch={true}>
+                  Stream
+                </Link>
+                <Link href="/vault" className={`navbar-link${isActive('/vault')}`} prefetch={true}>
+                  Your Vault
+                </Link>
+              </>
             )}
           </nav>
         </div>

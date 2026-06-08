@@ -7,12 +7,14 @@ import { motion } from 'framer-motion';
 import { RECOMMEND_COLOR, SUBGENRE_HEX } from '@/lib/config';
 import { staggerItem, cardSpring } from '@/lib/motion';
 import type { Entry } from '@/lib/types';
+import { useAuth } from '@/components/layout/AuthProvider';
 
 interface MovieCardProps {
   entry: Entry;
 }
 
 export default function MovieCard({ entry }: MovieCardProps) {
+  const { user } = useAuth();
   const { movie, total, recommend, subgenre } = entry;
   const poster    = movie?.poster_url ?? null;
   const backdrop  = movie?.backdrop_url ?? null;
@@ -24,6 +26,8 @@ export default function MovieCard({ entry }: MovieCardProps) {
 
   // Three-tier image fallback: poster → backdrop → genre gradient
   const imgSrc = poster ?? backdrop ?? null;
+  
+  const targetHref = user ? `/vault/${entry.id}` : '/login';
 
   return (
     <motion.div
@@ -33,7 +37,7 @@ export default function MovieCard({ entry }: MovieCardProps) {
       style={{ willChange: 'transform' }}
     >
       <Link
-        href={`/vault/${entry.id}`}
+        href={targetHref}
         className="movie-card"
         aria-label={`${title}${year ? `, ${year}` : ''}`}
       >

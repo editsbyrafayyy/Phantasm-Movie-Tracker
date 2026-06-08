@@ -174,8 +174,8 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
 
           {/* Actions — owner-only */}
           <div className="backdrop-actions">
-            {canStream && (movie.omdb_id || movie.tmdb_id) && (
-              <Link href={`/stream/${movie.omdb_id || movie.tmdb_id}`} className="btn-watch">
+            {(movie.omdb_id || movie.tmdb_id) && (
+              <Link href={canStream ? `/stream/${movie.omdb_id || movie.tmdb_id}` : '/login'} className="btn-watch">
                 <Play size={14} fill="white" color="white" />
                 Watch Now
               </Link>

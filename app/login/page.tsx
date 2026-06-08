@@ -1,17 +1,16 @@
 'use client';
 
 import { useState, Suspense, type FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Moon } from 'lucide-react';
+import { Moon, Eye, EyeOff } from 'lucide-react';
 
 function LoginForm() {
   const router       = useRouter();
-  const searchParams = useSearchParams();
-  const next         = searchParams.get('next') ?? '/';
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
 
@@ -29,19 +28,14 @@ function LoginForm() {
       return;
     }
 
-    router.push(next);
+    // Always redirect to Rafay's Movies Page (home)
+    router.push('/');
     router.refresh();
   }
 
   return (
     <section className="login-page">
       <div className="login-container">
-        {/* Logo */}
-        <div className="login-logo">
-          <Moon size={20} strokeWidth={2} className="login-logo-icon" aria-hidden="true" />
-          <span className="login-logo-text">VAULT</span>
-        </div>
-
         {/* Headline */}
         <header className="login-header">
           <p className="page-label">Welcome back</p>
@@ -68,17 +62,42 @@ function LoginForm() {
 
           <div className="form-field">
             <label htmlFor="password" className="form-label">Password</label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="form-input"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              disabled={loading}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                className="form-input"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                disabled={loading}
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '4px'
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {error && (
