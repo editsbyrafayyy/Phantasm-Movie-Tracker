@@ -17,16 +17,16 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { data: entries, error } = await supabase
     .from('entries')
     .select('*, movie:movies (id, title, poster_url)')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: true });
 
   if (error) {

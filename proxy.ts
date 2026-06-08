@@ -31,29 +31,23 @@ export async function proxy(req: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   const { pathname } = req.nextUrl;
 
   // ── Session Hardening ──────────────────────────────────────────────────────
-  // Explicit session expiry handling
-  if (session?.expires_at && session.expires_at * 1000 < Date.now()) {
-    await supabase.auth.signOut();
-    return NextResponse.redirect(new URL('/login', req.url));
-  }
-
   // Auth-only routes: redirect logged-in users away from /login
-  if (pathname === '/login' && session) {
+  if (pathname === '/login' && user) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 
   // Redirect-loop guard: don't redirect /login → /login
-  if (pathname === '/login' && !session) {
+  if (pathname === '/login' && !user) {
     return res;
   }
 
   // Members only routes: /add, /update, /profile, /vault, /browse, /stream, /stats, /api/add-movie, /api/stats
   const membersOnly = ['/add', '/update', '/profile', '/vault', '/browse', '/stream', '/stats', '/api/add-movie', '/api/stats'];
-  if (membersOnly.some(p => pathname.startsWith(p)) && !session) {
+  if (membersOnly.some(p => pathname.startsWith(p)) && !user) {
     const loginUrl = new URL('/login', req.url);
     return NextResponse.redirect(loginUrl);
   }

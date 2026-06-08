@@ -30,10 +30,10 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const authPromise = createServerSupabaseClient().then(s => s.auth.getSession());
+  const authPromise = createServerSupabaseClient().then(s => s.auth.getUser());
   const entriesPromise = getOwnerEntries();
 
-  const [{ data: { session } }, entries] = await Promise.all([
+  const [{ data: { user } }, entries] = await Promise.all([
     authPromise,
     entriesPromise
   ]);
@@ -56,13 +56,13 @@ export default async function HomePage() {
       {/* ── Hero Carousel ───────────────────────────── */}
       <HeroCarousel
         slides={slides}
-        canStream={!!session}
+        canStream={!!user}
         ownerName={ownerName}
         totalFilms={entries.length}
       />
 
       {/* ── Guest Notice ───────────────────────────── */}
-      {!session && (
+      {!user && (
         <div className="guest-notice-banner">
           <p className="guest-notice-text">
             You are browsing as a guest. This is {ownerName}'s personal horror vault.

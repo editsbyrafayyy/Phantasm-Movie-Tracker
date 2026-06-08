@@ -39,11 +39,11 @@ export default async function VaultEntryPage({ params }: Props) {
     entryPromise
   ]);
 
-  const { data: { session } } = await authClient.auth.getSession();
+  const { data: { user } } = await authClient.auth.getUser();
 
   if (error || !entry) notFound();
 
-  const sessionUserId = session?.user?.id ?? null;
+  const sessionUserId = user?.id ?? null;
   const isOwner = sessionUserId !== null && sessionUserId === ownerId;
 
   const isOwnerEntry = ownerId && entry.user_id === ownerId;
@@ -67,7 +67,7 @@ export default async function VaultEntryPage({ params }: Props) {
       entry={entry as Entry}
       similar={(similar ?? []) as Entry[]}
       isOwner={isOwner}
-      canStream={!!session}
+      canStream={!!user}
     />
   );
 }

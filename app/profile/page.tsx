@@ -20,9 +20,9 @@ export const metadata: Metadata = {
 
 export default async function ProfilePage() {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect('/login');
   }
 
@@ -31,12 +31,12 @@ export default async function ProfilePage() {
     supabase
       .from('profiles')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single(),
     supabase
       .from('entries')
       .select('*, movie:movies (id, title, poster_url)')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: true })
   ]);
 
@@ -50,7 +50,7 @@ export default async function ProfilePage() {
   const typedProfile = profile as Profile;
   const typedEntries = (entries ?? []) as Entry[];
   
-  const isOwner = typedProfile.role === 'owner' || session.user.id === process.env.OWNER_USER_ID;
+  const isOwner = typedProfile.role === 'owner' || user.id === process.env.OWNER_USER_ID;
 
   const memberSince = new Date(typedProfile.created_at).toLocaleDateString('en-GB', {
     day: 'numeric',

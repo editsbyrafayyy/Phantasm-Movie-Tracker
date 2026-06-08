@@ -4,9 +4,9 @@ import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -14,10 +14,10 @@ export async function POST(request: Request) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single();
 
-    const isOwner = profile?.role === 'owner' || session.user.id === process.env.OWNER_USER_ID;
+    const isOwner = profile?.role === 'owner' || user.id === process.env.OWNER_USER_ID;
 
     if (!isOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

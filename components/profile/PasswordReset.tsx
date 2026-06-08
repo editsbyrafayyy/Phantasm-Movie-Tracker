@@ -89,7 +89,7 @@ export default function PasswordReset() {
         <Toast
           message={toast.message}
           type={toast.type}
-          onClose={() => setToast(null)}
+          onDismiss={() => setToast(null)}
         />
       )}
     </div>

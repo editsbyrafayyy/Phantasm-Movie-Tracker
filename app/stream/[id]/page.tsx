@@ -19,8 +19,8 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
   // Auth check — streaming is members only
   const authClient = await createServerSupabaseClient();
-  const { data: { session } } = await authClient.auth.getSession();
-  if (!session) redirect('/login?next=/stream/' + id);
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) redirect('/login?next=/stream/' + id);
 
   const supabase = createServiceClient();
   let movie: Movie | null = null;

@@ -26,8 +26,8 @@ const SUBGENRE_ORDER = [
 export default async function StreamPage() {
   // Auth check — streaming is members only
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect('/login?next=/stream');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login?next=/stream');
 
   // Fetch data in parallel
   const [entries, trending, topRated] = await Promise.all([
