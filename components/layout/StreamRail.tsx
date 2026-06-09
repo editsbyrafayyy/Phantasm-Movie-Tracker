@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Moon, User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function StreamRail() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, profile, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -35,7 +36,7 @@ export default function StreamRail() {
           {/* Desktop Navigation Links */}
           <nav className="navbar-links-desktop" aria-label="Desktop navigation">
             <Link href="/" className={`navbar-link${isActive('/')}`} prefetch={true}>
-              Rafay's Movies
+              Rafay&apos;s Movies
             </Link>
             {user && (
               <>
@@ -92,7 +93,12 @@ export default function StreamRail() {
                     <button
                       className="navbar-dropdown-item navbar-dropdown-signout"
                       role="menuitem"
-                      onClick={() => { setDropdownOpen(false); signOut(); }}
+                      onClick={async () => {
+                        setDropdownOpen(false);
+                        await signOut();
+                        router.push('/login');
+                        router.refresh();
+                      }}
                     >
                       <LogOut size={14} aria-hidden="true" />
                       Sign Out

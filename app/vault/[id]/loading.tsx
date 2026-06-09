@@ -1,40 +1,38 @@
-export default function Loading() {
+export default function MovieDetailLoading() {
   return (
-    <div className="detail-v3-page">
-      {/* Hero Skeleton */}
-      <div className="backdrop-hero" style={{ background: '#0a0a0a' }}>
-        <div className="absolute inset-0 bg-white/[0.02] animate-pulse" />
-        <div className="backdrop-hero-gradient" />
-        <div className="backdrop-hero-content">
-          <div className="h-4 w-24 bg-white/[0.05] rounded animate-pulse mb-4" />
-          <div className="h-12 w-3/4 bg-white/[0.05] rounded-lg animate-pulse mb-6" />
-          <div className="flex gap-2 mb-6">
-            <div className="h-6 w-20 bg-white/[0.05] rounded-full animate-pulse" />
-            <div className="h-6 w-20 bg-white/[0.05] rounded-full animate-pulse" />
+    <div className="movie-detail-v3">
+      {/* Hero Section Skeleton */}
+      <div className="md-hero skeleton" style={{ height: '70vh', borderRadius: 0 }}>
+        <div className="md-hero-content">
+          <div className="skeleton h-12 w-1/3 mb-4" style={{ background: 'rgba(255,255,255,0.1)' }} />
+          <div className="flex gap-4 mb-6">
+            <div className="skeleton h-6 w-20" style={{ background: 'rgba(255,255,255,0.1)' }} />
+            <div className="skeleton h-6 w-24" style={{ background: 'rgba(255,255,255,0.1)' }} />
           </div>
-          <div className="h-5 w-64 bg-white/[0.05] rounded animate-pulse" />
         </div>
       </div>
 
-      <div className="detail-overview-grid" style={{ marginTop: 40 }}>
-        <div className="detail-overview-main">
-          <div className="h-4 w-full bg-white/[0.03] rounded animate-pulse mb-3" />
-          <div className="h-4 w-full bg-white/[0.03] rounded animate-pulse mb-3" />
-          <div className="h-4 w-2/3 bg-white/[0.03] rounded animate-pulse mb-12" />
+      {/* Content Section Skeleton */}
+      <div className="page-container" style={{ marginTop: '-100px', position: 'relative', zIndex: 10 }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          {/* Left: Score Card */}
+          <div className="lg:col-span-5">
+            <div className="skeleton h-[500px] w-full rounded-2xl" />
+          </div>
 
-          {/* Similar Section Skeleton */}
-          <div className="h-6 w-48 bg-white/[0.05] rounded animate-pulse mb-6" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="aspect-[2/3] rounded-lg bg-white/[0.04] animate-pulse" />
-            ))}
+          {/* Right: Info & Similar */}
+          <div className="lg:col-span-7">
+            <div className="skeleton h-8 w-48 mb-6" />
+            <div className="skeleton h-32 w-full mb-12" />
+            
+            <div className="skeleton h-8 w-40 mb-6" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="skeleton aspect-[2/3] rounded-lg" />
+              ))}
+            </div>
           </div>
         </div>
-
-        <aside className="detail-overview-side">
-          <div className="h-32 w-full bg-white/[0.03] rounded-xl animate-pulse mb-6" />
-          <div className="h-48 w-full bg-white/[0.03] rounded-xl animate-pulse" />
-        </aside>
       </div>
     </div>
   );

@@ -289,7 +289,7 @@ export async function POST(req: NextRequest) {
 
   const OWNER_ID = process.env.OWNER_USER_ID;
   if (userId === OWNER_ID) {
-    revalidateTag('owner-entries', 'max');
+    revalidateTag('owner-entries');
   }
 
   revalidatePath('/', 'layout');

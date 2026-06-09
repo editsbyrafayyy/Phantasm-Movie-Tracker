@@ -49,6 +49,7 @@ create table if not exists entries (
   impact         numeric(3,1) check (impact between 0 and 1),
   bonus          int not null default 0 check (bonus in (0, 1)),
   total          numeric(4,2),
+  must_watch     boolean default false,
   created_at     timestamptz default now(),
   updated_at     timestamptz default now(),
   unique(user_id, movie_id)           -- one entry per user per film

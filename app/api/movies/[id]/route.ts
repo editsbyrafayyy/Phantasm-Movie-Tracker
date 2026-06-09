@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let body: Partial<MovieFormData> & { owner_recommended?: boolean };
+  let body: Partial<MovieFormData> & { must_watch?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -87,25 +87,25 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const guard = guardOwnerEntry(user.id, existing.user_id);
   if (guard) return guard;
 
-  // Quick toggle logic if only updating owner_recommended
-  if (body.owner_recommended !== undefined && Object.keys(body).every(k => k === 'owner_recommended')) {
+  // Quick toggle logic if only updating must_watch
+  if (body.must_watch !== undefined && Object.keys(body).every(k => k === 'must_watch')) {
     if (user.id !== OWNER_ID) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     const { data, error } = await supabase
       .from('entries')
-      .update({ owner_recommended: body.owner_recommended })
+      .update({ must_watch: body.must_watch })
       .eq('id', id)
       .select('*, movie:movies (*)')
       .single();
 
     if (error || !data) {
-      console.error('PATCH /api/movies/[id] owner_recommended error', error);
+      console.error('PATCH /api/movies/[id] must_watch error', error);
       return NextResponse.json({ error: 'Failed to update recommendation' }, { status: 500 });
     }
 
     if (user.id === OWNER_ID) {
-      revalidateTag('owner-entries', 'max');
+      revalidateTag('owner-entries');
     }
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true, entry: data });
@@ -342,7 +342,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       impact:        body.impact     !== '' ? body.impact     : null,
       bonus:         body.bonus      ?? 0,
       total,
-      owner_recommended: (body.owner_recommended !== undefined && user.id === OWNER_ID) ? body.owner_recommended : undefined,
+      must_watch:    (body.must_watch !== undefined && user.id === OWNER_ID) ? body.must_watch : undefined,
     })
     .eq('id', id)
     .select('*, movie:movies (*)')
@@ -354,7 +354,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   if (user.id === OWNER_ID) {
-    revalidateTag('owner-entries', 'max');
+    revalidateTag('owner-entries');
   }
 
   revalidatePath('/', 'layout');
@@ -394,7 +394,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   if (user.id === OWNER_ID) {
-    revalidateTag('owner-entries', 'max');
+    revalidateTag('owner-entries');
   }
 
   revalidatePath('/', 'layout');

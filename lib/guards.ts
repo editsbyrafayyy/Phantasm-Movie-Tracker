@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const OWNER_ID = '69a94e3f-bcb8-4eb2-884f-98fe2b5fdcd0';
+export const OWNER_ID = process.env.OWNER_USER_ID || '69a94e3f-bcb8-4eb2-884f-98fe2b5fdcd0';
 
 /**
  * Returns a 403 response if the authenticated user is attempting

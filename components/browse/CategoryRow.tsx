@@ -30,9 +30,11 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
 
   return (
     <section className="category-section" style={{ position: 'relative' }}>
-      <div className="category-header">
-        <h2 className="category-heading">{label}</h2>
-      </div>
+      {label && (
+        <div className="category-header">
+          <h2 className="category-heading">{label}</h2>
+        </div>
+      )}
       
       <button className="category-scroll-btn left" onClick={() => scroll('left')} aria-label="Scroll left" style={{ minWidth: 44, minHeight: 44 }}>
         <ChevronLeft size={24} />

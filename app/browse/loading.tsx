@@ -1,20 +1,32 @@
-export default function Loading() {
+export default function BrowseLoading() {
   return (
-    <div className="browse-container" style={{ paddingTop: 20 }}>
-      {/* Header Skeleton */}
-      <div style={{ marginBottom: 32 }}>
-        <div className="h-10 w-64 bg-white/[0.05] rounded-lg animate-pulse mb-4" />
-        <div className="h-5 w-96 bg-white/[0.05] rounded-lg animate-pulse" />
+    <div className="browse-container">
+      {/* Search and Navigation Header Skeleton */}
+      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <div className="skeleton h-10 w-64 mb-2" />
+            <div className="skeleton h-5 w-80" />
+          </div>
+
+          {/* Media Type Tabs Skeleton */}
+          <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8 }}>
+            <div className="skeleton h-8 w-24 rounded-md" />
+            <div className="skeleton h-8 w-24 rounded-md" />
+          </div>
+        </div>
+
+        {/* Global Search Bar Skeleton */}
+        <div className="skeleton h-10 w-full max-w-[400px]" />
       </div>
 
-      {/* Grid Skeleton */}
       <div className="browse-grid">
         {Array.from({ length: 12 }).map((_, i) => (
-          <div 
-            key={i} 
-            className="skeleton aspect-[2/3]"
-            style={{ animationDelay: `${i * 50}ms` }}
-          />
+          <div key={i} className="flex flex-col gap-2">
+            <div className="skeleton aspect-[2/3] w-full" />
+            <div className="skeleton h-4 w-3/4 mt-2" />
+            <div className="skeleton h-3 w-1/2" />
+          </div>
         ))}
       </div>
     </div>

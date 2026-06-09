@@ -23,6 +23,7 @@ export default function UpdateMovieForm() {
   const [fetching, setFetching] = useState(!!entryId);
   const [loading,  setLoading]  = useState(false);
   const [toast,    setToast]    = useState<{ message: string; type: ToastType } | null>(null);
+  const [errors,   setErrors]   = useState<Partial<Record<keyof UpdateForm, string>>>({});
 
   useEffect(() => {
     if (!entryId) return;
@@ -53,6 +54,7 @@ export default function UpdateMovieForm() {
 
   function set<K extends keyof UpdateForm>(key: K, value: UpdateForm[K]) {
     setForm(prev => prev ? { ...prev, [key]: value } : prev);
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: undefined }));
   }
 
   function handleOmdbSelect(hit: OmdbSearchHit) {
@@ -60,9 +62,21 @@ export default function UpdateMovieForm() {
     set('title', hit.title);
   }
 
+  function validate() {
+    const newErrors: Partial<Record<keyof UpdateForm, string>> = {};
+    if (!form?.title?.trim()) newErrors.title = 'Title is required';
+    if (!form?.subgenre)      newErrors.subgenre = 'Please select a subgenre';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form || !entryId) return;
+    if (!validate()) {
+      setToast({ message: 'Please fix the errors below.', type: 'error' });
+      return;
+    }
     setLoading(true);
     setToast({ message: 'Saving…', type: 'loading' });
 
@@ -113,6 +127,7 @@ export default function UpdateMovieForm() {
           onSelect={handleOmdbSelect}
           disabled={loading}
         />
+        {errors.title && <p className="field-error">{errors.title}</p>}
         {form.omdbId && (
           <p className="omdb-selected-note">
             OMDB matched — metadata will be saved automatically.{' '}
@@ -135,6 +150,7 @@ export default function UpdateMovieForm() {
           <option value="">Select a subgenre…</option>
           {SUBGENRES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+        {errors.subgenre && <p className="field-error">{errors.subgenre}</p>}
       </div>
 
       {/* Secondary tag */}

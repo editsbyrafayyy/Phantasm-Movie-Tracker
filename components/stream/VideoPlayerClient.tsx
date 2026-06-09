@@ -329,6 +329,7 @@ export default function VideoPlayerClient({
                 <button 
                   onClick={() => setShowTrailer(false)} 
                   style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+                  aria-label="Close trailer"
                 >
                   <X size={14} />
                 </button>
@@ -653,6 +654,7 @@ export default function VideoPlayerClient({
                                   color: '#fff',
                                   flexShrink: 0
                                 }}
+                                aria-label={`Mark episode ${ep.episode_number} as ${isWatched ? 'unwatched' : 'watched'}`}
                               >
                                 {isWatched && <Check size={10} strokeWidth={3} />}
                               </button>
@@ -691,6 +693,7 @@ export default function VideoPlayerClient({
                                 onMouseOver={e => e.currentTarget.style.transform = 'scale(1.15)'}
                                 onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
                                 title="Play Episode"
+                                aria-label={`Play episode ${ep.episode_number}`}
                               >
                                 <Play size={14} fill="currentColor" />
                               </button>
@@ -852,7 +855,7 @@ export default function VideoPlayerClient({
           <div style={{ background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.1)', padding: '24px', borderRadius: 12, width: '100%', maxWidth: 440, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Download Options</h3>
-              <button onClick={() => setShowDownloadModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <button onClick={() => setShowDownloadModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }} aria-label="Close modal">
                 <X size={20} />
               </button>
             </div>

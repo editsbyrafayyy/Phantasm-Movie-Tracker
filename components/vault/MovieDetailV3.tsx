@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Play, Pencil, Trash2, Star, Film, Pin } from 'lucide-react';
 import { SCORE_FIELDS } from '@/lib/config';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Toast, { type ToastType } from '@/components/ui/Toast';
 import type { Entry } from '@/lib/types';
 
 
@@ -28,53 +30,55 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting]     = useState(false);
-  const [toast, setToast]           = useState<{ msg: string; ok: boolean } | null>(null);
-  const [isRecommended, setIsRecommended] = useState(!!entry.owner_recommended);
-  const [togglingRec, setTogglingRec] = useState(false);
+  const [toast, setToast]           = useState<{ message: string; type: ToastType } | null>(null);
+  const [mustWatch, setMustWatch] = useState(!!entry.must_watch);
+  const [togglingMustWatch, setTogglingMustWatch] = useState(false);
 
   const { movie } = entry;
 
-  async function toggleRecommendation() {
-    setTogglingRec(true);
-    const nextVal = !isRecommended;
-    setIsRecommended(nextVal);
+  async function toggleMustWatch() {
+    setTogglingMustWatch(true);
+    const nextVal = !mustWatch;
+    setMustWatch(nextVal);
     
     try {
       const res = await fetch(`/api/movies/${entry.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ owner_recommended: nextVal }),
+        body: JSON.stringify({ must_watch: nextVal }),
       });
       
       if (!res.ok) throw new Error('Toggle failed');
       
       setToast({
-        msg: nextVal ? "Pinned to Rafay's Recommendations" : "Removed from Rafay's Recommendations",
-        ok: true
+        message: nextVal ? "Added to Must Watch" : "Removed from Must Watch",
+        type: 'success'
       });
       router.refresh();
     } catch (err) {
       console.error(err);
-      setIsRecommended(!nextVal);
-      setToast({ msg: 'Failed to update recommendation. Try again.', ok: false });
+      setMustWatch(!nextVal);
+      setToast({ message: 'Failed to update. Try again.', type: 'error' });
     } finally {
-      setTogglingRec(false);
+      setTogglingMustWatch(false);
     }
   }
+
   const bgImg    = movie.backdrop_url ?? movie.poster_url ?? null;
   const title    = movie.title ?? 'Unknown';
   const recStyle = entry.recommend ? RECOMMEND_STYLE[entry.recommend] : null;
 
   async function handleDelete() {
     setDeleting(true);
+    setToast({ message: 'Removing...', type: 'loading' });
     try {
       const res = await fetch(`/api/movies/${entry.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
-      setToast({ msg: 'Entry removed from vault', ok: true });
+      setToast({ message: 'Entry removed from vault', type: 'success' });
       setConfirming(false);
       setTimeout(() => router.push('/vault'), 1400);
     } catch {
-      setToast({ msg: 'Error deleting entry. Try again.', ok: false });
+      setToast({ message: 'Error deleting entry. Try again.', type: 'error' });
       setDeleting(false);
       setConfirming(false);
     }
@@ -183,13 +187,20 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
             {isOwner && (
               <>
                 <button
-                  onClick={toggleRecommendation}
-                  className={`btn-edit${isRecommended ? ' active-rec' : ''}`}
-                  disabled={togglingRec}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  onClick={toggleMustWatch}
+                  disabled={togglingMustWatch}
+                  className="btn-edit"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: mustWatch ? 'var(--accent)' : 'transparent',
+                    color: mustWatch ? '#080808' : 'var(--text-dim)',
+                    borderColor: mustWatch ? 'var(--accent)' : 'var(--border-strong)',
+                  }}
                 >
-                  <Pin size={14} fill={isRecommended ? 'currentColor' : 'none'} />
-                  {isRecommended ? 'Recommended' : 'Recommend'}
+                  <Pin size={14} fill={mustWatch ? 'currentColor' : 'none'} />
+                  {mustWatch ? 'Must Watch ✓' : 'Must Watch'}
                 </button>
                 <Link href={`/update?id=${entry.id}`} className="btn-edit">
                   <Pencil size={14} />
@@ -384,67 +395,24 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
       </div>
 
       {/* ── Delete Confirm Dialog (owner-only) ────────────── */}
-      {isOwner && (
-        <AnimatePresence>
-          {confirming && (
-            <>
-              <motion.div
-                className="dialog-backdrop"
-                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(4px)', zIndex: 199 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => !deleting && setConfirming(false)}
-              />
-              <div className="dialog-overlay">
-                <motion.div
-                  className="dialog-panel"
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  transition={{ duration: 0.18, ease: 'easeOut' }}
-                >
-                  <h2 className="dialog-title">Remove entry?</h2>
-                  <p className="dialog-body">
-                    This will permanently delete your rating for <strong>{title}</strong>. This cannot be undone.
-                  </p>
-                  <div className="dialog-actions">
-                    <button
-                      className="btn-ghost"
-                      onClick={() => setConfirming(false)}
-                      disabled={deleting}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="btn-danger"
-                      onClick={handleDelete}
-                      disabled={deleting}
-                    >
-                      {deleting ? 'Removing...' : 'Remove'}
-                    </button>
-                  </div>
-                </motion.div>
-              </div>
-            </>
-          )}
-        </AnimatePresence>
+      {isOwner && confirming && (
+        <ConfirmDialog
+          title="Remove entry?"
+          body={`This will permanently delete your rating for "${title}". This cannot be undone.`}
+          confirmLabel={deleting ? 'Removing...' : 'Remove'}
+          onConfirm={handleDelete}
+          onCancel={() => !deleting && setConfirming(false)}
+        />
       )}
 
       {/* ── Toast ─────────────────────────────────────────── */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            className={`toast ${toast.ok ? 'toast-success' : 'toast-error'} toast-visible`}
-            style={{ zIndex: 300 }}
-            initial={{ opacity: 0, y: 20, scale: 0.94 }}
-            animate={{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 30 } }}
-            exit={{ opacity: 0, y: 16, transition: { duration: 0.18 } }}
-          >
-            <span className="toast-message">{toast.msg}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

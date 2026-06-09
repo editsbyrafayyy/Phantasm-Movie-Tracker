@@ -1,11 +1,14 @@
 import { VaultSkeleton } from '@/components/vault/VaultSkeleton';
 
-export default function Loading() {
+export default function VaultLoading() {
   return (
-    <div className="vault-page" style={{ paddingTop: 20 }}>
+    <div className="vault-page">
       <header className="vault-header">
         <div className="vault-header-inner">
-          <div className="skeleton h-10 w-48 rounded" />
+          <h1 className="vault-heading">
+            <span className="vault-heading-light">The</span>{' '}
+            <em className="vault-heading-serif">Vault</em>
+          </h1>
         </div>
       </header>
       <VaultSkeleton count={12} />

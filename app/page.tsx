@@ -38,16 +38,17 @@ export default async function HomePage() {
     entriesPromise
   ]);
 
+  const ownerName = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
+
+  // Filter entries
+  const mustWatchEntries = entries.filter(e => e.must_watch === true);
+  const remainingEntries = entries.filter(e => e.must_watch !== true);
+
   // Top-rated entries with backdrop for the hero carousel
-  const slides = entries
+  const slides = remainingEntries
     .filter(e => e.movie.backdrop_url ?? e.movie.poster_url)
     .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
     .slice(0, 8);
-
-  const ownerName = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
-
-  // Filter owner's recommendations
-  const recommendedEntries = entries.filter(e => e.owner_recommended === true);
 
   return (
     <div className="browse-page">
@@ -63,7 +64,7 @@ export default async function HomePage() {
 
       {/* ── Guest Notice ───────────────────────────── */}
       {!user && (
-        <div className="guest-notice-banner">
+        <div className="guest-notice-banner" style={{ marginTop: 24, marginBottom: 24 }}>
           <p className="guest-notice-text">
             You are browsing as a guest. This is {ownerName}'s personal horror vault.
           </p>
@@ -73,11 +74,12 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* ── Rafay's Recommendations ────────────────────── */}
-      {recommendedEntries.length > 0 && (
-        <div style={{ marginTop: 48 }}>
-          <CategoryRow label="Rafay's Recommendations" entries={recommendedEntries} />
-        </div>
+      {/* ── Must Watch ────────────────────────────────── */}
+      {mustWatchEntries.length > 0 && (
+        <section className="home-must-watch-row" style={{ marginTop: 80, marginBottom: 40 }}>
+          <h2 className="section-label" style={{ marginLeft: 48, marginBottom: 24 }}>Must Watch</h2>
+          <CategoryRow label="" entries={mustWatchEntries} />
+        </section>
       )}
 
       {/* ── My Vault ──────────────────────────────────── */}
@@ -86,7 +88,7 @@ export default async function HomePage() {
         <p className="home-vault-sub">Curated films scored and stored by {ownerName}.</p>
       </div>
 
-      <VaultFilter entries={entries} subgenreOrder={SUBGENRE_ORDER} />
+      <VaultFilter entries={remainingEntries} subgenreOrder={SUBGENRE_ORDER} />
     </div>
   );
 }
