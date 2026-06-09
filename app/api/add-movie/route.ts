@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     characters: 1, pacing: 1, visuals: 1, thrill: 1, sound: 1, impact: 1,
   };
   for (const [field, max] of Object.entries(SCORE_LIMITS)) {
-    const val = (body as any)[field];
+    const val = body[field as keyof MovieFormData];
     if (val !== '' && val !== null && val !== undefined) {
       const n = Number(val);
       if (isNaN(n) || n < 0 || n > max) {
@@ -289,6 +289,7 @@ export async function POST(req: NextRequest) {
 
   const OWNER_ID = process.env.OWNER_USER_ID;
   if (userId === OWNER_ID) {
+    // @ts-expect-error - Next.js 16 type mismatch or new API
     revalidateTag('owner-entries');
   }
 

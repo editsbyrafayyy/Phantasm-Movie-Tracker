@@ -66,7 +66,7 @@ export default async function HomePage() {
       {!user && (
         <div className="guest-notice-banner" style={{ marginTop: 24, marginBottom: 24 }}>
           <p className="guest-notice-text">
-            You are browsing as a guest. This is {ownerName}'s personal horror vault.
+            You are browsing as a guest. This is {ownerName}&apos;s personal horror vault.
           </p>
           <Link href="/login" className="guest-notice-link" prefetch={true}>
             Sign in →

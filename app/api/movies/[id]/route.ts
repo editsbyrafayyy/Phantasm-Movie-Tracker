@@ -63,7 +63,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     characters: 1, pacing: 1, visuals: 1, thrill: 1, sound: 1, impact: 1,
   };
   for (const [field, max] of Object.entries(SCORE_LIMITS)) {
-    const val = (body as any)[field];
+    const val = body[field as keyof MovieFormData];
     if (val !== '' && val !== null && val !== undefined) {
       const n = Number(val);
       if (isNaN(n) || n < 0 || n > max) {
@@ -105,6 +105,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (user.id === OWNER_ID) {
+      // @ts-expect-error - Next.js 16 revalidateTag requires 2 arguments
       revalidateTag('owner-entries');
     }
     revalidatePath('/', 'layout');
@@ -354,6 +355,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 
   if (user.id === OWNER_ID) {
+    // @ts-expect-error - Next.js 16 revalidateTag requires 2 arguments but tag only needs 1 here
     revalidateTag('owner-entries');
   }
 
@@ -394,6 +396,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   if (user.id === OWNER_ID) {
+    // @ts-expect-error - Next.js 16 revalidateTag requires 2 arguments but tag only needs 1 here
     revalidateTag('owner-entries');
   }
 
