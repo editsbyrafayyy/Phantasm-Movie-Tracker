@@ -77,7 +77,9 @@ export default async function HomePage() {
       {/* ── Must Watch ────────────────────────────────── */}
       {mustWatchEntries.length > 0 && (
         <section className="home-must-watch-row" style={{ marginTop: 80, marginBottom: 40 }}>
-          <h2 className="section-label" style={{ marginLeft: 48, marginBottom: 24 }}>Must Watch</h2>
+          <div className="home-vault-section" style={{ marginTop: 0 }}>
+            <h2 className="section-label" style={{ marginBottom: 24 }}>Must Watch</h2>
+          </div>
           <CategoryRow label="" entries={mustWatchEntries} />
         </section>
       )}
