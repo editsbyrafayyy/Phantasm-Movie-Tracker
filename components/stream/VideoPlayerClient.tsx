@@ -295,34 +295,6 @@ export default function VideoPlayerClient({
               />
             )}
 
-            {/* Fullscreen Toggle Button */}
-            {!failed && !showTrailer && (
-              <button
-                onClick={toggleFullscreen}
-                className="watch-fullscreen-btn"
-                style={{
-                  position: 'absolute',
-                  right: 16,
-                  bottom: 16,
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.6)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  transition: 'all 0.2s'
-                }}
-                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              >
-                {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-              </button>
-            )}
-
             {/* Trailer overlay header */}
             {showTrailer && (
               <div style={{ position: 'absolute', top: 16, left: 16, background: 'rgba(0,0,0,0.85)', padding: '6px 12px', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8, border: '1px solid rgba(255,255,255,0.15)', zIndex: 12 }}>
