@@ -36,8 +36,8 @@ export async function GET(
 
   const providers = getProvidersInOrder().map(p => ({
     name: p.name,
-    url: type === 'tv' 
-      ? p.tvUrl(imdbId, season, episode, tmdbIdStr) 
+    url: type === 'tv'
+      ? p.tvUrl(imdbId, season, episode, tmdbIdStr)
       : p.movieUrl(imdbId, tmdbIdStr)
   }));
 

@@ -17,6 +17,11 @@ export const PROVIDERS: Provider[] = [
     tvUrl:    (id, s, e, tmdb) => `https://vidlink.pro/tv/${tmdb ?? id}/${s}/${e}`,
   },
   {
+    id: 'vidsrc-to', name: 'VidSrc', priority: 2,
+    movieUrl: (id) =>         `https://vidsrc.to/embed/movie/${id}`,
+    tvUrl:    (id, s, e) =>   `https://vidsrc.to/embed/tv/${id}/${s}/${e}`,
+  },
+  {
     id: '2embed', name: '2Embed', priority: 5,
     movieUrl: (id, tmdb) =>   `https://www.2embed.cc/embed/${id || tmdb}`,
     tvUrl:    (id, s, e, tmdb) => `https://www.2embed.cc/embedtv/${id || tmdb}&s=${s}&e=${e}`,

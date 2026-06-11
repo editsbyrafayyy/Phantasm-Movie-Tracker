@@ -288,6 +288,7 @@ export default function VideoPlayerClient({
                 src={showTrailer ? `https://www.youtube.com/embed/${trailerKey}?autoplay=1` : embedUrl}
                 className="watch-iframe"
                 style={{ width: '100%', height: '100%', border: 'none' }}
+                allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write"
                 allowFullScreen
                 referrerPolicy="origin"
                 title={title}
