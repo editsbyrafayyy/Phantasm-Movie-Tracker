@@ -46,3 +46,6 @@ pnpm-debug.log*
 next-env.d.ts
 
 .vercel
+
+# Scratch scripts
+scratch/

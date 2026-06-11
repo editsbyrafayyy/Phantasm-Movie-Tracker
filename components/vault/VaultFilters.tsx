@@ -15,8 +15,6 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'za',     label: 'Z → A'          },
 ];
 
-const RECOMMEND_OPTIONS = ['Peak', 'Yes', 'No', 'Garbage'];
-
 interface VaultFiltersProps {
   entries:        Entry[];
   onFiltered:     (result: Entry[]) => void;
@@ -27,6 +25,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
   const [selectedGenre, setGenre]        = useState('All');
   const [selectedRec,   setRec]          = useState('All');
   const [sort,          setSort]         = useState<SortKey>('recent');
+  const [ratingFilter,  setRatingFilter] = useState<'all' | 'rated' | 'unrated'>('all');
 
   const filtered = useMemo(() => {
     let result = [...entries];
@@ -45,6 +44,13 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
     // Recommend filter
     if (selectedRec !== 'All') {
       result = result.filter(e => e.recommend === selectedRec);
+    }
+
+    // Rating filter (Rated vs Not Rated)
+    if (ratingFilter === 'rated') {
+      result = result.filter(e => e.total !== null && e.total > 0);
+    } else if (ratingFilter === 'unrated') {
+      result = result.filter(e => e.total === null || e.total === 0);
     }
 
     // Sort
@@ -76,14 +82,17 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
     }
 
     return result;
-  }, [entries, search, selectedGenre, selectedRec, sort]);
+  }, [entries, search, selectedGenre, selectedRec, ratingFilter, sort]);
 
   // Propagate filtered results to parent whenever they change
   useEffect(() => {
     onFiltered(filtered);
   }, [filtered, onFiltered]);
 
-  const activeFilterCount = (selectedGenre !== 'All' ? 1 : 0) + (selectedRec !== 'All' ? 1 : 0);
+  const activeFilterCount = 
+    (selectedGenre !== 'All' ? 1 : 0) + 
+    (selectedRec !== 'All' ? 1 : 0) + 
+    (ratingFilter !== 'all' ? 1 : 0);
 
   return (
     <div className="vault-filters">
@@ -129,13 +138,24 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
           />
         </div>
 
-        <div style={{ flex: 1, minWidth: '120px' }}>
+        <div style={{ flex: 1, minWidth: '120px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <CustomSelect
             value={sort}
             options={SORT_OPTIONS}
             onChange={val => setSort(val as SortKey)}
             ariaLabel="Sort movies"
             icon={<SlidersHorizontal size={13} />}
+            align="right"
+          />
+          <CustomSelect
+            value={ratingFilter}
+            onChange={val => setRatingFilter(val as 'all' | 'rated' | 'unrated')}
+            options={[
+              { value: 'all', label: 'All Ratings' },
+              { value: 'rated', label: 'Rated' },
+              { value: 'unrated', label: 'Not Rated' },
+            ]}
+            ariaLabel="Filter by rating status"
             align="right"
           />
         </div>
@@ -145,7 +165,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
       {activeFilterCount > 0 && (
         <button
           className="vault-clear-filters"
-          onClick={() => { setGenre('All'); setRec('All'); }}
+          onClick={() => { setGenre('All'); setRec('All'); setRatingFilter('all'); }}
           style={{ marginTop: 12 }}
         >
           Clear {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}

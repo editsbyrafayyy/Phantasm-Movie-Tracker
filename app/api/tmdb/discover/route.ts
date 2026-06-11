@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   
   // Enforce horror/thriller/sci-fi genres and exclude animation/anime/family/etc for TV
   if (type === 'tv') {
-    tmdbUrl.searchParams.set('with_genres', '9648,10765');
+    tmdbUrl.searchParams.set('with_genres', '9648|10765|27|53');
     tmdbUrl.searchParams.set('without_genres', '16,10762,10751,10764,10766,10767,10763,99');
   } else {
     tmdbUrl.searchParams.set('with_genres', '27,53');

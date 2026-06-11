@@ -137,7 +137,7 @@ export default function BrowseGrid() {
           <input
             type="text"
             className="form-input search-input-inner"
-            placeholder={mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search mystery / sci-fi shows...'}
+            placeholder={mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search horror / thriller / sci-fi shows...'}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             style={{

@@ -59,8 +59,8 @@ export async function GET(req: NextRequest) {
           const isExcluded = genres.some((id: number) => [16, 10762, 10751, 10764, 10766, 10767, 10763, 99].includes(id));
           if (isExcluded) return false;
           
-          // TV: must be Mystery (9648) or Sci-Fi & Fantasy (10765)
-          const isTargetGenre = genres.some((id: number) => id === 9648 || id === 10765);
+          // TV: must be Mystery (9648), Sci-Fi & Fantasy (10765), Horror (27), or Thriller (53)
+          const isTargetGenre = genres.some((id: number) => [9648, 10765, 27, 53].includes(id));
           return isTargetGenre;
         } else {
           // Movie: must be Horror (27) or Thriller (53)
