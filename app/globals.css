@@ -1088,7 +1088,7 @@ select.form-input {
 .vault-page { position:relative;z-index:2; }
 .vault-header { padding:110px 48px 24px;max-width:1200px;margin:0 auto; }
 .vault-header-inner { display:flex;align-items:baseline;gap:14px; }
-.vault-heading { font-family:var(--font-sans);font-weight:300;font-size:clamp(24px,4vw,36px);color:var(--text-dim); }
+.vault-heading { font-family:var(--font-sans);font-weight:300;font-size:clamp(40px,8vw,64px);color:var(--text-dim); }
 .vault-heading-light { font-weight:300; }
 .vault-heading-serif { font-family:var(--font-serif);font-style:italic;color:var(--text); }
 .vault-count-badge { font-family:var(--font-display);font-size:14px;color:var(--red);border:1px solid rgba(204,0,0,.3);border-radius:4px;padding:2px 8px;letter-spacing:1px; }
@@ -1154,6 +1154,10 @@ select.form-input {
 }
 .custom-select-label {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: left;
 }
 .custom-select-chevron {
   color: var(--text-muted);
