@@ -92,14 +92,8 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          {/* Password reset form */}
-          <PasswordReset />
-
           {/* Admin panel for owner */}
           {isOwner && <AdminPanel />}
-
-          {/* Sign Out Button */}
-          <SignOutButton />
         </div>
       </div>
 
@@ -133,6 +127,12 @@ export default async function ProfilePage() {
           <p>Rate horror films in your vault to unlock statistics.</p>
         </div>
       )}
+
+      {/* Change Password + Sign Out — at the very bottom, below stats */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 40, marginTop: 48, maxWidth: 560, margin: '0 auto' }}>
+        <PasswordReset />
+        <SignOutButton />
+      </div>
     </div>
   );
 }

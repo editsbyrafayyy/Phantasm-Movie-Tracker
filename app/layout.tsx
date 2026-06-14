@@ -44,8 +44,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${bebasNeue.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${bebasNeue.variable}`} suppressHydrationWarning style={{ background: '#080808' }}>
       <head>
+        {/* PWA / mobile theme — prevents white flash and colours OS chrome */}
+        <meta name="theme-color" content="#080808" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#080808" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#080808" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="background-color" content="#080808" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
@@ -54,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning style={{ background: '#080808' }}>
         <NextTopLoader showSpinner={false} color="#e63232" height={3} />
         <AuthProvider>
           <StreamRail />

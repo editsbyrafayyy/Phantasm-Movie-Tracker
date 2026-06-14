@@ -1,6 +1,9 @@
 /* ── Reset & Base ─────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Prevent white flash before CSS loads — set background immediately */
+html, body { background: #080808; }
+
 :root {
   /* Palette */
   --bg:           #080808;
@@ -71,6 +74,11 @@ body {
   overflow-x:  hidden;
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
+  /* Extend dark background into safe areas on iOS */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  /* Prevent overscroll bounce from revealing white behind the page */
+  overscroll-behavior: none;
   position:    relative;
 }
 
@@ -1202,7 +1210,7 @@ select.form-input {
 @media (max-width:640px)  { .movie-grid { grid-template-columns:repeat(2,1fr);gap:10px; } }
 .movie-card { display:block;text-decoration:none; will-change: transform; }
 .movie-card-poster { position:relative;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:var(--surface-2);border: 1px solid rgba(255,255,255,0.1);animation:fadeUp .5s ease both; will-change: transform, opacity; }
-.movie-card-img { object-fit:cover;transition:transform .3s ease; }
+.movie-card-img { object-fit:cover;transition:transform .3s ease;transform-origin:center bottom; }
 .movie-card:hover .movie-card-img { transform:scale(1.05); }
 .movie-card:hover .movie-card-poster { box-shadow:0 8px 32px rgba(0,0,0,.6); }
 .movie-card-no-poster { display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.1); }
@@ -1215,8 +1223,8 @@ select.form-input {
 .movie-card-genre-chip { position:absolute;bottom:44px;left:10px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.7);opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s; }
 .movie-card:hover .movie-card-genre-chip { opacity:1;transform:translateY(0); }
 
-.movie-card:hover {
-  transform: translateY(-2px);
+.movie-card:hover,
+.stream-card:hover {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
@@ -1762,6 +1770,9 @@ select:focus-visible {
   position:relative;
   z-index:2;
   background:var(--bg);
+  /* Pull the detail page up to cancel main's padding-top (56px navbar height).
+     This lets the backdrop hero bleed full-bleed to the top behind the fixed navbar. */
+  margin-top: -56px;
 }
 .detail-back-bar {
   position:absolute;
@@ -2268,7 +2279,7 @@ select:focus-visible {
 .stream-hero-dot.active { background:#fff; transform:scale(1.3); }
 
 /* ── Category Row ───────────────────────────────────────────────────────── */
-.category-section { margin-bottom:32px; }
+.category-section { margin-bottom:32px; overflow: visible; }
 .category-header {
   display:flex;
   align-items:center;
@@ -2297,14 +2308,14 @@ select:focus-visible {
   display:flex;
   gap:16px;
   overflow-x:auto;
-  padding:0 48px 32px 48px;
+  padding:12px 48px 32px 48px;
   scrollbar-width:none;
   scroll-snap-type:x mandatory;
   scroll-padding-left: 48px;
 }
 .category-scroll-track::-webkit-scrollbar { display:none; }
 @media (max-width:640px) { 
-  .category-scroll-track { padding:0 24px 16px; gap:12px; scroll-padding-left: 24px; } 
+  .category-scroll-track { padding:16px 24px 16px; gap:12px; scroll-padding-left: 24px; } 
 }
 
 .category-scroll-btn {
@@ -3221,7 +3232,7 @@ select:focus-visible {
     left: 0;
     right: 0;
     height: calc(84px + env(safe-area-inset-bottom)) !important; /* Extend height down */
-    background: #060606 !important;
+    background: #080808 !important; /* Match page background — prevents grey OS nav bar area */
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 0 8px;
     z-index: 1000;
