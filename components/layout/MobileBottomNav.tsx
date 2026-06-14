@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Clapperboard, Compass, Play, Plus, User, LogIn } from 'lucide-react';
+import { Clapperboard, Film, Play, Plus, User, LogIn } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function MobileBottomNav() {
@@ -48,14 +48,14 @@ export default function MobileBottomNav() {
     <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
       <Link href="/" className={`mobile-bottom-nav-link${isActive('/')}`} prefetch={true}>
         <Clapperboard size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-        <span>Vault</span>
+        <span>{showLoggedIn ? 'Curated' : 'Vault'}</span>
       </Link>
       
       {showLoggedIn ? (
         <>
-          <Link href="/browse" className={`mobile-bottom-nav-link${isActive('/browse')}`} prefetch={true}>
-            <Compass size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            <span>Browse</span>
+          <Link href="/vault" className={`mobile-bottom-nav-link${isActive('/vault')}`} prefetch={true}>
+            <Film size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
+            <span>My Vault</span>
           </Link>
           <Link href="/stream" className={`mobile-bottom-nav-link${isActive('/stream')}`} prefetch={true}>
             <Play size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />

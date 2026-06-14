@@ -40,9 +40,6 @@ export default function StreamRail() {
             </Link>
             {user && (
               <>
-                <Link href="/browse" className={`navbar-link${isActive('/browse')}`} prefetch={true}>
-                  Browse
-                </Link>
                 <Link href="/stream" className={`navbar-link${isActive('/stream')}`} prefetch={true}>
                   Stream
                 </Link>

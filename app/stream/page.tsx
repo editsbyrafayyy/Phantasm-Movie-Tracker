@@ -1,7 +1,9 @@
 import { redirect }           from 'next/navigation';
+import Link                    from 'next/link';
 import StreamHeroClient        from '@/components/stream/StreamHeroClient';
 import CategoryRow             from '@/components/browse/CategoryRow';
 import TmdbRow                 from '@/components/browse/TmdbRow';
+import BrowseGrid              from '@/components/browse/BrowseGrid';
 import type { Entry }          from '@/lib/types';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getOwnerEntries }     from '@/lib/data';
@@ -23,11 +25,14 @@ const SUBGENRE_ORDER = [
   'Thriller (Non-Horror)',
 ];
 
-export default async function StreamPage() {
+export default async function StreamPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
+  const activeTab = tab ?? 'hub';
+
   // Auth check — streaming is members only
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login?next=/stream');
+  if (!user) redirect(`/login?next=/stream${activeTab === 'search' ? '?tab=search' : ''}`);
 
   // Fetch data in parallel
   const [entries, trending, topRated] = await Promise.all([
@@ -54,9 +59,29 @@ export default async function StreamPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <StreamHeroClient featured={featured} />
+      {/* Stream Hub / Search Catalog Toggle */}
+      <div className="stream-tab-wrapper">
+        <div className="stream-tab-toggle">
+          <Link
+            href="/stream"
+            className={`stream-tab-btn${activeTab === 'hub' ? ' active' : ''}`}
+          >
+            Stream Hub
+          </Link>
+          <Link
+            href="/stream?tab=search"
+            className={`stream-tab-btn${activeTab === 'search' ? ' active' : ''}`}
+          >
+            Search Catalog
+          </Link>
+        </div>
+      </div>
 
-      <div style={{ paddingTop: 32, paddingBottom: 60 }}>
+      {activeTab === 'hub' && (
+        <>
+          <StreamHeroClient featured={featured} />
+
+          <div style={{ paddingTop: 32, paddingBottom: 60 }}>
         {/* TMDB discovery rows */}
         <TmdbRow label="New &amp; Popular"    movies={trending}  />
         <TmdbRow label="Highly Rated"         movies={topRated}  />
@@ -82,7 +107,15 @@ export default async function StreamPage() {
             </p>
           </div>
         )}
-      </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'search' && (
+        <div style={{ paddingBottom: 60 }}>
+          <BrowseGrid showStreamTabs={false} />
+        </div>
+      )}
     </div>
   );
 }

@@ -88,14 +88,19 @@ export default function BrowseGrid() {
     <div className="browse-container">
       {/* Search and Navigation Header */}
       <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 32, fontWeight: 'bold', margin: 0, color: '#fff' }}>Discover Horror</h1>
-            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', marginTop: 8 }}>Explore the deepest corners of the horror catalog.</p>
-          </div>
+        <div className="browse-header-container">
+          <h1 style={{ fontSize: 32, fontWeight: 'bold', margin: 0, color: '#fff' }}>
+            Discover Horror
+          </h1>
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', marginTop: 8, marginBottom: 0 }}>
+            Explore the deepest corners of the horror catalog.
+          </p>
+        </div>
 
+        {/* Search & Filters Area */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} className="browse-header-container">
           {/* Media Type Tabs */}
-          <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8 }}>
+          <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8, width: 'fit-content' }}>
             <button
               onClick={() => handleTabChange('movie')}
               style={{
@@ -129,24 +134,24 @@ export default function BrowseGrid() {
               TV Shows
             </button>
           </div>
-        </div>
 
-        {/* Global Search Bar */}
-        <div className="search-input-wrap" style={{ maxWidth: '400px', width: '100%' }}>
-          <Search className="search-icon" size={16} style={{ color: 'rgba(255,255,255,0.4)', left: '14px' }} />
-          <input
-            type="text"
-            className="form-input search-input-inner"
-            placeholder={mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search horror / thriller / sci-fi shows...'}
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{
-              paddingLeft: '40px',
-              height: '42px',
-              fontSize: '14px',
-              borderRadius: '4px',
-            }}
-          />
+          {/* Global Search Bar */}
+          <div className="search-input-wrap" style={{ maxWidth: '400px', width: '100%' }}>
+            <Search className="search-icon" size={16} style={{ color: 'rgba(255,255,255,0.4)', left: '14px' }} />
+            <input
+              type="text"
+              className="form-input search-input-inner"
+              placeholder={mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search horror / thriller / sci-fi shows...'}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{
+                paddingLeft: '40px',
+                height: '42px',
+                fontSize: '14px',
+                borderRadius: '4px',
+              }}
+            />
+          </div>
         </div>
       </div>
 

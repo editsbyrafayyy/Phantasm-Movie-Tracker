@@ -2206,7 +2206,7 @@ select:focus-visible {
   flex: 1;
   min-height: 100vh;
   overflow-y: auto;
-  padding-top: 56px !important; /* Make space for top navbar */
+  padding-top: 0 !important; /* Space handled by outer main element */
 }
 
 /* ── Streaming Hero Carousel ────────────────────────────────────────────── */
@@ -3197,7 +3197,7 @@ select:focus-visible {
   }
 
   .stream-main {
-    padding-top: 56px !important; /* Space for the fixed top header */
+    padding-top: 0 !important; /* Space handled by outer main element */
     padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important; /* Space for the fixed bottom navigation */
     padding-left: 0 !important;
     padding-right: 0 !important;
@@ -3469,4 +3469,60 @@ select:focus-visible {
     radial-gradient(circle at 20% 80%, rgba(230, 50, 50, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(230, 50, 50, 0.05) 0%, transparent 50%);
   pointer-events: none;
+}
+
+.stream-tab-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 24px 20px 24px 20px;
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
+}
+
+.stream-tab-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+@media (max-width: 768px) {
+  .stream-tab-wrapper {
+    padding: 16px 20px 16px 20px; /* mobile */
+  }
+  .browse-container {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
+
+.stream-tab-btn {
+  padding: 8px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+.stream-tab-btn:hover:not(.active) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stream-tab-btn.active {
+  background: var(--red) !important;
+  color: #fff !important;
+  -webkit-appearance: none;
+  appearance: none;
 }

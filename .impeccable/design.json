@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-15T00:54:00Z",
+  "title": "Design System: VAULT",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Crimson", "canonical": "#e63232", "tonalRamp": ["#330b0b", "#661616", "#992121", "#cc2c2c", "#e63232", "#eb5b5b", "#f08585", "#f5aeae"] },
+      "bg-base": { "role": "neutral", "displayName": "The Void", "canonical": "#080808", "tonalRamp": ["#000000", "#080808", "#111111", "#1a1a1a", "#222222", "#333333", "#444444", "#555555"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headlines only." },
+      "headline": { "displayName": "Headline", "purpose": "Elegant accents and titles." }
+    },
+    "shadows": [
+      { "name": "ambient-glow", "value": "0 10px 32px rgba(255,255,255,0.18)", "purpose": "Hover lift for primary actions." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call to action. High contrast.",
+      "html": "<button class=\"ds-btn-primary\">SUBMIT LOG</button>",
+      "css": ".ds-btn-primary { width: 100%; padding: 15px 32px; min-height: 44px; background: #ffffff; color: #080808; border: none; border-radius: 999px; font-family: Inter, 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.2px; transition: background 0.2s, transform 0.2s, box-shadow 0.2s; } .ds-btn-primary:hover { background: rgba(255, 255, 255, 0.9); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255, 255, 255, 0.1); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary actions. Transparent with subtle border.",
+      "html": "<button class=\"ds-btn-ghost\">LOAD MOVIE</button>",
+      "css": ".ds-btn-ghost { width: 100%; padding: 12px; min-height: 44px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.13); border-radius: 10px; color: rgba(255, 255, 255, 0.6); font-family: Inter, 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; justify-content: center; gap: 8px; } .ds-btn-ghost:hover { border-color: rgba(255, 255, 255, 0.35); color: #fff; background: rgba(255, 255, 255, 0.04); }"
+    },
+    {
+      "name": "Glass Panel",
+      "kind": "card",
+      "refersTo": "glass-panel",
+      "description": "Container for tools and forms.",
+      "html": "<div class=\"ds-glass-panel\"><p style=\"color:rgba(255,255,255,0.5);font-family:Inter,sans-serif;font-size:14px;margin:0;\">Content area</p></div>",
+      "css": ".ds-glass-panel { background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 14px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 20px; }"
+    },
+    {
+      "name": "Field Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Standard text input.",
+      "html": "<input type=\"text\" class=\"ds-input\" placeholder=\"Search catalog...\" />",
+      "css": ".ds-input { width: 100%; padding: 11px 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; color: #f0f0f0; font-family: Inter, sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; } .ds-input::placeholder { color: rgba(255, 255, 255, 0.2); } .ds-input:focus { border-color: #CC0000; background: rgba(204, 0, 0, 0.04); box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.08); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Horror Vault",
+    "overview": "VAULT is a private cinematic environment designed to track and stream horror films. It uses deep, near-black backgrounds intertwined with film grain and subtle red glows to create an immersive, premium, and slightly menacing atmosphere.\n\nThis system explicitly rejects generic SaaS layouts, white cards on light gray backgrounds, and overly bright or clinical designs.",
+    "keyCharacteristics": [
+      "Cinematic immersion: Dark backgrounds let movie posters and content shine.",
+      "High contrast: Stark white typography and borders over deep blacks.",
+      "Textural depth: Film grain overlays and subtle red glows mimic darkroom lighting."
+    ],
+    "rules": [
+      { "name": "The Void Rule", "body": "Backgrounds must remain overwhelmingly dark. Never introduce light gray or white background panels. The UI recedes into the shadows.", "section": "colors" },
+      { "name": "The Cinematic Pairing Rule", "body": "Use Bebas Neue for structural authority and Playfair Display italic for thematic flavor. Never mix them within the same word.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Depth is achieved via borders and glassmorphism blurs, not shadows.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do rely on typography and spacing over bounding boxes.",
+      "Do use backdrop-filter: blur(12px) for overlay surfaces to create cinematic depth.",
+      "Do ensure reasonable contrast and readability within the dark theme constraints."
+    ],
+    "donts": [
+      "Don't use generic SaaS layouts (white cards on light gray backgrounds).",
+      "Don't use overly bright or clinical designs.",
+      "Don't use heavy black drop shadows; they are invisible against the near-black background anyway."
+    ]
+  }
+}
