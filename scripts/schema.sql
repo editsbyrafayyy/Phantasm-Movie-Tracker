@@ -128,3 +128,27 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- ── Mood Cache Table (added in v3.1) ─────────────────────────────────
+create table if not exists mood_cache (
+  mood         text primary key,
+  payload      jsonb not null,
+  computed_at  timestamptz default now()
+);
+
+-- Enable RLS for security
+alter table mood_cache enable row level security;
+
+-- Allow public read access to mood_cache
+create policy "Allow public read access to mood_cache" 
+  on mood_cache for select 
+  to public 
+  using (true);
+
+-- Allow authenticated service_role/owner full access
+create policy "Allow service_role full access to mood_cache" 
+  on mood_cache for all 
+  to service_role 
+  using (true) 
+  with check (true);
+

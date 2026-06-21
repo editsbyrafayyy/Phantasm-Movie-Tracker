@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Clapperboard, Film, Play, Plus, User, LogIn } from 'lucide-react';
+import { Clapperboard, Film, Play, Plus, User, LogIn, Bookmark } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function MobileBottomNav() {
@@ -60,6 +60,10 @@ export default function MobileBottomNav() {
           <Link href="/stream" className={`mobile-bottom-nav-link${isActive('/stream')}`} prefetch={true}>
             <Play size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
             <span>Stream</span>
+          </Link>
+          <Link href="/watchlist" className={`mobile-bottom-nav-link${isActive('/watchlist')}`} prefetch={true}>
+            <Bookmark size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
+            <span>Watch Later</span>
           </Link>
           <Link href="/add" className={`mobile-bottom-nav-link${isActive('/add')}`} prefetch={true}>
             <Plus size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />

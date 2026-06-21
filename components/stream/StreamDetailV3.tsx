@@ -3,9 +3,10 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Play, Star, Film } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Play, Star } from 'lucide-react';
 import type { TmdbMovieDetail } from '@/lib/tmdb';
+import WatchlistButton from '@/components/watchlist/WatchlistButton';
 
 interface StreamDetailV3Props {
   movie: TmdbMovieDetail;
@@ -15,6 +16,13 @@ interface StreamDetailV3Props {
 
 export default function StreamDetailV3({ movie, imdbId, mediaType = 'movie' }: StreamDetailV3Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from') || '/stream';
+
+  const isComingSoon = movie.release_date 
+    ? new Date(movie.release_date).getTime() > Date.now()
+    : false;
+
   const bgImg = movie.backdrop_path 
     ? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}` 
     : movie.poster_path 
@@ -40,10 +48,10 @@ export default function StreamDetailV3({ movie, imdbId, mediaType = 'movie' }: S
     <div className="detail-v3-page">
       {/* Fixed back button */}
       <div className="detail-back-bar">
-        <button onClick={() => router.back()} className="back-link" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Link href={from} className="back-link" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ArrowLeft size={15} />
           Go Back
-        </button>
+        </Link>
       </div>
 
       {/* ── Backdrop Hero ─────────────────────────────────── */}
@@ -96,10 +104,20 @@ export default function StreamDetailV3({ movie, imdbId, mediaType = 'movie' }: S
           </div>
 
           <div className="backdrop-actions">
-            <Link href={`/stream/${imdbId || movie.id}?type=${mediaType}`} className="btn-watch">
-              <Play size={14} fill="white" color="white" />
-              Watch Now
-            </Link>
+            {!isComingSoon && (
+              <Link href={`/stream/${imdbId || movie.id}?type=${mediaType}`} className="btn-watch">
+                <Play size={14} fill="white" color="white" />
+                Watch Now
+              </Link>
+            )}
+            <WatchlistButton
+              tmdbId={movie.id}
+              mediaType={mediaType}
+              title={title}
+              posterUrl={movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : null}
+              year={Number(year) || null}
+              showLabel={true}
+            />
           </div>
         </motion.div>
       </div>

@@ -11,7 +11,7 @@ import Spinner        from '@/components/ui/Spinner';
 import { SUBGENRES, SECONDARY_TAGS, SCORE_FIELDS, computeTotal } from '@/lib/config';
 import type { Entry, MovieFormData, OmdbSearchHit } from '@/lib/types';
 
-type UpdateForm = MovieFormData;
+type UpdateForm = MovieFormData & { notes: string };
 
 export default function UpdateMovieForm() {
   const router       = useRouter();
@@ -46,6 +46,7 @@ export default function UpdateMovieForm() {
           sound:        data.sound        ?? '',
           impact:       data.impact       ?? '',
           bonus:        data.bonus        ?? 0,
+          notes:        data.notes        ?? '',
         });
       })
       .catch(() => setToast({ message: 'Could not load entry.', type: 'error' }))
@@ -201,6 +202,28 @@ export default function UpdateMovieForm() {
         onChange={v => set('bonus', v)}
         disabled={loading}
       />
+
+      {/* Personal Notes */}
+      <div className="form-section">
+        <p className="section-label">
+          Personal Notes <span className="optional">(optional)</span>
+        </p>
+        <div style={{ position: 'relative' }}>
+          <textarea
+            className="form-input notes-textarea"
+            value={form.notes ?? ''}
+            onChange={e => setForm(prev => prev ? { ...prev, notes: e.target.value.slice(0, 500) } : prev)}
+            placeholder="Your thoughts, what stood out, a quote, anything…"
+            rows={3}
+            disabled={loading}
+            maxLength={500}
+            aria-label="Personal notes"
+          />
+          <span className="notes-char-count">
+            {(form.notes ?? '').length}/500
+          </span>
+        </div>
+      </div>
 
       {/* Running total */}
       <div className="total-bar">

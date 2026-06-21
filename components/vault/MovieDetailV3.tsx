@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Play, Pencil, Trash2, Star, Film, Pin } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film } from 'lucide-react';
 import { SCORE_FIELDS } from '@/lib/config';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast, { type ToastType } from '@/components/ui/Toast';
+import ShareCardButton from '@/components/vault/ShareCardButton';
 import type { Entry } from '@/lib/types';
 
 
@@ -28,6 +29,9 @@ interface MovieDetailV3Props {
 
 export default function MovieDetailV3({ entry, similar, isOwner, canStream }: MovieDetailV3Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from') || '/';
+
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting]     = useState(false);
   const [toast, setToast]           = useState<{ message: string; type: ToastType } | null>(null);
@@ -89,9 +93,9 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
 
       {/* Fixed back button */}
       <div className="detail-back-bar">
-        <Link href="/" className="back-link">
+        <Link href={from} className="back-link">
           <ArrowLeft size={15} />
-          Back to Vault
+          {from === '/vault' ? 'Back to Your Vault' : 'Back to Vault'}
         </Link>
       </div>
 
@@ -186,6 +190,7 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
             )}
             {isOwner && (
               <>
+                <ShareCardButton entry={entry} />
                 <button
                   onClick={toggleMustWatch}
                   disabled={togglingMustWatch}
@@ -200,7 +205,7 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
                   }}
                 >
                   <Pin size={14} fill={mustWatch ? 'currentColor' : 'none'} />
-                  {mustWatch ? 'Must Watch ✓' : 'Must Watch'}
+                  {mustWatch ? 'Must Watch' : 'Must Watch'}
                 </button>
                 <Link href={`/update?id=${entry.id}`} className="btn-edit">
                   <Pencil size={14} />
@@ -224,6 +229,18 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
           {movie.plot && (
             <p className="detail-plot-v3">{movie.plot}</p>
           )}
+
+          {/* Personal Notes */}
+          {entry.notes && (
+            <blockquote className="entry-notes-block">
+              <span className="entry-notes-icon"><PenLine size={15} /></span>
+              <div className="entry-notes-content">
+                <span className="entry-notes-label">Personal Note</span>
+                <p className="entry-notes-text">{entry.notes}</p>
+              </div>
+            </blockquote>
+          )}
+
 
           {/* Vault ratings section — labeled clearly for guests */}
           <div className="vault-ratings-section">

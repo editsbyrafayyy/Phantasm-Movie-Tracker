@@ -113,7 +113,7 @@ export default async function StreamPage({ searchParams }: { searchParams: Promi
 
       {activeTab === 'search' && (
         <div style={{ paddingBottom: 60 }}>
-          <BrowseGrid />
+          <BrowseGrid canSave={!!user} />
         </div>
       )}
     </div>

@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Moon, User, LogOut, ChevronDown } from 'lucide-react';
+import { Moon, User, LogOut, ChevronDown, Bookmark } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function StreamRail() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   function isActive(path: string) {
@@ -49,6 +49,9 @@ export default function StreamRail() {
                 <Link href="/add" className={`navbar-link${isActive('/add')}`} prefetch={true}>
                   Log Film
                 </Link>
+                <Link href="/watchlist" className={`navbar-link${isActive('/watchlist')}`} prefetch={true}>
+                  Watch Later
+                </Link>
               </>
             )}
           </nav>
@@ -56,7 +59,9 @@ export default function StreamRail() {
 
         {/* Right side: Auth area */}
         <div className="navbar-auth-desktop">
-          {user ? (
+          {loading ? (
+            <div className="navbar-auth-loading" aria-hidden="true" />
+          ) : user ? (
             <div className="navbar-profile-dropdown-container">
               <button
                 className="navbar-profile-btn"
@@ -89,6 +94,16 @@ export default function StreamRail() {
                     >
                       <User size={14} aria-hidden="true" />
                       Profile
+                    </Link>
+                    <Link
+                      href="/watchlist"
+                      className="navbar-dropdown-item"
+                      role="menuitem"
+                      onClick={() => setDropdownOpen(false)}
+                      prefetch={true}
+                    >
+                      <Bookmark size={14} aria-hidden="true" />
+                      Watch Later
                     </Link>
                     <button
                       className="navbar-dropdown-item navbar-dropdown-signout"

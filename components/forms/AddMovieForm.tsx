@@ -10,7 +10,7 @@ import Toast, { type ToastType } from '@/components/ui/Toast';
 import { SUBGENRES, SECONDARY_TAGS, SCORE_FIELDS, computeTotal } from '@/lib/config';
 import type { MovieFormData, OmdbSearchHit } from '@/lib/types';
 
-const EMPTY: MovieFormData = {
+const EMPTY: MovieFormData & { notes: string } = {
   title:        '',
   omdbId:       '',
   subgenre:     '',
@@ -25,12 +25,13 @@ const EMPTY: MovieFormData = {
   sound:        '',
   impact:       '',
   bonus:        0,
+  notes:        '',
 };
 
 export default function AddMovieForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [form,    setForm]    = useState<MovieFormData>(EMPTY);
+  const [form,    setForm]    = useState<MovieFormData & { notes: string }>(EMPTY);
 
   useEffect(() => {
     const titleParam = searchParams.get('title') ?? '';
@@ -187,6 +188,28 @@ export default function AddMovieForm() {
         onChange={v => set('bonus', v)}
         disabled={loading}
       />
+
+      {/* Personal Notes */}
+      <div className="form-section">
+        <p className="section-label">
+          Personal Notes <span className="optional">(optional)</span>
+        </p>
+        <div style={{ position: 'relative' }}>
+          <textarea
+            className="form-input notes-textarea"
+            value={(form as MovieFormData & { notes: string }).notes ?? ''}
+            onChange={e => setForm(prev => ({ ...prev, notes: e.target.value.slice(0, 500) }))}
+            placeholder="Your thoughts, what stood out, a quote, anything…"
+            rows={3}
+            disabled={loading}
+            maxLength={500}
+            aria-label="Personal notes"
+          />
+          <span className="notes-char-count">
+            {((form as MovieFormData & { notes: string }).notes ?? '').length}/500
+          </span>
+        </div>
+      </div>
 
       {/* Running total */}
       <div className="total-bar">

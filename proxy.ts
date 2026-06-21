@@ -31,7 +31,15 @@ export async function proxy(req: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // Gracefully handle Supabase being unreachable (DNS/network errors in dev)
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Network unreachable — treat as unauthenticated, allow request to proceed
+  }
+
   const { pathname } = req.nextUrl;
 
   // ── Session Hardening ──────────────────────────────────────────────────────

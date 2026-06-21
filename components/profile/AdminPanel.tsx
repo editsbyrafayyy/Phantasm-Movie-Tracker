@@ -17,7 +17,25 @@ export default function AdminPanel() {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [isRefreshingMoods, setIsRefreshingMoods] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  async function handleRefreshMoods() {
+    setIsRefreshingMoods(true);
+    setToast(null);
+    try {
+      const res = await fetch('/api/stream/moods/refresh', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to refresh recommendations');
+      }
+      setToast({ message: 'Mood recommendations refreshed successfully.', type: 'success' });
+    } catch (err: any) {
+      setToast({ message: err.message, type: 'error' });
+    } finally {
+      setIsRefreshingMoods(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchUsers() {
@@ -122,6 +140,21 @@ export default function AdminPanel() {
           {isResetting ? 'Resetting...' : 'Force Reset Password'}
         </button>
       </form>
+
+      <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
+        <h4 style={{ fontSize: 14, marginBottom: 8, color: 'var(--text)', fontWeight: 600 }}>Mood Recommendations</h4>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+          Refresh the server-side cache for the "Pick by Mood" recommendations. This will rebuild the pools from your Vault and TMDB.
+        </p>
+        <button
+          onClick={handleRefreshMoods}
+          className="btn-primary"
+          disabled={isRefreshingMoods}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          {isRefreshingMoods ? 'Refreshing...' : 'Refresh Mood Recommendations'}
+        </button>
+      </div>
 
       {toast && (
         <Toast

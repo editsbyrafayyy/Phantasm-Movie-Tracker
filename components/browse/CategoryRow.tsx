@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Film, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SUBGENRE_HEX } from '@/lib/config';
@@ -17,6 +17,7 @@ interface CategoryRowProps {
 export default function CategoryRow({ label, entries }: CategoryRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   if (entries.length === 0) return null;
 
@@ -57,9 +58,9 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
               whileHover={{ scale: 1.04, y: -5 }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-              onMouseEnter={() => router.prefetch(`/vault/${entry.id}`)}
+              onMouseEnter={() => router.prefetch(`/vault/${entry.id}?from=${encodeURIComponent(pathname)}`)}
             >
-              <Link href={`/vault/${entry.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+              <Link href={`/vault/${entry.id}?from=${encodeURIComponent(pathname)}`} style={{ textDecoration: 'none', display: 'block' }}>
                 <div className="stream-card-poster">
                   {img ? (
                     <Image

@@ -1,8 +1,12 @@
+import { Suspense } from 'react';
 import Link    from 'next/link';
 import HeroBackground from '@/components/HeroBackground';
 import HeroCarousel   from '@/components/browse/HeroCarousel';
 import CategoryRow from '@/components/browse/CategoryRow';
 import VaultFilter    from '@/components/home/VaultFilter';
+import ComingSoonWidget from '@/components/home/ComingSoonWidget';
+import RouletteTrigger from '@/components/home/RouletteTrigger';
+import ActivityFeed    from '@/components/home/ActivityFeed';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -30,13 +34,24 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const authPromise = createServerSupabaseClient().then(s => s.auth.getUser());
-  const entriesPromise = getOwnerEntries();
+  // Gracefully handle Supabase connectivity issues
+  let user = null;
+  let entries: Entry[] = [];
 
-  const [{ data: { user } }, entries] = await Promise.all([
-    authPromise,
-    entriesPromise
-  ]);
+  try {
+    const authPromise    = createServerSupabaseClient().then(s => s.auth.getUser());
+    const entriesPromise = getOwnerEntries();
+
+    const [authResult, fetchedEntries] = await Promise.all([
+      authPromise,
+      entriesPromise,
+    ]);
+
+    user    = authResult.data.user;
+    entries = fetchedEntries;
+  } catch {
+    // Network unavailable — render with empty data, no crash
+  }
 
   const ownerName = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
 
@@ -44,15 +59,18 @@ export default async function HomePage() {
   const mustWatchEntries = entries.filter(e => e.must_watch === true);
   const remainingEntries = entries.filter(e => e.must_watch !== true);
 
-  // Top-rated entries with backdrop for the hero carousel
+  // Top-rated entries with BOTH poster AND backdrop for the hero carousel
   const slides = remainingEntries
-    .filter(e => e.movie.backdrop_url ?? e.movie.poster_url)
+    .filter(e => e.movie.backdrop_url && e.movie.poster_url)
     .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
     .slice(0, 8);
 
   return (
     <div className="browse-page">
       <HeroBackground />
+
+      {/* ── Film Roulette floating trigger ──────────────── */}
+      <RouletteTrigger entries={entries} canStream={!!user} />
 
       {/* ── Hero Carousel ───────────────────────────── */}
       <HeroCarousel
@@ -84,7 +102,17 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── My Vault ──────────────────────────────────── */}
+      {/* ── Coming Soon in Horror ──────────────────────────────── */}
+      <Suspense fallback={null}>
+        <ComingSoonWidget />
+      </Suspense>
+
+      {/* ── Member Activity Feed ───────────────────────────────── */}
+      <Suspense fallback={null}>
+        <ActivityFeed />
+      </Suspense>
+
+      {/* ── My Vault ──────────────────────────────────────────── */}
       <div className="home-vault-section">
         <h2 className="home-vault-heading">From the Vault</h2>
         <p className="home-vault-sub">Curated films scored and stored by {ownerName}.</p>

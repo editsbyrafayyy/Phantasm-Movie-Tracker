@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Star, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
@@ -15,6 +15,7 @@ interface Props {
 export default function TmdbRow({ label, movies }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   if (!movies.length) return null;
 
@@ -44,10 +45,10 @@ export default function TmdbRow({ label, movies }: Props) {
         {movies.slice(0, 20).map(movie => (
           <Link
             key={movie.id}
-            href={`/stream/tmdb/${movie.id}`}
+            href={`/stream/tmdb/${movie.id}?from=${encodeURIComponent(pathname)}`}
             className="stream-card group"
             style={{ textDecoration: 'none', display: 'block', position: 'relative' }}
-            onMouseEnter={() => router.prefetch(`/stream/tmdb/${movie.id}`)}
+            onMouseEnter={() => router.prefetch(`/stream/tmdb/${movie.id}?from=${encodeURIComponent(pathname)}`)}
           >
             <div className="stream-card-poster">
               {movie.poster_path ? (

@@ -328,3 +328,34 @@ export async function getHiddenGemsHorror(): Promise<TmdbDiscoverMovie[]> {
   } catch { return []; }
 }
 
+/**
+ * Returns upcoming horror/thriller films releasing between today and Dec 31, 2026.
+ * Sorted by popularity descending, limited to 12. Cached for 6 hours.
+ */
+export async function getComingSoonHorror(): Promise<TmdbDiscoverMovie[]> {
+  try {
+    const key   = getKey();
+    const today = new Date().toISOString().split('T')[0];
+    const end   = '2026-12-31';
+
+    const url = `${TMDB_BASE}/discover/movie?api_key=${key}`
+      + `&with_genres=27,53`
+      + `&primary_release_date.gte=${today}`
+      + `&primary_release_date.lte=${end}`
+      + `&sort_by=popularity.desc`
+      + `&vote_count.gte=0`
+      + `&language=en-US`
+      + `&page=1`;
+
+    const res = await fetch(url, { next: { revalidate: 21600 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    const results: TmdbDiscoverMovie[] = (data.results ?? [])
+      .filter((m: TmdbDiscoverMovie) => m.poster_path)
+      .slice(0, 12);
+
+    return results;
+  } catch { return []; }
+}
+

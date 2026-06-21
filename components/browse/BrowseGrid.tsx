@@ -4,9 +4,17 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, Search } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import MoodPicker from '@/components/browse/MoodPicker';
+import WatchlistButton from '@/components/watchlist/WatchlistButton';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
-export default function BrowseGrid() {
+interface BrowseGridProps {
+  canSave?: boolean;
+}
+
+export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
+  const pathname = usePathname();
   const [movies, setMovies] = useState<TmdbDiscoverMovie[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -97,6 +105,9 @@ export default function BrowseGrid() {
           </p>
         </div>
 
+        {/* Mood Picker */}
+        <MoodPicker />
+
         {/* Search & Filters Area */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} className="browse-header-container">
           {/* Media Type Tabs */}
@@ -167,7 +178,7 @@ export default function BrowseGrid() {
             {movies.map((movie, idx) => (
               <Link
                 key={`${movie.id}-${idx}`}
-                href={`/stream/tmdb/${movie.id}?type=${mediaType}`}
+                href={`/stream/tmdb/${movie.id}?type=${mediaType}&from=${encodeURIComponent(pathname)}`}
                 className="stream-card group"
                 style={{ textDecoration: 'none', display: 'block', position: 'relative' }}
               >
@@ -188,6 +199,19 @@ export default function BrowseGrid() {
                     </div>
                   )}
                   <div className="stream-card-overlay" />
+
+                  {/* Watchlist button */}
+                  {canSave && (
+                    <WatchlistButton
+                      tmdbId={movie.id}
+                      mediaType={mediaType}
+                      title={movie.title ?? movie.name ?? ''}
+                      posterUrl={movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : null}
+                      year={Number((movie.release_date ?? movie.first_air_date ?? '').slice(0, 4)) || null}
+                      showLabel={false}
+                      className="watchlist-card-overlay-btn"
+                    />
+                  )}
 
                   {/* View overlay */}
                   <div className="stream-card-play-btn">

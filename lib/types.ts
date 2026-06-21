@@ -38,6 +38,7 @@ export interface Entry {
   bonus:         0 | 1;
   total:         number | null;
   must_watch?: boolean;
+  notes?:        string | null;
   created_at:    string;
   updated_at:    string;
   movie:         Movie;              // joined from movies table

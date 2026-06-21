@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Film, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { RECOMMEND_COLOR, SUBGENRE_HEX } from '@/lib/config';
@@ -27,7 +28,8 @@ export default function MovieCard({ entry }: MovieCardProps) {
   // Three-tier image fallback: poster → backdrop → genre gradient
   const imgSrc = poster ?? backdrop ?? null;
   
-  const targetHref = user ? `/vault/${entry.id}` : '/login';
+  const pathname = usePathname();
+  const targetHref = user ? `/vault/${entry.id}?from=${encodeURIComponent(pathname)}` : '/login';
 
   return (
     <motion.div

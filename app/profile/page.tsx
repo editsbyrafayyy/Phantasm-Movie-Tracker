@@ -8,6 +8,7 @@ import RecommendBars   from '@/components/stats/RecommendBars';
 import ScoreHistograms from '@/components/stats/ScoreHistograms';
 import TopRatedList    from '@/components/stats/TopRatedList';
 import ScoreDistribution from '@/components/stats/ScoreDistribution';
+import VaultWrapped    from '@/components/stats/VaultWrapped';
 import ProfileEdit     from '@/components/profile/ProfileEdit';
 import PasswordReset   from '@/components/profile/PasswordReset';
 import AdminPanel      from '@/components/profile/AdminPanel';
@@ -104,6 +105,8 @@ export default async function ProfilePage() {
             <p className="page-label">Your Vault</p>
             <h1 className="page-title-serif" style={{ fontSize: 'clamp(32px, 5vw, 42px)' }}>Statistics.</h1>
           </header>
+
+          <VaultWrapped entries={typedEntries} year={new Date().getFullYear()} />
 
           <SummaryStrip stats={stats} />
 
