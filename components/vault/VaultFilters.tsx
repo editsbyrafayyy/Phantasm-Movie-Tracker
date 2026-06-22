@@ -109,56 +109,50 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
         />
       </div>
 
-      {/* Selects Row */}
-      <div className="vault-selects-row" style={{ display: 'flex', gap: 12, width: '100%', flexWrap: 'wrap', marginTop: 12 }}>
-        <div style={{ flex: 1, minWidth: '120px' }}>
-          <CustomSelect
-            value={selectedGenre}
-            onChange={setGenre}
-            options={[
-              { value: 'All', label: 'All Genres' },
-              ...SUBGENRES.map(g => ({ value: g, label: g })),
-            ]}
-            ariaLabel="Filter by genre"
-          />
-        </div>
+      {/* Selects Row — 2×2 grid on all sizes */}
+      <div className="vault-selects-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%', marginTop: 12 }}>
+        <CustomSelect
+          value={selectedGenre}
+          onChange={setGenre}
+          options={[
+            { value: 'All', label: 'All Genres' },
+            ...SUBGENRES.map(g => ({ value: g, label: g })),
+          ]}
+          ariaLabel="Filter by genre"
+        />
 
-        <div style={{ flex: 1, minWidth: '120px' }}>
-          <CustomSelect
-            value={selectedRec}
-            onChange={setRec}
-            options={[
-              { value: 'All', label: 'All Statuses' },
-              { value: 'Peak', label: 'Peak' },
-              { value: 'Yes', label: 'Yes' },
-              { value: 'No', label: 'No' },
-              { value: 'Garbage', label: 'Garbage' },
-            ]}
-            ariaLabel="Filter by recommendation"
-          />
-        </div>
+        <CustomSelect
+          value={selectedRec}
+          onChange={setRec}
+          options={[
+            { value: 'All', label: 'All Statuses' },
+            { value: 'Peak', label: 'Peak' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+            { value: 'Garbage', label: 'Garbage' },
+          ]}
+          ariaLabel="Filter by recommendation"
+        />
 
-        <div style={{ flex: 1, minWidth: '120px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <CustomSelect
-            value={sort}
-            options={SORT_OPTIONS}
-            onChange={val => setSort(val as SortKey)}
-            ariaLabel="Sort movies"
-            icon={<SlidersHorizontal size={13} />}
-            align="right"
-          />
-          <CustomSelect
-            value={ratingFilter}
-            onChange={val => setRatingFilter(val as 'all' | 'rated' | 'unrated')}
-            options={[
-              { value: 'all', label: 'All Ratings' },
-              { value: 'rated', label: 'Rated' },
-              { value: 'unrated', label: 'Not Rated' },
-            ]}
-            ariaLabel="Filter by rating status"
-            align="right"
-          />
-        </div>
+        <CustomSelect
+          value={sort}
+          options={SORT_OPTIONS}
+          onChange={val => setSort(val as SortKey)}
+          ariaLabel="Sort movies"
+          icon={<SlidersHorizontal size={13} />}
+        />
+
+        <CustomSelect
+          value={ratingFilter}
+          onChange={val => setRatingFilter(val as 'all' | 'rated' | 'unrated')}
+          options={[
+            { value: 'all', label: 'All Ratings' },
+            { value: 'rated', label: 'Rated' },
+            { value: 'unrated', label: 'Not Rated' },
+          ]}
+          ariaLabel="Filter by rating status"
+          align="right"
+        />
       </div>
 
       {/* Active filter count / Clear */}
