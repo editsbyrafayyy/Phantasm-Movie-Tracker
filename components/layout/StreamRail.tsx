@@ -102,16 +102,6 @@ export default function StreamRail() {
                       <User size={14} aria-hidden="true" />
                       Profile
                     </Link>
-                    <Link
-                      href="/watchlist"
-                      className="navbar-dropdown-item"
-                      role="menuitem"
-                      onClick={() => setDropdownOpen(false)}
-                      prefetch={true}
-                    >
-                      <Bookmark size={14} aria-hidden="true" />
-                      Watch Later
-                    </Link>
                     <button
                       className="navbar-dropdown-item navbar-dropdown-signout"
                       role="menuitem"

@@ -3401,8 +3401,8 @@ select:focus-visible {
   
   /* Banners sizing and rounding overrides */
   .hero-carousel {
-    height: 520px !important;
-    min-height: unset !important;
+    height: auto !important;
+    min-height: 520px;
     max-height: none !important;
     border-radius: 0 !important; /* Full width touches viewport edges */
     width: 100% !important;
@@ -3411,7 +3411,8 @@ select:focus-visible {
     border-right: none !important;
   }
   .stream-hero {
-    height: 420px !important;
+    height: auto !important;
+    min-height: unset !important;
     border-radius: 0 !important; /* Full width touches viewport edges */
     width: 100% !important;
     margin-left: 0 !important;
@@ -3512,11 +3513,18 @@ select:focus-visible {
   /* Unified Top Navbar Mobile Overrides */
   .unified-top-navbar {
     height: 56px;
-    justify-content: center !important;
+    justify-content: space-between !important;
   }
   .navbar-container {
-    justify-content: center !important;
+    justify-content: space-between !important;
     padding: 0 16px;
+    position: relative;
+    width: 100%;
+  }
+  .navbar-logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
   }
   .unified-navbar-container {
     padding: 0 16px !important;
@@ -3525,8 +3533,8 @@ select:focus-visible {
     gap: 0;
   }
   .navbar-links-desktop,
-  .navbar-auth-desktop,
-  .navbar-profile-dropdown-container {
+  .navbar-profile-username,
+  .navbar-guest-label {
     display: none !important;
   }
 }

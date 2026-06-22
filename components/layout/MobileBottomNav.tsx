@@ -69,10 +69,6 @@ export default function MobileBottomNav() {
             <Plus size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
             <span>Log Film</span>
           </Link>
-          <Link href="/profile" className={`mobile-bottom-nav-link${isActive('/profile')}`} prefetch={true}>
-            <User size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            <span>Profile</span>
-          </Link>
         </>
       ) : (
         <Link href="/login" className={`mobile-bottom-nav-link${isActive('/login')}`} prefetch={true}>
