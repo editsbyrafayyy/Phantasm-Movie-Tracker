@@ -29,7 +29,14 @@ export default function StreamRail() {
         <div className="navbar-left-group">
           {/* Logo */}
           <Link href="/" className="navbar-logo" prefetch={true}>
-            <Moon size={18} className="navbar-logo-icon" />
+            <img 
+              src="/apple-touch-icon.png?v=2" 
+              alt="Movie Tracker Logo" 
+              width={26} 
+              height={26} 
+              className="navbar-logo-icon-img" 
+              style={{ borderRadius: '4px', objectFit: 'cover' }}
+            />
             <span className="navbar-logo-text">VAULT</span>
           </Link>
 
