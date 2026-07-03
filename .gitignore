@@ -49,3 +49,5 @@ next-env.d.ts
 
 # Scratch scripts
 scratch/
+
+!README.md
