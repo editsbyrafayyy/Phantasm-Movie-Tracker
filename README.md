@@ -26,7 +26,7 @@ This project started as a way to move our group's movie tracking off spreadsheet
 
 ## Note on Setup and Reuse
 
-This repo is shared for portfolio and learning purposes only.
+This repo is shared for portfolio only.
 
 It relies on private services (a Supabase project, API keys, admin accounts, and friend-group data) that are not included here, and a few features are intentionally built around my friend group rather than general users. Because of that:
 
