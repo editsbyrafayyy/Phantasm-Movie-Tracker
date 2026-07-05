@@ -10,7 +10,6 @@ This project started as a way to move our group's movie tracking off spreadsheet
 - **Watchlist** — save what's next, remove it once it's watched
 - **Browse** — discover new titles via TMDB, with mood-based recommendations and a hero carousel of trending content
 - **Add / Update flow** — search OMDB/TMDB and pull in accurate metadata instead of entering it manually
-- **Stream** — a built-in watch page with detail views and a video player
 - **Stats and Vault Wrapped** — a year-in-review style breakdown of viewing habits: genre spread, score distributions, top rated titles, and more
 - **Roulette** — a random picker for when the group can't decide what to watch
 - **Profile and Admin tools** — account management, password resets, and an admin panel for managing users
