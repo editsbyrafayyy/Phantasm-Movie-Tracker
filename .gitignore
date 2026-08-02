@@ -21,6 +21,7 @@ movie-tracker-*.json
 
 # ── Documentation and Planning ────────────────────────────────────────────────
 *.md
+CLAUDE.md
 Screenshots/
 Claude Skills/
 # ── OS / Editor ───────────────────────────────────────────────────────────────
