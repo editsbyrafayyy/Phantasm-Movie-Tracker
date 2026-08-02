@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Moon, User, LogOut, ChevronDown, Bookmark } from 'lucide-react';
@@ -21,6 +21,21 @@ export default function StreamRail() {
 
   const initial = profile?.display_name?.[0] ?? profile?.username?.[0] ?? user?.email?.[0] ?? '?';
   const displayName = profile?.display_name ?? profile?.username ?? user?.email ?? '';
+
+  // Global 'N' shortcut → navigate to /add (auth-gated, skips input/textarea focus)
+  useEffect(() => {
+    if (!user) return;
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        router.push('/add');
+      }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [user, router]);
 
   return (
     <header className="unified-top-navbar" aria-label="Main navigation">

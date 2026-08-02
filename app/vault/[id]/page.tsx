@@ -52,20 +52,30 @@ export default async function VaultEntryPage({ params }: Props) {
 
   const similarScopeUserId = isOwnerEntry ? ownerId : sessionUserId;
 
-  // Fetch similar entries: same subgenre, excluding the current entry, ordered by score
-  const { data: similar } = await supabase
-    .from('entries')
-    .select('*, movie:movies (*)')
-    .eq('subgenre', entry.subgenre)
-    .eq('user_id', similarScopeUserId)
-    .neq('id', id)
-    .order('total', { ascending: false })
-    .limit(10);
+  // Fetch all entries for franchise tracking & similar entries
+  const [similarRes, allEntriesRes] = await Promise.all([
+    supabase
+      .from('entries')
+      .select('*, movie:movies (*)')
+      .eq('subgenre', entry.subgenre)
+      .eq('user_id', similarScopeUserId)
+      .neq('id', id)
+      .order('total', { ascending: false })
+      .limit(10),
+    supabase
+      .from('entries')
+      .select('*, movie:movies (*)')
+      .eq('user_id', similarScopeUserId)
+  ]);
+
+  const similar = similarRes.data ?? [];
+  const allEntries = allEntriesRes.data ?? [];
 
   return (
     <MovieDetailV3
       entry={entry as Entry}
-      similar={(similar ?? []) as Entry[]}
+      similar={similar as Entry[]}
+      allEntries={allEntries as Entry[]}
       isOwner={isOwner}
       canStream={!!user}
     />

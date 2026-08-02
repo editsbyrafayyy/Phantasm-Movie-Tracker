@@ -202,6 +202,30 @@ export default function VideoPlayerClient({
     }
   }, [tmdbId, imdbId]);
 
+  // Write to watch history on mount so the Stream Hub can surface "Pick up where you left off"
+  useEffect(() => {
+    if (typeof window === 'undefined' || !title) return;
+    const HISTORY_KEY = 'vault_watch_history';
+    const MAX_ITEMS   = 20;
+    const TTL_MS      = 30 * 24 * 60 * 60 * 1000; // 30 days
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      const existing: Array<{ id: string; title: string; poster_url: string | null; type: string; watchedAt: number }> =
+        raw ? JSON.parse(raw) : [];
+      // Remove stale (>30d) and the current id if already present
+      const now = Date.now();
+      const filtered = existing.filter(
+        e => (now - e.watchedAt) < TTL_MS && e.id !== (tmdbId || imdbId)
+      );
+      const next = [
+        { id: tmdbId || imdbId, title, poster_url: poster_url ?? null, type, watchedAt: now },
+        ...filtered,
+      ].slice(0, MAX_ITEMS);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    } catch { /* silent — never break the player */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imdbId, tmdbId]); // only re-run if the movie changes
+
   const toggleWatched = (s: number, epNum: number) => {
     const key = `${s}:${epNum}`;
     const newWatched = { ...watchedEpisodes, [key]: !watchedEpisodes[key] };

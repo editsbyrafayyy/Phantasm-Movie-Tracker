@@ -21,9 +21,19 @@ export default function MovieCard({ entry }: MovieCardProps) {
   const backdrop  = movie?.backdrop_url ?? null;
   const title     = movie?.title ?? 'Unknown';
   const year      = movie?.year ?? null;
-  const recColor  = recommend ? RECOMMEND_COLOR[recommend] : undefined;
-  const genreHex  = SUBGENRE_HEX[subgenre] ?? '#333333';
-  const hasScore  = total !== null && total > 0;
+  const runtime_min = movie?.runtime_min ?? null;
+  const recColor    = recommend ? RECOMMEND_COLOR[recommend] : undefined;
+  const genreHex    = SUBGENRE_HEX[subgenre] ?? '#333333';
+  const hasScore    = total !== null && total > 0;
+
+  // Format runtime (e.g. 94 -> 1h 34m or 45 -> 45m)
+  const formattedRuntime = runtime_min
+    ? runtime_min >= 60
+      ? `${Math.floor(runtime_min / 60)}h ${runtime_min % 60 ? `${runtime_min % 60}m` : ''}`
+      : `${runtime_min}m`
+    : null;
+
+  const metaText = [year, formattedRuntime].filter(Boolean).join(' · ');
 
   // Three-tier image fallback: poster → backdrop → genre gradient
   const imgSrc = poster ?? backdrop ?? null;
@@ -41,7 +51,7 @@ export default function MovieCard({ entry }: MovieCardProps) {
       <Link
         href={targetHref}
         className="movie-card"
-        aria-label={`${title}${year ? `, ${year}` : ''}`}
+        aria-label={`${title}${metaText ? `, ${metaText}` : ''}`}
       >
         <div className="movie-card-poster">
           {/* Tier 1 & 2: poster or backdrop image */}
@@ -97,7 +107,7 @@ export default function MovieCard({ entry }: MovieCardProps) {
           {/* Bottom strip */}
           <div className="movie-card-bottom">
             <p className="movie-card-title">{title}</p>
-            {year && <p className="movie-card-year">{year}</p>}
+            {metaText && <p className="movie-card-year">{metaText}</p>}
           </div>
 
           {/* Subgenre chip — CSS hover reveal */}

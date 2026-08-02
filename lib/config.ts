@@ -107,3 +107,30 @@ export function computeTotal(fields: {
   }, 0);
   return sum + fields.bonus;
 }
+
+// ── Built-in Horror Franchises ────────────────────────────────────────────────
+export const FRANCHISES: { name: string; pattern: RegExp }[] = [
+  { name: 'Scream Collection',            pattern: /\bScream\b/i },
+  { name: 'Saw Franchise',                pattern: /\b(Saw|Jigsaw|Spiral)\b/i },
+  { name: 'Halloween Franchise',          pattern: /\bHalloween\b/i },
+  { name: 'The Conjuring Universe',       pattern: /\b(Conjuring|Annabelle|Nun)\b/i },
+  { name: 'Alien Franchise',              pattern: /\b(Alien|Prometheus)\b/i },
+  { name: 'Evil Dead Series',             pattern: /\b(Evil Dead|Army of Darkness)\b/i },
+  { name: 'A Nightmare on Elm Street',    pattern: /\bElm Street\b/i },
+  { name: 'Friday the 13th',              pattern: /\bFriday the 13th\b/i },
+  { name: 'Hellraiser Franchise',         pattern: /\bHellraiser\b/i },
+  { name: 'Paranormal Activity Series',   pattern: /\bParanormal Activity\b/i },
+  { name: 'Texas Chainsaw Massacre',      pattern: /\bTexas Chain\s?saw\b/i },
+  { name: 'Final Destination Series',     pattern: /\bFinal Destination\b/i },
+  { name: 'Insidious Series',             pattern: /\bInsidious\b/i },
+  { name: 'Child\'s Play / Chucky',       pattern: /\b(Child's Play|Chucky)\b/i },
+  { name: 'Predator Series',              pattern: /\b(Predator|Prey)\b/i },
+  { name: 'A Quiet Place Franchise',      pattern: /\bQuiet Place\b/i },
+];
+
+export function getMovieFranchise(title: string): string | null {
+  if (!title) return null;
+  const match = FRANCHISES.find(f => f.pattern.test(title));
+  return match ? match.name : null;
+}
+

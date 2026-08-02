@@ -5,12 +5,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers } from 'lucide-react';
 import { SCORE_FIELDS } from '@/lib/config';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast, { type ToastType } from '@/components/ui/Toast';
 import ShareCardButton from '@/components/vault/ShareCardButton';
+import FranchiseTrack from '@/components/vault/FranchiseTrack';
+import ListManagerModal from '@/components/vault/ListManagerModal';
 import type { Entry } from '@/lib/types';
+import {
+  RadarChart, Radar, PolarGrid, PolarAngleAxis,
+  PolarRadiusAxis, ResponsiveContainer, Tooltip,
+} from 'recharts';
 
 
 const RECOMMEND_STYLE: Record<string, { color: string; border: string; bg: string }> = {
@@ -21,13 +27,14 @@ const RECOMMEND_STYLE: Record<string, { color: string; border: string; bg: strin
 };
 
 interface MovieDetailV3Props {
-  entry:   Entry;
-  similar: Entry[];
-  isOwner: boolean;
-  canStream: boolean;
+  entry:      Entry;
+  similar:    Entry[];
+  allEntries?: Entry[];
+  isOwner:    boolean;
+  canStream:  boolean;
 }
 
-export default function MovieDetailV3({ entry, similar, isOwner, canStream }: MovieDetailV3Props) {
+export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner, canStream }: MovieDetailV3Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from') || '/';
@@ -37,6 +44,7 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
   const [toast, setToast]           = useState<{ message: string; type: ToastType } | null>(null);
   const [mustWatch, setMustWatch] = useState(!!entry.must_watch);
   const [togglingMustWatch, setTogglingMustWatch] = useState(false);
+  const [stackModalOpen, setStackModalOpen] = useState(false);
 
   const { movie } = entry;
 
@@ -188,6 +196,16 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
                 Watch Now
               </Link>
             )}
+            {canStream && (
+              <button
+                onClick={() => setStackModalOpen(true)}
+                className="btn-edit"
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <Layers size={14} />
+                Save to Stack
+              </button>
+            )}
             {isOwner && (
               <>
                 <ShareCardButton entry={entry} />
@@ -247,6 +265,52 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
             <div className="vault-ratings-header">
               <span className="vault-ratings-label">Vault Ratings</span>
             </div>
+
+            {/* ── Radar Chart ── */}
+            {entry.total !== null && entry.total > 0 && (
+              <div className="score-radar-wrap">
+                <ResponsiveContainer width="100%" height={260}>
+                  <RadarChart
+                    data={SCORE_FIELDS.map(f => ({
+                      subject: f.label,
+                      value:   Math.round(((entry[f.key as keyof Entry] as number ?? 0) / f.max) * 100),
+                      rawVal:  entry[f.key as keyof Entry] as number ?? 0,
+                      max:     f.max,
+                    }))}
+                    margin={{ top: 10, right: 24, bottom: 10, left: 24 }}
+                  >
+                    <PolarGrid stroke="rgba(255,255,255,0.07)" />
+                    <PolarAngleAxis
+                      dataKey="subject"
+                      tick={{ fill: 'var(--text-dim)', fontSize: 11, fontFamily: 'var(--font-sans)' }}
+                    />
+                    <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 8,
+                        fontSize: 12,
+                        color: 'var(--text)',
+                      }}
+                      formatter={(_: unknown, __: unknown, props: { payload?: { rawVal: number; max: number } }) => [
+                        `${props.payload?.rawVal ?? 0} / ${props.payload?.max ?? 1}`,
+                        'Score',
+                      ]}
+                    />
+                    <Radar
+                      name="Score"
+                      dataKey="value"
+                      stroke="#e63232"
+                      fill="#e63232"
+                      fillOpacity={0.18}
+                      strokeWidth={1.5}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
             <div className="score-bars">
               {SCORE_FIELDS.map(field => {
                 const val = entry[field.key as keyof Entry] as number | null;
@@ -281,6 +345,9 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
               </div>
             </div>
           </div>
+
+          {/* Franchise Track (if part of a series) */}
+          <FranchiseTrack currentEntry={entry} allEntries={allEntries} />
 
           {/* Cast Subsection */}
           <div className="detail-subsection">
@@ -430,6 +497,13 @@ export default function MovieDetailV3({ entry, similar, isOwner, canStream }: Mo
           onDismiss={() => setToast(null)}
         />
       )}
+      {/* List Manager Modal */}
+      <ListManagerModal
+        movieId={movie.id}
+        movieTitle={title}
+        isOpen={stackModalOpen}
+        onClose={() => setStackModalOpen(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { redirect }           from 'next/navigation';
 import Link                    from 'next/link';
 import StreamHeroClient        from '@/components/stream/StreamHeroClient';
+import WatchHistoryRow         from '@/components/stream/WatchHistoryRow';
 import CategoryRow             from '@/components/browse/CategoryRow';
 import TmdbRow                 from '@/components/browse/TmdbRow';
 import BrowseGrid              from '@/components/browse/BrowseGrid';
@@ -80,6 +81,7 @@ export default async function StreamPage({ searchParams }: { searchParams: Promi
       {activeTab === 'hub' && (
         <>
           <StreamHeroClient featured={featured} />
+          <WatchHistoryRow />
 
           <div style={{ paddingTop: 32, paddingBottom: 60 }}>
         {/* TMDB discovery rows */}

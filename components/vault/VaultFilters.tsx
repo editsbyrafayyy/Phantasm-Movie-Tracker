@@ -7,12 +7,23 @@ import { SUBGENRES } from '@/lib/config';
 import type { Entry } from '@/lib/types';
 
 type SortKey = 'az' | 'za' | 'top' | 'recent';
+type YearBucket = 'all' | 'pre1980' | '1980s' | '1990s' | '2000s' | '2010s' | '2020s';
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'recent', label: 'Recently Added' },
   { value: 'top',    label: 'Highest Rated'  },
   { value: 'az',     label: 'A → Z'          },
   { value: 'za',     label: 'Z → A'          },
+];
+
+const YEAR_OPTIONS: { value: YearBucket; label: string }[] = [
+  { value: 'all',    label: 'All Years'  },
+  { value: '2020s',  label: '2020s'      },
+  { value: '2010s',  label: '2010s'      },
+  { value: '2000s',  label: '2000s'      },
+  { value: '1990s',  label: '1990s'      },
+  { value: '1980s',  label: '1980s'      },
+  { value: 'pre1980',label: 'Before 1980'},
 ];
 
 interface VaultFiltersProps {
@@ -26,6 +37,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
   const [selectedRec,   setRec]          = useState('All');
   const [sort,          setSort]         = useState<SortKey>('recent');
   const [ratingFilter,  setRatingFilter] = useState<'all' | 'rated' | 'unrated'>('all');
+  const [yearBucket,    setYearBucket]   = useState<YearBucket>('all');
 
   const filtered = useMemo(() => {
     let result = [...entries];
@@ -51,6 +63,21 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
       result = result.filter(e => e.total !== null && e.total > 0);
     } else if (ratingFilter === 'unrated') {
       result = result.filter(e => e.total === null || e.total === 0);
+    }
+
+    // Year bucket filter
+    if (yearBucket !== 'all') {
+      result = result.filter(e => {
+        const y = e.movie?.year;
+        if (!y) return false;
+        if (yearBucket === 'pre1980') return y < 1980;
+        if (yearBucket === '1980s')   return y >= 1980 && y < 1990;
+        if (yearBucket === '1990s')   return y >= 1990 && y < 2000;
+        if (yearBucket === '2000s')   return y >= 2000 && y < 2010;
+        if (yearBucket === '2010s')   return y >= 2010 && y < 2020;
+        if (yearBucket === '2020s')   return y >= 2020;
+        return true;
+      });
     }
 
     // Sort
@@ -82,7 +109,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
     }
 
     return result;
-  }, [entries, search, selectedGenre, selectedRec, ratingFilter, sort]);
+  }, [entries, search, selectedGenre, selectedRec, ratingFilter, yearBucket, sort]);
 
   // Propagate filtered results to parent whenever they change
   useEffect(() => {
@@ -92,7 +119,8 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
   const activeFilterCount = 
     (selectedGenre !== 'All' ? 1 : 0) + 
     (selectedRec !== 'All' ? 1 : 0) + 
-    (ratingFilter !== 'all' ? 1 : 0);
+    (ratingFilter !== 'all' ? 1 : 0) +
+    (yearBucket !== 'all' ? 1 : 0);
 
   return (
     <div className="vault-filters">
@@ -109,7 +137,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
         />
       </div>
 
-      {/* Selects Row — 2×2 grid on all sizes */}
+      {/* Selects Row — responsive grid */}
       <div className="vault-selects-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%', marginTop: 12 }}>
         <CustomSelect
           value={selectedGenre}
@@ -153,13 +181,20 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
           ariaLabel="Filter by rating status"
           align="right"
         />
+
+        <CustomSelect
+          value={yearBucket}
+          onChange={val => setYearBucket(val as YearBucket)}
+          options={YEAR_OPTIONS}
+          ariaLabel="Filter by decade"
+        />
       </div>
 
       {/* Active filter count / Clear */}
       {activeFilterCount > 0 && (
         <button
           className="vault-clear-filters"
-          onClick={() => { setGenre('All'); setRec('All'); setRatingFilter('all'); }}
+          onClick={() => { setGenre('All'); setRec('All'); setRatingFilter('all'); setYearBucket('all'); }}
           style={{ marginTop: 12 }}
         >
           Clear {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}
