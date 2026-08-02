@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, Suspense, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Moon, Eye, EyeOff } from 'lucide-react';
 
 function LoginForm() {
-  const router       = useRouter();
-
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,9 +40,12 @@ function LoginForm() {
       return;
     }
 
-    // Always redirect to Rafay's Movies Page (home)
-    router.push('/');
-    router.refresh();
+    // Full page reload instead of client-side router.push — ensures the
+    // newly-set auth cookie is actually sent with the next request. Safari
+    // has a slower cookie-flush timing than Chromium, so a soft navigation
+    // can race ahead of the cookie write and read a logged-out state,
+    // bouncing the user straight back to /login.
+    window.location.href = '/';
   }
 
   return (
