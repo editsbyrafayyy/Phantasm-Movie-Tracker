@@ -14,13 +14,28 @@ function LoginForm() {
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
+
+    // Read straight from the DOM instead of trusting React state to have
+    // caught up. Safari's iCloud Keychain autofill can fill the visible
+    // input value without firing a proper onChange/input event, which
+    // leaves React state out of sync with what's on screen (Mac-specific
+    // bug: submit button stays disabled, native :invalid styling kicks in).
+    const form = e.currentTarget;
+    const emailVal = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
+    const passwordVal = (form.elements.namedItem('password') as HTMLInputElement).value;
+
+    if (!emailVal || !passwordVal) {
+      setError('Please enter your email and password.');
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: emailVal, password: passwordVal });
 
     if (error) {
       setError(error.message);
@@ -49,9 +64,9 @@ function LoginForm() {
             <label htmlFor="email" className="form-label">Email</label>
             <input
               id="email"
+              name="email"
               type="email"
               autoComplete="email"
-              required
               className="form-input"
               placeholder="you@example.com"
               value={email}
@@ -65,9 +80,9 @@ function LoginForm() {
             <div style={{ position: 'relative' }}>
               <input
                 id="password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
-                required
                 className="form-input"
                 placeholder="••••••••"
                 value={password}
@@ -104,10 +119,15 @@ function LoginForm() {
             <p className="login-error" role="alert">{error}</p>
           )}
 
+          {/* Only disable while a request is in flight. Gating on
+              !email || !password caused false negatives on Mac Safari
+              when autofill filled the fields without updating React
+              state, leaving the button permanently disabled. Real
+              emptiness is now checked inside handleSubmit instead. */}
           <button
             type="submit"
             className="btn-primary"
-            disabled={loading || !email || !password}
+            disabled={loading}
           >
             {loading ? 'Signing in…' : 'Sign In →'}
           </button>

@@ -7,6 +7,7 @@ import ScoreField      from '@/components/ScoreField';
 import RecommendPills  from '@/components/RecommendPills';
 import BonusToggle     from '@/components/BonusToggle';
 import Toast, { type ToastType } from '@/components/ui/Toast';
+import ScoreReveal from '@/components/ui/ScoreReveal';
 import { SUBGENRES, SECONDARY_TAGS, SCORE_FIELDS, computeTotal } from '@/lib/config';
 import type { MovieFormData, OmdbSearchHit } from '@/lib/types';
 
@@ -45,6 +46,7 @@ export default function AddMovieForm() {
     }
   }, [searchParams]);
   const [loading, setLoading] = useState(false);
+  const [showReveal, setShowReveal] = useState(false);
   const [toast,   setToast]   = useState<{ message: string; type: ToastType } | null>(null);
   const [errors,  setErrors]  = useState<Partial<Record<keyof MovieFormData, string>>>({});
 
@@ -93,7 +95,7 @@ export default function AddMovieForm() {
       }
 
       setToast({ message: 'Added to your vault!', type: 'success' });
-      setTimeout(() => router.push('/vault'), 1200);
+      setShowReveal(true);
     } catch {
       setToast({ message: 'Network error. Try again.', type: 'error' });
       setLoading(false);
@@ -234,6 +236,16 @@ export default function AddMovieForm() {
           message={toast.message}
           type={toast.type}
           onDismiss={() => setToast(null)}
+        />
+      )}
+
+      {/* Score Reveal */}
+      {showReveal && (
+        <ScoreReveal
+          total={total}
+          title={form.title}
+          recommend={form.recommend}
+          onDone={() => router.push('/vault')}
         />
       )}
     </form>

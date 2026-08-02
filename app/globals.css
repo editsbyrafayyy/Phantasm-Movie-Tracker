@@ -5085,216 +5085,146 @@ select:focus-visible {
   gap: 6px;
 }
 
+/* ── Share Card Modal ────────────────────────────────────────────────────────── */
 .share-overlay {
   position: fixed;
   inset: 0;
   z-index: 300;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px;
+  padding: 16px;
 }
 
 .share-panel {
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
+  max-height: calc(100svh - 32px);
   background: var(--surface);
   border: 1px solid var(--border-mid);
   border-radius: 20px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-height: 90svh;
-  overflow-y: auto;
-}
-.share-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.share-panel-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  font-family: var(--font-sans);
-}
-
-.share-card-wrapper {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* The actual screenshot target */
-.share-card {
-  position: relative;
-  width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #0a0a0a;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-}
-
-.share-card-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-.share-card-bg-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.95) 100%);
-}
-.share-card-bg--fallback {
-  background: linear-gradient(135deg, #1a0005 0%, #0a0a0a 100%);
-}
-
-.share-card-content {
-  position: relative;
-  z-index: 1;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-.share-card-top {
+.share-panel-header {
   display: flex;
-  gap: 14px;
   align-items: flex-start;
-}
-
-.share-card-poster {
-  position: relative;
-  width: 64px;
-  height: 96px;
-  border-radius: 6px;
-  overflow: hidden;
+  justify-content: space-between;
+  gap: 12px;
   flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.1);
 }
 
-.share-card-meta {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.share-card-eyebrow {
-  font-size: 9px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #e63232;
-  font-weight: 600;
-}
-.share-card-title {
-  font-size: 18px;
+.share-panel-title {
+  font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text);
+  font-family: var(--font-sans);
   line-height: 1.2;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.share-card-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 2px;
-}
-.share-card-chips span {
-  font-size: 10px;
-  color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.06);
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
-.share-card-score-badge {
+/* Format toggle buttons */
+.share-format-toggle {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  gap: 8px;
   flex-shrink: 0;
 }
-.share-card-score-val {
-  font-size: 40px;
-  font-weight: 800;
-  color: #e63232;
-  line-height: 1;
-}
-.share-card-score-denom {
-  font-size: 13px;
-  color: rgba(255,255,255,0.35);
-}
 
-/* Score bars */
-.share-card-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding-top: 14px;
-}
-.share-bar-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.share-bar-label {
-  font-size: 10px;
-  color: rgba(255,255,255,0.4);
-  min-width: 72px;
-  text-align: right;
-}
-.share-bar-track {
+.share-format-btn {
   flex: 1;
-  height: 4px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 2px;
-  overflow: hidden;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  letter-spacing: 0.3px;
 }
-.share-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #e63232 0%, #ff6b6b 100%);
-  border-radius: 2px;
-  transition: width 0.3s ease;
+.share-format-btn:hover {
+  border-color: var(--border-mid);
+  color: var(--text);
 }
-.share-bar-val {
-  font-size: 10px;
-  color: rgba(255,255,255,0.5);
-  min-width: 18px;
-  text-align: right;
+.share-format-btn.active {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+  box-shadow: 0 0 14px rgba(230, 50, 50, 0.25);
 }
 
-/* Footer branding */
-.share-card-footer {
+/* Card preview container — clips scaled card and collapses to its visual height */
+.share-card-preview-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #060606;
+  /* height is collapsed by the negative margin trick on the scaler child */
+}
+
+.share-card-preview-scaler {
+  /* width/height/transform set inline from component */
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Tip row */
+.share-tip {
   display: flex;
   align-items: center;
   gap: 6px;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding-top: 12px;
-}
-.share-card-brand {
-  font-size: 12px;
-  font-weight: 700;
-  color: #e63232;
-  letter-spacing: 1px;
-  text-transform: lowercase;
-}
-.share-card-tagline {
-  font-size: 10px;
-  color: rgba(255,255,255,0.25);
-  letter-spacing: 0.5px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  margin: 0;
 }
 
+/* Action row */
 .share-panel-actions {
   display: flex;
   gap: 10px;
+  flex-shrink: 0;
 }
+
+/* Legacy classes — kept so older code that may reference them doesn't break */
+.share-card-wrapper  { border-radius: 12px; overflow: hidden; }
+.share-card          { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #0a0a0a; }
+.share-card-bg       { position: absolute; inset: 0; z-index: 0; }
+.share-card-bg-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.95) 100%); }
+.share-card-bg--fallback { background: linear-gradient(135deg, #1a0005 0%, #0a0a0a 100%); }
+.share-card-content  { position: relative; z-index: 1; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.share-card-top      { display: flex; gap: 14px; align-items: flex-start; }
+.share-card-poster   { position: relative; width: 64px; height: 96px; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
+.share-card-meta     { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.share-card-eyebrow  { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #e63232; font-weight: 600; }
+.share-card-score-badge { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.share-card-score-val   { font-size: 40px; font-weight: 800; color: #e63232; line-height: 1; }
+.share-card-score-denom { font-size: 13px; color: rgba(255,255,255,0.35); }
+.share-card-bars     { display: flex; flex-direction: column; gap: 7px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px; }
+.share-bar-row       { display: flex; align-items: center; gap: 8px; }
+.share-bar-label     { font-size: 10px; color: rgba(255,255,255,0.4); min-width: 72px; text-align: right; }
+.share-bar-track     { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.share-bar-fill      { height: 100%; background: linear-gradient(90deg, #e63232 0%, #ff6b6b 100%); border-radius: 2px; }
+.share-bar-val       { font-size: 10px; color: rgba(255,255,255,0.5); min-width: 18px; text-align: right; }
+.share-card-footer   { display: flex; align-items: center; gap: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; }
+.share-card-brand    { font-size: 12px; font-weight: 700; color: #e63232; letter-spacing: 1px; text-transform: lowercase; }
+.share-card-tagline  { font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.5px; }
+.share-card-chips    { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.share-card-chips span { font-size: 10px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
+.share-card-title    { font-size: 18px; font-weight: 700; color: #fff; line-height: 1.2; }
 
 /* ── Vault Wrapped ───────────────────────────────────────────────────────────── */
 .wrapped-section {
@@ -5719,3 +5649,210 @@ select:focus-visible {
   color: var(--text-muted);
   opacity: 0.5;
 }
+
+/* ── Ambient Poster Theming (Movie Detail Page) ──────────────────────────────── */
+.detail-v3-page {
+  position: relative;
+  z-index: 1;
+}
+
+.detail-v3-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 70vw;
+  height: 70vh;
+  max-width: 800px;
+  max-height: 800px;
+  background: radial-gradient(
+    circle at 80% 20%,
+    var(--film-ambient, rgba(230, 50, 50, 0.15)) 0%,
+    rgba(8, 8, 8, 0) 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.55;
+  transition: opacity 0.8s ease;
+}
+
+/* ── Franchise Track Progress & Completion ──────────────────────────────────── */
+.franchise-track-section.is-complete {
+  border-color: rgba(212, 175, 55, 0.3);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(15, 15, 15, 0.8) 100%);
+}
+
+.franchise-complete-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: #ffd700;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: goldPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 215, 0, 0.2); }
+  50% { box-shadow: 0 0 14px rgba(255, 215, 0, 0.5); }
+}
+
+.franchise-progress-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.franchise-progress-ring {
+  transform: rotate(-90deg);
+  flex-shrink: 0;
+}
+
+.franchise-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.franchise-ring-fill {
+  fill: none;
+  stroke: var(--red);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.franchise-ring-fill.complete {
+  stroke: #ffd700;
+}
+
+/* ── Data Export Section ─────────────────────────────────────────────────────── */
+.export-container {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.export-header {
+  margin-bottom: 16px;
+}
+
+.export-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.export-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.export-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.export-btn {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+
+/* ── Score Reveal Overlay ────────────────────────────────────────────────────── */
+.score-reveal-overlay {
+  position: fixed;
+  inset: 0;
+  background: #080808;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.score-reveal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-reveal-title {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(18px, 3vw, 26px);
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 400px;
+}
+
+.score-reveal-number {
+  font-family: 'Bebas Neue', var(--font-display), sans-serif;
+  font-size: clamp(80px, 15vw, 120px);
+  color: #e63232;
+  line-height: 1;
+}
+
+.score-reveal-denom {
+  font-family: 'Inter', var(--font-body), sans-serif;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 24px;
+}
+
+.score-reveal-recommend {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-family: 'Inter', var(--font-body), sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.score-reveal-success {
+  font-family: 'Inter', var(--font-body), sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.score-reveal-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: #e63232;
+  width: 5px;
+  height: 5px;
+  pointer-events: none;
+}
+
+/* Franchise Card Rewatch Badge */
+.franchise-rewatch-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(230, 50, 50, 0.9);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+

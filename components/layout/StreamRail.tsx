@@ -68,6 +68,9 @@ export default function StreamRail() {
                 <Link href="/vault" className={`navbar-link${isActive('/vault')}`} prefetch={true}>
                   Your Vault
                 </Link>
+                <Link href="/diary" className={`navbar-link${isActive('/diary')}`} prefetch={true}>
+                  Diary
+                </Link>
                 <Link href="/add" className={`navbar-link${isActive('/add')}`} prefetch={true}>
                   Log Film
                 </Link>

@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers, BookOpen, RotateCcw } from 'lucide-react';
 import { SCORE_FIELDS } from '@/lib/config';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast, { type ToastType } from '@/components/ui/Toast';
 import ShareCardButton from '@/components/vault/ShareCardButton';
 import FranchiseTrack from '@/components/vault/FranchiseTrack';
 import ListManagerModal from '@/components/vault/ListManagerModal';
+import DiaryLogModal from '@/components/vault/DiaryLogModal';
+import { extractDominantColor } from '@/lib/posterColor';
 import type { Entry } from '@/lib/types';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
@@ -45,8 +47,29 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
   const [mustWatch, setMustWatch] = useState(!!entry.must_watch);
   const [togglingMustWatch, setTogglingMustWatch] = useState(false);
   const [stackModalOpen, setStackModalOpen] = useState(false);
+  const [diaryModalOpen, setDiaryModalOpen] = useState(false);
+  const [watchCount, setWatchCount] = useState<number>(0);
+  const [ambientColor, setAmbientColor] = useState<string | null>(null);
 
   const { movie } = entry;
+
+  useEffect(() => {
+    if (!movie?.id) return;
+    fetch(`/api/diary?movie_id=${movie.id}&count=true`)
+      .then(r => r.json())
+      .then(d => setWatchCount(d.count ?? 0))
+      .catch(() => {});
+  }, [movie?.id]);
+
+  useEffect(() => {
+    const poster = movie?.poster_url ?? movie?.backdrop_url;
+    if (!poster) return;
+    const proxiedUrl = `/_next/image?url=${encodeURIComponent(poster)}&w=250&q=50`;
+    extractDominantColor(proxiedUrl).then(color => {
+      if (color) setAmbientColor(color);
+    });
+  }, [movie?.poster_url, movie?.backdrop_url]);
+
 
   async function toggleMustWatch() {
     setTogglingMustWatch(true);
@@ -97,7 +120,11 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
   }
 
   return (
-    <div className="detail-v3-page">
+    <div
+      className="detail-v3-page"
+      style={ambientColor ? { '--film-ambient': ambientColor } as React.CSSProperties : undefined}
+    >
+
 
       {/* Fixed back button */}
       <div className="detail-back-bar">
@@ -197,14 +224,24 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
               </Link>
             )}
             {canStream && (
-              <button
-                onClick={() => setStackModalOpen(true)}
-                className="btn-edit"
-                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <Layers size={14} />
-                Save to Stack
-              </button>
+              <>
+                <button
+                  onClick={() => setDiaryModalOpen(true)}
+                  className="btn-edit"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <BookOpen size={14} />
+                  Log Watch
+                </button>
+                <button
+                  onClick={() => setStackModalOpen(true)}
+                  className="btn-edit"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Layers size={14} />
+                  Save to Stack
+                </button>
+              </>
             )}
             {isOwner && (
               <>
@@ -474,6 +511,13 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
               <span>IMDb</span>
               <span>{movie.imdb_rating ?? '—'}</span>
             </div>
+            <div className="vault-meta-row">
+              <span>Watch Log</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: watchCount > 1 ? 'var(--red)' : 'var(--text-dim)' }}>
+                {watchCount > 1 && <RotateCcw size={11} />}
+                {watchCount > 0 ? `${watchCount} ${watchCount === 1 ? 'watch' : 'watches'}` : 'Not logged'}
+              </span>
+            </div>
           </div>
         </aside>
       </div>
@@ -503,6 +547,14 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
         movieTitle={title}
         isOpen={stackModalOpen}
         onClose={() => setStackModalOpen(false)}
+      />
+      {/* Diary Log Modal */}
+      <DiaryLogModal
+        movieId={movie.id}
+        movieTitle={title}
+        isOpen={diaryModalOpen}
+        onClose={() => setDiaryModalOpen(false)}
+        onSuccess={() => setWatchCount(prev => prev + 1)}
       />
     </div>
   );

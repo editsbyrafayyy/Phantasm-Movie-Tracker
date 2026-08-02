@@ -128,9 +128,29 @@ export const FRANCHISES: { name: string; pattern: RegExp }[] = [
   { name: 'A Quiet Place Franchise',      pattern: /\bQuiet Place\b/i },
 ];
 
+export const FRANCHISE_TOTALS: Record<string, number> = {
+  'Scream Collection':          6,
+  'Saw Franchise':              10,
+  'Halloween Franchise':        13,
+  'The Conjuring Universe':     9,
+  'Alien Franchise':            8,
+  'Evil Dead Series':           5,
+  'A Nightmare on Elm Street':  9,
+  'Friday the 13th':            12,
+  'Hellraiser Franchise':       11,
+  'Paranormal Activity Series': 7,
+  'Texas Chainsaw Massacre':    9,
+  'Final Destination Series':   5,
+  'Insidious Series':           5,
+  "Child's Play / Chucky":      8,
+  'Predator Series':            5,
+  'A Quiet Place Franchise':    3,
+};
+
 export function getMovieFranchise(title: string): string | null {
   if (!title) return null;
   const match = FRANCHISES.find(f => f.pattern.test(title));
   return match ? match.name : null;
 }
+
 
