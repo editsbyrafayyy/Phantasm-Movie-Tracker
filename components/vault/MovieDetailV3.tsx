@@ -9,7 +9,7 @@ import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers, Book
 import { SCORE_FIELDS } from '@/lib/config';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast, { type ToastType } from '@/components/ui/Toast';
-import ShareCardButton from '@/components/vault/ShareCardButton';
+
 import FranchiseTrack from '@/components/vault/FranchiseTrack';
 import ListManagerModal from '@/components/vault/ListManagerModal';
 import DiaryLogModal from '@/components/vault/DiaryLogModal';
@@ -64,7 +64,7 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
   useEffect(() => {
     const poster = movie?.poster_url ?? movie?.backdrop_url;
     if (!poster) return;
-    const proxiedUrl = `/_next/image?url=${encodeURIComponent(poster)}&w=250&q=50`;
+    const proxiedUrl = `/_next/image?url=${encodeURIComponent(poster)}&w=256&q=50`;
     extractDominantColor(proxiedUrl).then(color => {
       if (color) setAmbientColor(color);
     });
@@ -217,6 +217,7 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
 
           {/* Actions — owner-only */}
           <div className="backdrop-actions">
+            {/* ── Primary actions ── */}
             {(movie.omdb_id || movie.tmdb_id) && (
               <Link href={canStream ? `/stream/${movie.omdb_id || movie.tmdb_id}` : '/login'} className="btn-watch">
                 <Play size={14} fill="white" color="white" />
@@ -243,9 +244,10 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
                 </button>
               </>
             )}
+
+            {/* ── Secondary actions ── */}
             {isOwner && (
               <>
-                <ShareCardButton entry={entry} />
                 <button
                   onClick={toggleMustWatch}
                   disabled={togglingMustWatch}
@@ -260,11 +262,11 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
                   }}
                 >
                   <Pin size={14} fill={mustWatch ? 'currentColor' : 'none'} />
-                  {mustWatch ? 'Must Watch' : 'Must Watch'}
+                  {mustWatch ? 'Pinned' : 'Must Watch'}
                 </button>
                 <Link href={`/update?id=${entry.id}`} className="btn-edit">
                   <Pencil size={14} />
-                  Edit Ratings
+                  Edit
                 </Link>
                 <button
                   className="btn-delete-icon"

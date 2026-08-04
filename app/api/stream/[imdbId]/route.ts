@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getProvidersInOrder } from '@/lib/providers';
 import type { StreamEmbed } from '@/lib/types';
-
-function createServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function GET(
   req: NextRequest,

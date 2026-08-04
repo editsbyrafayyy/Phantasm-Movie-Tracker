@@ -46,7 +46,12 @@ export async function createServerSupabaseClient() {
  */
 export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder-url-for-build.supabase.co';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key-for-build';
+  // Use anon key as fallback if SUPABASE_SERVICE_ROLE_KEY is invalid or uses un-registered sb_secret format
+  const rawServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serviceKey = (rawServiceKey && !rawServiceKey.startsWith('sb_secret_')) 
+    ? rawServiceKey 
+    : (anonKey || rawServiceKey || 'placeholder-service-key-for-build');
 
   return createServerClient(
     url,

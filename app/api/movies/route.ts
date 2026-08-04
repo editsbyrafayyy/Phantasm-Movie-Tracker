@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 /**
  * GET /api/movies
  * Returns all entries for the authenticated user, joined with movie metadata.
+ * Private cache: fresh for 15s, SWR up to 60s. Mutations (add/delete entry)
+ * should trigger a client-side refetch to handle the stale window.
  */
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -27,5 +29,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch entries' }, { status: 500 });
   }
 
-  return NextResponse.json(data ?? []);
+  return NextResponse.json(data ?? [], {
+    headers: { 'Cache-Control': 'private, max-age=15, stale-while-revalidate=60' },
+  });
 }

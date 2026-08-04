@@ -4,6 +4,10 @@ import { rateLimit } from '@/lib/ratelimit';
 import { SCORE_FIELDS, SUBGENRES } from '@/lib/config';
 import type { StatsData, Entry } from '@/lib/types';
 
+// Stats are user-specific and can tolerate 30s staleness.
+// SWR allows a stale response for up to 5 min while Next revalidates.
+const STATS_CACHE = 'private, max-age=30, stale-while-revalidate=300';
+
 /**
  * GET /api/stats
  * Returns aggregated statistics for the authenticated user.
@@ -47,7 +51,7 @@ export async function GET(req: NextRequest) {
       scoreDistribution:   [],
       releaseDecades:      [],
     };
-    return NextResponse.json(empty);
+    return NextResponse.json(empty, { headers: { 'Cache-Control': STATS_CACHE } });
   }
 
   // ── Summary ────────────────────────────────────────────────────────────────
@@ -141,7 +145,7 @@ export async function GET(req: NextRequest) {
     releaseDecades,
   };
 
-  return NextResponse.json(stats);
+  return NextResponse.json(stats, { headers: { 'Cache-Control': STATS_CACHE } });
 }
 
 function round(n: number, dp = 2): number {

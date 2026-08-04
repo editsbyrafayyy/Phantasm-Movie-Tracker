@@ -1676,10 +1676,19 @@ select:focus-visible {
 }
 
 .backdrop-actions {
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  align-items: center;
+}
+/* Visual separator between primary and secondary actions */
+.backdrop-actions-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 4px;
 }
 .btn-watch {
   display: inline-flex;
@@ -5077,154 +5086,6 @@ select:focus-visible {
   text-align: center;
   padding: 20px 0;
 }
-
-/* ── Shareable Review Card ───────────────────────────────────────────────────── */
-.share-card-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* ── Share Card Modal ────────────────────────────────────────────────────────── */
-.share-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.share-panel {
-  width: 100%;
-  max-width: 440px;
-  max-height: calc(100svh - 32px);
-  background: var(--surface);
-  border: 1px solid var(--border-mid);
-  border-radius: 20px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.share-panel-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.share-panel-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-  font-family: var(--font-sans);
-  line-height: 1.2;
-}
-
-/* Format toggle buttons */
-.share-format-toggle {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.share-format-btn {
-  flex: 1;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  padding: 7px 12px;
-  border-radius: 8px;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  letter-spacing: 0.3px;
-}
-.share-format-btn:hover {
-  border-color: var(--border-mid);
-  color: var(--text);
-}
-.share-format-btn.active {
-  background: var(--red);
-  color: #fff;
-  border-color: var(--red);
-  box-shadow: 0 0 14px rgba(230, 50, 50, 0.25);
-}
-
-/* Card preview container — clips scaled card and collapses to its visual height */
-.share-card-preview-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #060606;
-  /* height is collapsed by the negative margin trick on the scaler child */
-}
-
-.share-card-preview-scaler {
-  /* width/height/transform set inline from component */
-  position: relative;
-  flex-shrink: 0;
-}
-
-/* Tip row */
-.share-tip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: var(--font-sans);
-  margin: 0;
-}
-
-/* Action row */
-.share-panel-actions {
-  display: flex;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-/* Legacy classes — kept so older code that may reference them doesn't break */
-.share-card-wrapper  { border-radius: 12px; overflow: hidden; }
-.share-card          { position: relative; width: 100%; border-radius: 12px; overflow: hidden; background: #0a0a0a; }
-.share-card-bg       { position: absolute; inset: 0; z-index: 0; }
-.share-card-bg-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.95) 100%); }
-.share-card-bg--fallback { background: linear-gradient(135deg, #1a0005 0%, #0a0a0a 100%); }
-.share-card-content  { position: relative; z-index: 1; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.share-card-top      { display: flex; gap: 14px; align-items: flex-start; }
-.share-card-poster   { position: relative; width: 64px; height: 96px; border-radius: 6px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
-.share-card-meta     { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.share-card-eyebrow  { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #e63232; font-weight: 600; }
-.share-card-score-badge { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
-.share-card-score-val   { font-size: 40px; font-weight: 800; color: #e63232; line-height: 1; }
-.share-card-score-denom { font-size: 13px; color: rgba(255,255,255,0.35); }
-.share-card-bars     { display: flex; flex-direction: column; gap: 7px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px; }
-.share-bar-row       { display: flex; align-items: center; gap: 8px; }
-.share-bar-label     { font-size: 10px; color: rgba(255,255,255,0.4); min-width: 72px; text-align: right; }
-.share-bar-track     { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
-.share-bar-fill      { height: 100%; background: linear-gradient(90deg, #e63232 0%, #ff6b6b 100%); border-radius: 2px; }
-.share-bar-val       { font-size: 10px; color: rgba(255,255,255,0.5); min-width: 18px; text-align: right; }
-.share-card-footer   { display: flex; align-items: center; gap: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; }
-.share-card-brand    { font-size: 12px; font-weight: 700; color: #e63232; letter-spacing: 1px; text-transform: lowercase; }
-.share-card-tagline  { font-size: 10px; color: rgba(255,255,255,0.25); letter-spacing: 0.5px; }
-.share-card-chips    { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
-.share-card-chips span { font-size: 10px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; }
-.share-card-title    { font-size: 18px; font-weight: 700; color: #fff; line-height: 1.2; }
 
 /* ── Vault Wrapped ───────────────────────────────────────────────────────────── */
 .wrapped-section {

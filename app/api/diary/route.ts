@@ -25,7 +25,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to count entries' }, { status: 500 });
     }
 
-    return NextResponse.json({ count: count ?? 0 });
+    return NextResponse.json({ count: count ?? 0 }, {
+      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=30' },
+    });
   }
 
   let query = supabase
@@ -46,7 +48,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch diary entries' }, { status: 500 });
   }
 
-  return NextResponse.json({ diary: data ?? [] });
+  return NextResponse.json({ diary: data ?? [] }, {
+    headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=60' },
+  });
 }
 
 export async function POST(req: NextRequest) {

@@ -93,12 +93,11 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
               <div className="franchise-poster-wrap">
                 {poster ? (
                   <Image
-                    src={`/_next/image?url=${encodeURIComponent(poster)}&w=200&q=70`}
+                    src={poster}
                     alt={title}
                     fill
                     sizes="100px"
                     style={{ objectFit: 'cover' }}
-                    unoptimized
                   />
                 ) : (
                   <div className="franchise-poster-fallback">

@@ -59,12 +59,11 @@ export default function WatchHistoryRow() {
             <div className="watch-history-poster">
               {item.poster_url ? (
                 <Image
-                  src={`/_next/image?url=${encodeURIComponent(item.poster_url)}&w=200&q=70`}
+                  src={item.poster_url}
                   alt={item.title}
                   fill
                   style={{ objectFit: 'cover' }}
                   sizes="120px"
-                  unoptimized
                 />
               ) : (
                 <div className="watch-history-poster-fallback">
