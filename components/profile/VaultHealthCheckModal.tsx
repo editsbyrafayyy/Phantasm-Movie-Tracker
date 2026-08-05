@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, X, AlertTriangle, CheckCircle, ImageOff, Star, Film } from 'lucide-react';
+import { Activity, X, CheckCircle, ImageOff, Star } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 
 export default function VaultHealthCheckModal() {

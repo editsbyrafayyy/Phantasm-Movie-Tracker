@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Film, Search, SlidersHorizontal } from 'lucide-react';
+import { Film, Search, ChevronUp, ChevronDown } from 'lucide-react';
 import WatchlistRemoveButton from '@/components/watchlist/WatchlistRemoveButton';
 
 export interface WatchlistRow {
@@ -27,15 +27,26 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-type SortKey = 'recent' | 'year' | 'title' | 'type';
+type SortKey = 'custom' | 'recent' | 'year' | 'title' | 'type';
 
 export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
+  const [listItems, setListItems] = useState(items);
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<SortKey>('recent');
+  const [sort, setSort] = useState<SortKey>('custom');
   const [mediaFilter, setMediaFilter] = useState<'all' | 'movie' | 'tv'>('all');
 
+  function moveItem(index: number, direction: 'up' | 'down') {
+    // Find the real index in listItems when working with filtered view
+    // We operate on the full listItems array
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= listItems.length) return;
+    const updated = [...listItems];
+    [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+    setListItems(updated);
+  }
+
   const filtered = useMemo(() => {
-    let result = [...items];
+    let result = [...listItems];
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -48,21 +59,26 @@ export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
 
     switch (sort) {
       case 'recent':
-        result.sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime());
+        result = [...result].sort((a, b) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime());
         break;
       case 'year':
-        result.sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+        result = [...result].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
         break;
       case 'title':
-        result.sort((a, b) => a.title.localeCompare(b.title));
+        result = [...result].sort((a, b) => a.title.localeCompare(b.title));
         break;
       case 'type':
-        result.sort((a, b) => a.media_type.localeCompare(b.media_type));
+        result = [...result].sort((a, b) => a.media_type.localeCompare(b.media_type));
+        break;
+      case 'custom':
+      default:
         break;
     }
 
     return result;
-  }, [items, search, sort, mediaFilter]);
+  }, [listItems, search, sort, mediaFilter]);
+
+  const isCustomSortActive = sort === 'custom';
 
   if (items.length === 0) {
     return (
@@ -89,7 +105,7 @@ export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
       {/* Controls Bar */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20, alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
           <input
             type="text"
             className="form-input"
@@ -102,27 +118,16 @@ export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
 
         {/* Media type filter */}
         <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            className={`btn-edit ${mediaFilter === 'all' ? 'active' : ''}`}
-            onClick={() => setMediaFilter('all')}
-            style={{ height: 38, fontSize: 12 }}
-          >
-            All
-          </button>
-          <button
-            className={`btn-edit ${mediaFilter === 'movie' ? 'active' : ''}`}
-            onClick={() => setMediaFilter('movie')}
-            style={{ height: 38, fontSize: 12 }}
-          >
-            Movies
-          </button>
-          <button
-            className={`btn-edit ${mediaFilter === 'tv' ? 'active' : ''}`}
-            onClick={() => setMediaFilter('tv')}
-            style={{ height: 38, fontSize: 12 }}
-          >
-            TV
-          </button>
+          {(['all', 'movie', 'tv'] as const).map(f => (
+            <button
+              key={f}
+              className={`btn-edit${mediaFilter === f ? ' active' : ''}`}
+              onClick={() => setMediaFilter(f)}
+              style={{ height: 38, fontSize: 12 }}
+            >
+              {f === 'all' ? 'All' : f === 'movie' ? 'Movies' : 'TV'}
+            </button>
+          ))}
         </div>
 
         {/* Sort Select */}
@@ -130,8 +135,9 @@ export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
           className="form-input"
           value={sort}
           onChange={e => setSort(e.target.value as SortKey)}
-          style={{ height: 38, fontSize: 12, width: 'auto', paddingRight: 24 }}
+          style={{ height: 38, fontSize: 12, width: 'auto' }}
         >
+          <option value="custom">My Order</option>
           <option value="recent">Recently Added</option>
           <option value="year">Release Year</option>
           <option value="title">Title A–Z</option>
@@ -145,47 +151,92 @@ export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
         </div>
       ) : (
         <div className="watchlist-grid">
-          {filtered.map(item => (
-            <div key={item.id} className="watchlist-card">
-              <Link
-                href={`/stream/tmdb/${item.tmdb_id}?type=${item.media_type}&from=/watchlist`}
-                className="watchlist-card-poster-link"
-              >
-                <div className="watchlist-card-poster">
-                  {item.poster_url ? (
-                    <Image
-                      src={item.poster_url}
-                      alt={item.title}
-                      fill
-                      sizes="(max-width: 640px) 40vw, 160px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div className="watchlist-card-fallback"><Film size={24} opacity={0.3} /></div>
-                  )}
-                  <div className="watchlist-card-overlay" />
-                  <span className="watchlist-card-type">
-                    {item.media_type === 'tv' ? 'TV' : 'Film'}
-                  </span>
-                </div>
-              </Link>
-
-              <div className="watchlist-card-info">
+          {filtered.map((item, index) => {
+            // Get original index in full listItems for reordering
+            const originalIndex = listItems.findIndex(i => i.id === item.id);
+            return (
+              <div key={item.id} className="watchlist-card">
                 <Link
                   href={`/stream/tmdb/${item.tmdb_id}?type=${item.media_type}&from=/watchlist`}
-                  className="watchlist-card-title"
+                  className="watchlist-card-poster-link"
                 >
-                  {item.title}
+                  <div className="watchlist-card-poster">
+                    {item.poster_url ? (
+                      <Image
+                        src={item.poster_url}
+                        alt={item.title}
+                        fill
+                        sizes="(max-width: 640px) 40vw, 160px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="watchlist-card-fallback"><Film size={24} opacity={0.3} /></div>
+                    )}
+                    <div className="watchlist-card-overlay" />
+                    <span className="watchlist-card-type">
+                      {item.media_type === 'tv' ? 'TV' : 'Film'}
+                    </span>
+                  </div>
                 </Link>
-                <div className="watchlist-card-meta">
-                  {item.year && <span>{item.year}</span>}
-                  <span className="watchlist-card-added">Added {timeAgo(item.added_at)}</span>
+
+                <div className="watchlist-card-info">
+                  <Link
+                    href={`/stream/tmdb/${item.tmdb_id}?type=${item.media_type}&from=/watchlist`}
+                    className="watchlist-card-title"
+                  >
+                    {item.title}
+                  </Link>
+                  <div className="watchlist-card-meta">
+                    {item.year && <span>{item.year}</span>}
+                    <span className="watchlist-card-added">Added {timeAgo(item.added_at)}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {/* Reorder controls — only visible in custom sort mode */}
+                  {isCustomSortActive && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <button
+                        onClick={() => moveItem(originalIndex, 'up')}
+                        disabled={originalIndex === 0}
+                        title="Move up"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid var(--border)',
+                          borderRadius: 4,
+                          color: originalIndex === 0 ? 'var(--text-dim)' : 'var(--text-muted)',
+                          cursor: originalIndex === 0 ? 'not-allowed' : 'pointer',
+                          padding: '2px 4px',
+                          display: 'flex',
+                          opacity: originalIndex === 0 ? 0.3 : 1,
+                        }}
+                      >
+                        <ChevronUp size={12} />
+                      </button>
+                      <button
+                        onClick={() => moveItem(originalIndex, 'down')}
+                        disabled={originalIndex === listItems.length - 1}
+                        title="Move down"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid var(--border)',
+                          borderRadius: 4,
+                          color: originalIndex === listItems.length - 1 ? 'var(--text-dim)' : 'var(--text-muted)',
+                          cursor: originalIndex === listItems.length - 1 ? 'not-allowed' : 'pointer',
+                          padding: '2px 4px',
+                          display: 'flex',
+                          opacity: originalIndex === listItems.length - 1 ? 0.3 : 1,
+                        }}
+                      >
+                        <ChevronDown size={12} />
+                      </button>
+                    </div>
+                  )}
+                  <WatchlistRemoveButton tmdbId={item.tmdb_id} mediaType={item.media_type} />
                 </div>
               </div>
-
-              <WatchlistRemoveButton tmdbId={item.tmdb_id} mediaType={item.media_type} />
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

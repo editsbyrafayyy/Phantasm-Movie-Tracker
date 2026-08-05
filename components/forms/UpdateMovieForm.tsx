@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import OmdbSearchInput from '@/components/forms/OmdbSearchInput';
 import ScoreField     from '@/components/ScoreField';
@@ -26,27 +26,32 @@ export default function UpdateMovieForm() {
   const [showReveal, setShowReveal] = useState(false);
   const [toast,    setToast]    = useState<{ message: string; type: ToastType } | null>(null);
   const [errors,   setErrors]   = useState<Partial<Record<keyof UpdateForm, string>>>({});
-  const [subgenreAvg, setSubgenreAvg] = useState<number | null>(null);
+  const vaultCacheRef = useRef<Entry[] | null>(null);
 
+  // Cache vault data once on mount
   useEffect(() => {
-    if (!form?.subgenre) {
-      setSubgenreAvg(null);
-      return;
-    }
     fetch('/api/owner-vault')
       .then(r => r.json())
       .then((data: Entry[]) => {
-        if (!Array.isArray(data)) return;
-        const matches = data.filter(e => e.subgenre === form.subgenre && e.total !== null && e.total > 0);
-        if (matches.length > 0) {
-          const sum = matches.reduce((acc, curr) => acc + (curr.total ?? 0), 0);
-          setSubgenreAvg(Math.round((sum / matches.length) * 10) / 10);
-        } else {
-          setSubgenreAvg(null);
-        }
+        if (Array.isArray(data)) vaultCacheRef.current = data;
       })
-      .catch(() => setSubgenreAvg(null));
+      .catch(() => {});
+  }, []);
+
+  // Compute subgenre average from cached data
+  const subgenreAvg = useMemo(() => {
+    if (!form?.subgenre || !vaultCacheRef.current) return null;
+    const matches = vaultCacheRef.current.filter(
+      e => e.subgenre === form.subgenre && e.total !== null && e.total > 0
+    );
+    if (!matches.length) return null;
+    const sum = matches.reduce((acc, curr) => acc + (curr.total ?? 0), 0);
+    return Math.round((sum / matches.length) * 10) / 10;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form?.subgenre]);
+
+  const [prevEntryScore, setPrevEntryScore] = useState<number | null>(null);
+  const [prevScores, setPrevScores] = useState<Partial<UpdateForm> | null>(null);
 
   useEffect(() => {
     if (!entryId) return;
@@ -54,6 +59,18 @@ export default function UpdateMovieForm() {
       .then(r => r.json())
       .then((data: Entry) => {
         setEntry(data);
+        setPrevEntryScore(data.total ?? null);
+        setPrevScores({
+          atmosphere: data.atmosphere ?? '',
+          story:        data.story        ?? '',
+          characters:   data.characters   ?? '',
+          pacing:       data.pacing       ?? '',
+          visuals:      data.visuals      ?? '',
+          thrill:       data.thrill       ?? '',
+          sound:        data.sound        ?? '',
+          impact:       data.impact       ?? '',
+          bonus:        data.bonus        ?? 0,
+        });
         const draftKey = `vault_draft_note_${entryId}`;
         const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
         setForm({
@@ -272,6 +289,21 @@ export default function UpdateMovieForm() {
           {total > 0 ? total : '—'}
         </span>
       </div>
+
+      {prevEntryScore !== null && prevScores && total !== prevEntryScore && (
+        <div style={{ textAlign: 'right', marginTop: -8, marginBottom: 16 }}>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              setForm(prev => prev ? { ...prev, ...prevScores } : prev);
+            }}
+            style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            ↺ Restore previous rating ({prevEntryScore}/10)
+          </button>
+        </div>
+      )}
 
       <button
         type="submit"

@@ -232,20 +232,13 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
           ariaLabel="Filter by rating status"
           align="right"
         />
-
-        <CustomSelect
-          value={yearBucket}
-          onChange={val => setYearBucket(val as YearBucket)}
-          options={YEAR_OPTIONS}
-          ariaLabel="Filter by decade"
-        />
       </div>
 
       {/* Active filter count / Clear */}
       {activeFilterCount > 0 && (
         <button
           className="vault-clear-filters"
-          onClick={() => { setGenre('All'); setRec('All'); setRatingFilter('all'); setYearBucket('all'); }}
+          onClick={() => { setGenre('All'); setRec('All'); setRatingFilter('all'); setYearBucket('all'); setRuntimeFilter('all'); }}
           style={{ marginTop: 12 }}
         >
           Clear {activeFilterCount} filter{activeFilterCount > 1 ? 's' : ''}
