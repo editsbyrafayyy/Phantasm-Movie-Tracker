@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Film } from 'lucide-react';
+import { Film, LayoutGrid, Grid } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { staggerContainer } from '@/lib/motion';
 import MovieCard from './MovieCard';
@@ -16,6 +16,7 @@ interface MovieGridProps {
 
 export default function MovieGrid({ entries }: MovieGridProps) {
   const [filtered, setFiltered] = useState<Entry[]>(entries);
+  const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
 
   const handleFiltered = useCallback((result: Entry[]) => {
     setFiltered(result);
@@ -25,6 +26,52 @@ export default function MovieGrid({ entries }: MovieGridProps) {
     <div className="vault-content">
       {/* Subgenre makeup progress bar */}
       <SubgenreDistributionBar entries={entries} />
+
+      {/* Grid density toggle bar */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', padding: 3, borderRadius: 8, border: '1px solid var(--border)' }}>
+          <button
+            onClick={() => setDensity('comfortable')}
+            style={{
+              background: density === 'comfortable' ? 'var(--surface)' : 'transparent',
+              color: density === 'comfortable' ? 'var(--text)' : 'var(--text-muted)',
+              border: 'none',
+              borderRadius: 6,
+              padding: '4px 10px',
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Comfortable card grid density"
+          >
+            <LayoutGrid size={13} />
+            Comfortable
+          </button>
+          <button
+            onClick={() => setDensity('compact')}
+            style={{
+              background: density === 'compact' ? 'var(--surface)' : 'transparent',
+              color: density === 'compact' ? 'var(--text)' : 'var(--text-muted)',
+              border: 'none',
+              borderRadius: 6,
+              padding: '4px 10px',
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Compact card grid density"
+          >
+            <Grid size={13} />
+            Compact
+          </button>
+        </div>
+      </div>
 
       {/* Sticky filter bar */}
       <div className="vault-filter-bar">
@@ -52,7 +99,8 @@ export default function MovieGrid({ entries }: MovieGridProps) {
         </div>
       ) : (
         <motion.div
-          className="movie-grid"
+          className={`movie-grid ${density === 'compact' ? 'compact-grid' : ''}`}
+          style={density === 'compact' ? { gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 } : undefined}
           variants={staggerContainer}
           initial="initial"
           animate="animate"

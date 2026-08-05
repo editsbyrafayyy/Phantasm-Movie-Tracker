@@ -32,7 +32,22 @@ interface OmdbMovieDetail {
  * Used by /api/omdb-search to power the autocomplete dropdown.
  */
 export async function searchOmdb(query: string): Promise<OmdbSearchHit[]> {
-  const url  = `${BASE}/?s=${encodeURIComponent(query)}&apikey=${KEY}`;
+  const cleanQ = query.trim();
+  const isImdbId = /^tt\d{7,8}$/i.test(cleanQ);
+
+  if (isImdbId) {
+    const detail = await fetchOmdbById(cleanQ);
+    if (detail) {
+      return [{
+        imdbID: detail.omdb_id,
+        title: detail.title,
+        year: detail.year ? String(detail.year) : '',
+        poster: detail.poster_url,
+      }];
+    }
+  }
+
+  const url  = `${BASE}/?s=${encodeURIComponent(cleanQ)}&apikey=${KEY}`;
   const res  = await fetch(url, { next: { revalidate: 300 } });
   const data = await res.json();
 

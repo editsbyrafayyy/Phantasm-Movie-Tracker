@@ -54,6 +54,16 @@ export default function OmdbSearchInput({
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const q = e.target.value;
+    const imdbMatch = q.match(/tt\d{7,8}/i);
+
+    if (imdbMatch) {
+      const imdbId = imdbMatch[0];
+      onTitleChange(q);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      search(imdbId);
+      return;
+    }
+
     onTitleChange(q);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => search(q), 400);
