@@ -5,17 +5,20 @@ interface ScoreDistributionProps {
 }
 
 export default function ScoreDistribution({ entries }: ScoreDistributionProps) {
+  // Exclude unrated movies (total === null or total === 0)
+  const ratedEntries = entries.filter(e => e.total !== null && e.total > 0);
+
   const buckets = [
-    { label: '0 – 2', min: 0,   max: 2.0 },
-    { label: '2 – 4', min: 2.01, max: 4.0 },
-    { label: '4 – 6', min: 4.01, max: 6.0 },
-    { label: '6 – 8', min: 6.01, max: 8.0 },
+    { label: '0 – 2',  min: 0.01, max: 2.0 },
+    { label: '2 – 4',  min: 2.01, max: 4.0 },
+    { label: '4 – 6',  min: 4.01, max: 6.0 },
+    { label: '6 – 8',  min: 6.01, max: 8.0 },
     { label: '8 – 10', min: 8.01, max: 10.0 }
   ];
 
   const counts = buckets.map(b => ({
     ...b,
-    count: entries.filter(e => e.total !== null && e.total >= b.min && e.total <= b.max).length,
+    count: ratedEntries.filter(e => e.total! >= b.min && e.total! <= b.max).length,
   }));
 
   const max = Math.max(...counts.map(c => c.count), 1);
