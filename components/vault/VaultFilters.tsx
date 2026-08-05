@@ -39,6 +39,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
   const [sort,            setSort]            = useState<SortKey>('recent');
   const [ratingFilter,    setRatingFilter]    = useState<'all' | 'rated' | 'unrated'>('all');
   const [yearBucket,      setYearBucket]      = useState<YearBucket>('all');
+  const [runtimeFilter,   setRuntimeFilter]   = useState<'all' | 'under90' | '90to120' | 'over120'>('all');
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 250);
@@ -48,10 +49,27 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
   const filtered = useMemo(() => {
     let result = [...entries];
 
-    // Search
+    // Search (Title, Director, Cast)
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.toLowerCase();
-      result = result.filter(e => e.movie?.title?.toLowerCase().includes(q));
+      result = result.filter(e => {
+        const titleMatch = e.movie?.title?.toLowerCase().includes(q);
+        const directorMatch = e.movie?.director?.toLowerCase().includes(q);
+        const castMatch = e.movie?.cast_list?.some(c => c.name?.toLowerCase().includes(q));
+        return titleMatch || directorMatch || castMatch;
+      });
+    }
+
+    // Runtime filter
+    if (runtimeFilter !== 'all') {
+      result = result.filter(e => {
+        const r = e.movie?.runtime_min;
+        if (!r) return false;
+        if (runtimeFilter === 'under90') return r < 90;
+        if (runtimeFilter === '90to120') return r >= 90 && r <= 120;
+        if (runtimeFilter === 'over120') return r > 120;
+        return true;
+      });
     }
 
     // Subgenre filter (single-select)
@@ -115,7 +133,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
     }
 
     return result;
-  }, [entries, debouncedSearch, selectedGenre, selectedRec, ratingFilter, yearBucket, sort]);
+  }, [entries, debouncedSearch, selectedGenre, selectedRec, ratingFilter, yearBucket, runtimeFilter, sort]);
 
   // Propagate filtered results to parent whenever they change
   useEffect(() => {
@@ -126,6 +144,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
     (selectedGenre !== 'All' ? 1 : 0) + 
     (selectedRec !== 'All' ? 1 : 0) + 
     (ratingFilter !== 'all' ? 1 : 0) +
+    (runtimeFilter !== 'all' ? 1 : 0) +
     (yearBucket !== 'all' ? 1 : 0);
 
   return (
@@ -136,7 +155,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
         <input
           type="search"
           className="vault-search"
-          placeholder="Search titles…"
+          placeholder="Search titles, directors, cast…"
           value={search}
           onChange={e => setSearch(e.target.value)}
           aria-label="Search movies"
@@ -180,6 +199,18 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
             { value: 'Garbage', label: 'Garbage' },
           ]}
           ariaLabel="Filter by recommendation"
+        />
+
+        <CustomSelect
+          value={runtimeFilter}
+          onChange={val => setRuntimeFilter(val as 'all' | 'under90' | '90to120' | 'over120')}
+          options={[
+            { value: 'all', label: 'All Runtimes' },
+            { value: 'under90', label: '< 90 min' },
+            { value: '90to120', label: '90–120 min' },
+            { value: 'over120', label: '> 120 min' },
+          ]}
+          ariaLabel="Filter by runtime"
         />
 
         <CustomSelect

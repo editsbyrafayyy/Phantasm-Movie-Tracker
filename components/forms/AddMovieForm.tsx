@@ -49,6 +49,27 @@ export default function AddMovieForm() {
   const [showReveal, setShowReveal] = useState(false);
   const [toast,   setToast]   = useState<{ message: string; type: ToastType } | null>(null);
   const [errors,  setErrors]  = useState<Partial<Record<keyof MovieFormData, string>>>({});
+  const [duplicateWarning, setDuplicateWarning] = useState<{ id: string; title: string } | null>(null);
+
+  useEffect(() => {
+    if (!form.title.trim() || form.title.length < 3) {
+      setDuplicateWarning(null);
+      return;
+    }
+    fetch('/api/owner-vault')
+      .then(r => r.json())
+      .then((data: any[]) => {
+        if (!Array.isArray(data)) return;
+        const q = form.title.toLowerCase().trim();
+        const match = data.find(e => e.movie?.title?.toLowerCase() === q);
+        if (match) {
+          setDuplicateWarning({ id: match.id, title: match.movie.title });
+        } else {
+          setDuplicateWarning(null);
+        }
+      })
+      .catch(() => setDuplicateWarning(null));
+  }, [form.title]);
 
   const total = computeTotal(form);
 
@@ -121,6 +142,12 @@ export default function AddMovieForm() {
               Clear match
             </button>
           </p>
+        )}
+        {duplicateWarning && (
+          <div className="duplicate-warning" style={{ background: 'rgba(230, 126, 34, 0.15)', border: '1px solid rgba(230, 126, 34, 0.4)', padding: '10px 14px', borderRadius: 8, marginTop: 8, fontSize: 13, color: '#f39c12', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>⚠️ &quot;{duplicateWarning.title}&quot; is already in your Vault!</span>
+            <a href={`/vault/${duplicateWarning.id}`} style={{ color: '#ffffff', textDecoration: 'underline', fontWeight: 600 }}>View Entry →</a>
+          </div>
         )}
       </div>
 
