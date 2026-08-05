@@ -11,6 +11,7 @@ import ScoreDistribution from '@/components/stats/ScoreDistribution';
 import VaultWrapped    from '@/components/stats/VaultWrapped';
 import ProfileEdit     from '@/components/profile/ProfileEdit';
 import ExportButton    from '@/components/profile/ExportButton';
+import VaultHealthCheckModal from '@/components/profile/VaultHealthCheckModal';
 import PasswordReset   from '@/components/profile/PasswordReset';
 import AdminPanel      from '@/components/profile/AdminPanel';
 import SignOutButton   from '@/components/profile/SignOutButton';
@@ -132,8 +133,9 @@ export default async function ProfilePage() {
         </div>
       )}
 
-      {/* Export, Change Password & Sign Out — at the very bottom */}
+      {/* Export, Health Check & Profile Settings */}
       <div style={{ borderTop: '1px solid var(--border)', paddingTop: 40, marginTop: 48, maxWidth: 560, margin: '0 auto' }}>
+        <VaultHealthCheckModal />
         <ExportButton />
         <PasswordReset />
         <SignOutButton />

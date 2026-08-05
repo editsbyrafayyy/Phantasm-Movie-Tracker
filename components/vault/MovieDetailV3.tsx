@@ -240,11 +240,15 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
                 {entry.subgenre}
               </Link>
             )}
-            {entry.secondary_tag && (
-              <Link href={`/vault?subgenre=${encodeURIComponent(entry.secondary_tag)}`} className="backdrop-chip" style={{ cursor: 'pointer' }}>
-                {entry.secondary_tag}
-              </Link>
-            )}
+            {entry.secondary_tag && entry.secondary_tag.split(',').map(tag => {
+              const cleanTag = tag.trim();
+              if (!cleanTag) return null;
+              return (
+                <Link key={cleanTag} href={`/vault?subgenre=${encodeURIComponent(cleanTag)}`} className="backdrop-chip" style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.08)' }}>
+                  #{cleanTag}
+                </Link>
+              );
+            })}
           </div>
 
           {/* OMDb meta strip — moved above score */}

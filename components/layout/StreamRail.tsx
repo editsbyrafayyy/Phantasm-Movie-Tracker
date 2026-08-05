@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Moon, User, LogOut, ChevronDown, Bookmark } from 'lucide-react';
+import ToastHistoryModal from '@/components/ui/ToastHistoryModal';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function StreamRail() {
@@ -82,8 +83,9 @@ export default function StreamRail() {
           </nav>
         </div>
 
-        {/* Right side: Auth area */}
-        <div className="navbar-auth-desktop">
+        {/* Right side: Auth area & Notification History */}
+        <div className="navbar-auth-desktop" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <ToastHistoryModal />
           {loading ? (
             <div className="navbar-auth-loading" aria-hidden="true" />
           ) : user ? (
