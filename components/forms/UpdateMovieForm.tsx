@@ -26,6 +26,27 @@ export default function UpdateMovieForm() {
   const [showReveal, setShowReveal] = useState(false);
   const [toast,    setToast]    = useState<{ message: string; type: ToastType } | null>(null);
   const [errors,   setErrors]   = useState<Partial<Record<keyof UpdateForm, string>>>({});
+  const [subgenreAvg, setSubgenreAvg] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!form?.subgenre) {
+      setSubgenreAvg(null);
+      return;
+    }
+    fetch('/api/owner-vault')
+      .then(r => r.json())
+      .then((data: Entry[]) => {
+        if (!Array.isArray(data)) return;
+        const matches = data.filter(e => e.subgenre === form.subgenre && e.total !== null && e.total > 0);
+        if (matches.length > 0) {
+          const sum = matches.reduce((acc, curr) => acc + (curr.total ?? 0), 0);
+          setSubgenreAvg(Math.round((sum / matches.length) * 10) / 10);
+        } else {
+          setSubgenreAvg(null);
+        }
+      })
+      .catch(() => setSubgenreAvg(null));
+  }, [form?.subgenre]);
 
   useEffect(() => {
     if (!entryId) return;
@@ -33,6 +54,8 @@ export default function UpdateMovieForm() {
       .then(r => r.json())
       .then((data: Entry) => {
         setEntry(data);
+        const draftKey = `vault_draft_note_${entryId}`;
+        const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
         setForm({
           title:        data.movie?.title ?? '',
           omdbId:       data.movie?.omdb_id ?? '',
@@ -48,7 +71,7 @@ export default function UpdateMovieForm() {
           sound:        data.sound        ?? '',
           impact:       data.impact       ?? '',
           bonus:        data.bonus        ?? 0,
-          notes:        data.notes        ?? '',
+          notes:        savedDraft ?? data.notes ?? '',
         });
       })
       .catch(() => setToast({ message: 'Could not load entry.', type: 'error' }))
@@ -57,6 +80,13 @@ export default function UpdateMovieForm() {
 
   function set<K extends keyof UpdateForm>(key: K, value: UpdateForm[K]) {
     setForm(prev => prev ? { ...prev, [key]: value } : prev);
+    if (key === 'notes' && entryId) {
+      if (value) {
+        localStorage.setItem(`vault_draft_note_${entryId}`, String(value));
+      } else {
+        localStorage.removeItem(`vault_draft_note_${entryId}`);
+      }
+    }
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: undefined }));
   }
 
@@ -97,6 +127,9 @@ export default function UpdateMovieForm() {
         return;
       }
 
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(`vault_draft_note_${entryId}`);
+      }
       setToast({ message: 'Rating updated!', type: 'success' });
       setShowReveal(true);
     } catch {
@@ -153,6 +186,11 @@ export default function UpdateMovieForm() {
           <option value="">Select a subgenre…</option>
           {SUBGENRES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+        {subgenreAvg !== null && (
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+            💡 Your avg for <strong style={{ color: 'var(--text)' }}>{form.subgenre.replace(' Horror', '').replace(' (Non-Horror)', '')}</strong>: <strong style={{ color: 'var(--accent)' }}>{subgenreAvg}/10</strong>
+          </p>
+        )}
         {errors.subgenre && <p className="field-error">{errors.subgenre}</p>}
       </div>
 

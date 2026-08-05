@@ -9,6 +9,7 @@ import { RECOMMEND_COLOR, SUBGENRE_HEX } from '@/lib/config';
 import { staggerItem, cardSpring } from '@/lib/motion';
 import type { Entry } from '@/lib/types';
 import { useAuth } from '@/components/layout/AuthProvider';
+import WatchlistButton from '@/components/watchlist/WatchlistButton';
 
 interface MovieCardProps {
   entry: Entry;
@@ -97,6 +98,27 @@ export default function MovieCard({ entry }: MovieCardProps) {
             />
           )}
 
+          {/* Watchlist Bookmark toggle overlay */}
+          {movie?.tmdb_id && user && (
+            <div
+              style={{ position: 'absolute', top: 8, left: 8, zIndex: 6 }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <WatchlistButton
+                tmdbId={movie.tmdb_id}
+                mediaType="movie"
+                title={title}
+                posterUrl={imgSrc}
+                year={year}
+                showLabel={false}
+                className="watchlist-card-overlay-btn"
+              />
+            </div>
+          )}
+
           {/* Eye overlay — CSS-driven hover reveal */}
           <div className="movie-card-play" aria-hidden="true">
             <div className="movie-card-play-icon">
@@ -110,9 +132,18 @@ export default function MovieCard({ entry }: MovieCardProps) {
             {metaText && <p className="movie-card-year">{metaText}</p>}
           </div>
 
-          {/* Subgenre chip — CSS hover reveal */}
+          {/* Subgenre chip — click filters Vault by subgenre */}
           {subgenre && (
-            <span className="movie-card-genre-chip" aria-hidden="true">
+            <span
+              className="movie-card-genre-chip"
+              style={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = `/vault?subgenre=${encodeURIComponent(subgenre)}`;
+              }}
+              title={`View all ${subgenre} films`}
+            >
               {subgenre}
             </span>
           )}

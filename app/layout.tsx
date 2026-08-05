@@ -5,6 +5,8 @@ import './globals.css';
 import { AuthProvider } from '@/components/layout/AuthProvider';
 import StreamRail     from '@/components/layout/StreamRail';
 import StarField        from '@/components/StarField';
+import KeyboardShortcutsModal from '@/components/layout/KeyboardShortcutsModal';
+import CommandPaletteModal from '@/components/layout/CommandPaletteModal';
 import MobileBottomNav  from '@/components/layout/MobileBottomNav';
 
 const inter = Inter({
@@ -68,6 +70,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <StarField />
           <main>{children}</main>
           <MobileBottomNav />
+          <KeyboardShortcutsModal />
+          <CommandPaletteModal />
         </AuthProvider>
       </body>
     </html>

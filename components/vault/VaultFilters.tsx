@@ -32,19 +32,25 @@ interface VaultFiltersProps {
 }
 
 export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps) {
-  const [search,        setSearch]       = useState('');
-  const [selectedGenre, setGenre]        = useState('All');
-  const [selectedRec,   setRec]          = useState('All');
-  const [sort,          setSort]         = useState<SortKey>('recent');
-  const [ratingFilter,  setRatingFilter] = useState<'all' | 'rated' | 'unrated'>('all');
-  const [yearBucket,    setYearBucket]   = useState<YearBucket>('all');
+  const [search,          setSearch]          = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedGenre,   setGenre]           = useState('All');
+  const [selectedRec,     setRec]             = useState('All');
+  const [sort,            setSort]            = useState<SortKey>('recent');
+  const [ratingFilter,    setRatingFilter]    = useState<'all' | 'rated' | 'unrated'>('all');
+  const [yearBucket,      setYearBucket]      = useState<YearBucket>('all');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 250);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const filtered = useMemo(() => {
     let result = [...entries];
 
     // Search
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       result = result.filter(e => e.movie?.title?.toLowerCase().includes(q));
     }
 
@@ -109,7 +115,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
     }
 
     return result;
-  }, [entries, search, selectedGenre, selectedRec, ratingFilter, yearBucket, sort]);
+  }, [entries, debouncedSearch, selectedGenre, selectedRec, ratingFilter, yearBucket, sort]);
 
   // Propagate filtered results to parent whenever they change
   useEffect(() => {
@@ -135,6 +141,20 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
           onChange={e => setSearch(e.target.value)}
           aria-label="Search movies"
         />
+      </div>
+
+      {/* Decade Pills Row */}
+      <div className="vault-decade-pills" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4, marginTop: 10, scrollbarWidth: 'none' }}>
+        {YEAR_OPTIONS.map(opt => (
+          <button
+            key={opt.value}
+            className={`btn-edit ${yearBucket === opt.value ? 'active' : ''}`}
+            onClick={() => setYearBucket(opt.value as YearBucket)}
+            style={{ fontSize: 11, padding: '4px 12px', height: 28, flexShrink: 0, borderRadius: 14 }}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       {/* Selects Row — responsive grid */}

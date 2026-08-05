@@ -8,6 +8,8 @@ import MovieCard from './MovieCard';
 import VaultFilters from './VaultFilters';
 import type { Entry } from '@/lib/types';
 
+import SubgenreDistributionBar from './SubgenreDistributionBar';
+
 interface MovieGridProps {
   entries: Entry[];
 }
@@ -21,6 +23,9 @@ export default function MovieGrid({ entries }: MovieGridProps) {
 
   return (
     <div className="vault-content">
+      {/* Subgenre makeup progress bar */}
+      <SubgenreDistributionBar entries={entries} />
+
       {/* Sticky filter bar */}
       <div className="vault-filter-bar">
         <VaultFilters entries={entries} onFiltered={handleFiltered} />

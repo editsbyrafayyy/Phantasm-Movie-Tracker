@@ -40,8 +40,10 @@ function filterEntries(
   decade: DecadeFilter,
   runtime: RuntimeFilter,
   recommend: string,
+  unwatchedOnly: boolean,
 ): Entry[] {
   return entries.filter(e => {
+    if (unwatchedOnly && (e.total !== null && e.total > 0)) return false;
     if (subgenre !== 'Any' && e.subgenre !== subgenre) return false;
     if (recommend !== 'Any' && e.recommend !== recommend) return false;
     const dRange = DECADE_RANGES[decade];
@@ -57,10 +59,11 @@ function filterEntries(
 }
 
 export default function RouletteModal({ entries, canStream, onClose }: RouletteModalProps) {
-  const [subgenre,  setSubgenre]  = useState<string>('Any');
-  const [decade,    setDecade]    = useState<DecadeFilter>('Any');
-  const [runtime,   setRuntime]   = useState<RuntimeFilter>('Any');
-  const [recommend, setRecommend] = useState<string>('Any');
+  const [subgenre,      setSubgenre]      = useState<string>('Any');
+  const [decade,        setDecade]        = useState<DecadeFilter>('Any');
+  const [runtime,       setRuntime]       = useState<RuntimeFilter>('Any');
+  const [recommend,     setRecommend]     = useState<string>('Any');
+  const [unwatchedOnly, setUnwatchedOnly] = useState<boolean>(false);
 
   const [spinning, setSpinning]   = useState(false);
   const [result,   setResult]     = useState<Entry | null>(null);
@@ -74,7 +77,7 @@ export default function RouletteModal({ entries, canStream, onClose }: RouletteM
   }, [onClose]);
 
   const spin = useCallback(() => {
-    const pool = filterEntries(entries, subgenre, decade, runtime, recommend);
+    const pool = filterEntries(entries, subgenre, decade, runtime, recommend, unwatchedOnly);
     if (!pool.length) return;
 
     setSpinning(true);
@@ -88,9 +91,9 @@ export default function RouletteModal({ entries, canStream, onClose }: RouletteM
       setResult(pick);
       setSpinning(false);
     }, 900);
-  }, [entries, subgenre, decade, runtime, recommend]);
+  }, [entries, subgenre, decade, runtime, recommend, unwatchedOnly]);
 
-  const pool = filterEntries(entries, subgenre, decade, runtime, recommend);
+  const pool = filterEntries(entries, subgenre, decade, runtime, recommend, unwatchedOnly);
   const hasPool = pool.length > 0;
 
   return (
@@ -175,6 +178,25 @@ export default function RouletteModal({ entries, canStream, onClose }: RouletteM
                     onClick={() => setDecade(d)}
                   >{d}</button>
                 ))}
+              </div>
+            </div>
+
+            {/* Unwatched Filter */}
+            <div className="roulette-filter-group">
+              <span className="roulette-filter-label">Watch Status</span>
+              <div className="roulette-chip-row">
+                <button
+                  className={`roulette-chip${!unwatchedOnly ? ' active' : ''}`}
+                  onClick={() => setUnwatchedOnly(false)}
+                >
+                  All Films
+                </button>
+                <button
+                  className={`roulette-chip${unwatchedOnly ? ' active' : ''}`}
+                  onClick={() => setUnwatchedOnly(true)}
+                >
+                  Unwatched Only
+                </button>
               </div>
             </div>
           </div>

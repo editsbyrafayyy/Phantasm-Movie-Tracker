@@ -7,6 +7,8 @@ import VaultFilter    from '@/components/home/VaultFilter';
 import ComingSoonWidget from '@/components/home/ComingSoonWidget';
 import RouletteTrigger from '@/components/home/RouletteTrigger';
 import ActivityFeed    from '@/components/home/ActivityFeed';
+import OnThisDayWidget from '@/components/home/OnThisDayWidget';
+import RecentlyViewedRow from '@/components/home/RecentlyViewedRow';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -91,6 +93,14 @@ export default async function HomePage() {
           </Link>
         </div>
       )}
+
+      {/* ── On This Day Nostalgia Banner ───────────────── */}
+      <div style={{ marginTop: 24 }}>
+        <OnThisDayWidget />
+      </div>
+
+      {/* ── Recently Viewed Row ───────────────────────── */}
+      <RecentlyViewedRow />
 
       {/* ── Must Watch ────────────────────────────────── */}
       {mustWatchEntries.length > 0 && (

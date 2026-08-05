@@ -31,6 +31,8 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+import WatchlistClient from '@/components/watchlist/WatchlistClient';
+
 export default async function WatchlistPage() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -42,7 +44,7 @@ export default async function WatchlistPage() {
     .eq('user_id', user.id)
     .order('added_at', { ascending: false });
 
-  const items: WatchlistRow[] = error ? [] : (data ?? []);
+  const items = error ? [] : (data ?? []);
 
   return (
     <div className="watchlist-page">
@@ -64,63 +66,7 @@ export default async function WatchlistPage() {
         </div>
       </header>
 
-      {items.length === 0 ? (
-        <div className="watchlist-empty">
-          <div className="watchlist-empty-icon"><Film size={40} strokeWidth={1} /></div>
-          <h2 className="watchlist-empty-title">Nothing saved yet</h2>
-          <p className="watchlist-empty-sub">
-            Browse horror films and hit the <strong>Watch Later</strong> button to save them here.
-          </p>
-          <Link href="/browse" className="btn-primary" style={{ display: 'inline-flex', width: 'fit-content' }}>
-            Browse Films →
-          </Link>
-        </div>
-      ) : (
-        <div className="watchlist-grid">
-          {items.map(item => (
-            <div key={item.id} className="watchlist-card">
-              <Link
-                href={`/stream/tmdb/${item.tmdb_id}?type=${item.media_type}&from=/watchlist`}
-                className="watchlist-card-poster-link"
-              >
-                <div className="watchlist-card-poster">
-                  {item.poster_url ? (
-                    <Image
-                      src={item.poster_url}
-                      alt={item.title}
-                      fill
-                      sizes="(max-width: 640px) 40vw, 160px"
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div className="watchlist-card-fallback"><Film size={24} opacity={0.3} /></div>
-                  )}
-                  <div className="watchlist-card-overlay" />
-                  <span className="watchlist-card-type">
-                    {item.media_type === 'tv' ? 'TV' : 'Film'}
-                  </span>
-                </div>
-              </Link>
-
-              <div className="watchlist-card-info">
-                <Link
-                  href={`/stream/tmdb/${item.tmdb_id}?type=${item.media_type}&from=/watchlist`}
-                  className="watchlist-card-title"
-                >
-                  {item.title}
-                </Link>
-                <div className="watchlist-card-meta">
-                  {item.year && <span>{item.year}</span>}
-                  <span className="watchlist-card-added">Added {timeAgo(item.added_at)}</span>
-                </div>
-              </div>
-
-              {/* Remove button — uses a tiny form for server-friendly removal */}
-              <WatchlistRemoveButton tmdbId={item.tmdb_id} mediaType={item.media_type} />
-            </div>
-          ))}
-        </div>
-      )}
+      <WatchlistClient items={items} />
     </div>
   );
 }

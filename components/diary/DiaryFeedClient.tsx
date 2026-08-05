@@ -7,6 +7,8 @@ import { Film, RotateCcw, Trash2, Calendar, BookOpen, Search } from 'lucide-reac
 import Toast, { type ToastType } from '@/components/ui/Toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
+import { formatRelativeDate, formatFullDate } from '@/lib/dateUtils';
+
 interface DiaryItem {
   id: string;
   watched_at: string;
@@ -65,9 +67,14 @@ export default function DiaryFeedClient({ initialDiary }: DiaryFeedClientProps) 
         <p style={{ fontSize: 14, color: 'var(--text-muted)', maxWidth: 400, margin: '0 auto 24px' }}>
           Start logging your horror movie viewings and rewatches directly from any movie page in your vault.
         </p>
-        <Link href="/vault" className="btn-primary" style={{ display: 'inline-flex', gap: 8 }}>
-          Browse Vault
-        </Link>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href="/vault" className="btn-primary" style={{ display: 'inline-flex', gap: 8 }}>
+            Browse Vault
+          </Link>
+          <Link href="/browse" className="btn-edit" style={{ display: 'inline-flex', gap: 8 }}>
+            Discover Films
+          </Link>
+        </div>
       </div>
     );
   }
@@ -88,13 +95,20 @@ export default function DiaryFeedClient({ initialDiary }: DiaryFeedClientProps) 
           />
         </div>
 
-        <div className="diary-filter-chips" style={{ display: 'flex', gap: 6 }}>
+        <div className="diary-filter-chips" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           <button
             className={`btn-edit ${filterRewatch === null ? 'active' : ''}`}
             onClick={() => setFilterRewatch(null)}
             style={{ height: 38, fontSize: 12 }}
           >
             All ({diary.length})
+          </button>
+          <button
+            className={`btn-edit ${filterRewatch === false ? 'active' : ''}`}
+            onClick={() => setFilterRewatch(false)}
+            style={{ height: 38, fontSize: 12 }}
+          >
+            First Watches ({diary.filter(d => !d.rewatch).length})
           </button>
           <button
             className={`btn-edit ${filterRewatch === true ? 'active' : ''}`}
@@ -109,19 +123,15 @@ export default function DiaryFeedClient({ initialDiary }: DiaryFeedClientProps) 
       {/* Feed list */}
       <div className="diary-feed-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {filtered.map(item => {
-          const dateObj = new Date(item.watched_at);
-          const formattedDate = dateObj.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          });
+          const relativeDate = formatRelativeDate(item.watched_at);
+          const fullDate = formatFullDate(item.watched_at);
 
           return (
             <div key={item.id} className="diary-item-card" style={{ display: 'flex', gap: 16, padding: '16px 20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, alignItems: 'center' }}>
               {/* Date */}
-              <div className="diary-item-date" style={{ minWidth: 90, flexShrink: 0 }}>
+              <div className="diary-item-date" style={{ minWidth: 95, flexShrink: 0 }} title={fullDate}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)', display: 'block', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  {formattedDate}
+                  {relativeDate}
                 </span>
               </div>
 

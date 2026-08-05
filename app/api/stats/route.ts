@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   const { data: entries, error } = await supabase
     .from('entries')
-    .select('*, movie:movies (id, title, poster_url)')
+    .select('*, movie:movies (id, title, poster_url, runtime_min)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: true });
 
@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
   if (!entries || entries.length === 0) {
     const empty: StatsData = {
       totalFilms:          0,
+      totalRuntimeMin:     0,
       averageTotal:        0,
       highestScore:        0,
       mostCommonSubgenre:  '',
@@ -59,6 +60,7 @@ export async function GET(req: NextRequest) {
   const totalFilms  = entries.length;
   const averageTotal = round(totals.reduce((a, b) => a + b, 0) / totalFilms);
   const highestScore = Math.max(...totals);
+  const totalRuntimeMin = entries.reduce((acc, e) => acc + (e.movie?.runtime_min ?? 0), 0);
 
   // ── By subgenre ────────────────────────────────────────────────────────────
   const subgenreCounts = new Map<string, number>();
@@ -134,6 +136,7 @@ export async function GET(req: NextRequest) {
 
   const stats: StatsData = {
     totalFilms,
+    totalRuntimeMin,
     averageTotal,
     highestScore,
     mostCommonSubgenre,

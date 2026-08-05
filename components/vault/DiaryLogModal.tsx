@@ -31,7 +31,9 @@ export default function DiaryLogModal({
   useEffect(() => {
     if (isOpen && movieId) {
       setWatchedAt(today);
-      setQuickNote('');
+      const draftKey = `vault_draft_diary_${movieId}`;
+      const saved = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
+      setQuickNote(saved ?? '');
       fetch(`/api/diary?movie_id=${movieId}&count=true`)
         .then(r => r.json())
         .then(data => {
@@ -42,6 +44,18 @@ export default function DiaryLogModal({
         .catch(() => {});
     }
   }, [isOpen, movieId, today]);
+
+  function handleNoteChange(val: string) {
+    setQuickNote(val);
+    if (movieId) {
+      const draftKey = `vault_draft_diary_${movieId}`;
+      if (val) {
+        localStorage.setItem(draftKey, val);
+      } else {
+        localStorage.removeItem(draftKey);
+      }
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,6 +74,10 @@ export default function DiaryLogModal({
       });
 
       if (!res.ok) throw new Error('Failed to save log');
+
+      if (movieId && typeof window !== 'undefined') {
+        localStorage.removeItem(`vault_draft_diary_${movieId}`);
+      }
 
       setToast({ message: 'Watch logged in your Diary!', type: 'success' });
       if (onSuccess) onSuccess();
@@ -166,7 +184,7 @@ export default function DiaryLogModal({
                 <textarea
                   className="form-input notes-textarea"
                   value={quickNote}
-                  onChange={e => setQuickNote(e.target.value.slice(0, 280))}
+                  onChange={e => handleNoteChange(e.target.value.slice(0, 280))}
                   placeholder="Where did you watch it? Who with? Key impression..."
                   rows={3}
                   maxLength={280}

@@ -65,6 +65,7 @@ export interface MovieFormData {
 // ── Stats ─────────────────────────────────────────────────────────────────────
 export interface StatsData {
   totalFilms:          number;
+  totalRuntimeMin?:    number;
   averageTotal:        number;
   highestScore:        number;
   mostCommonSubgenre:  string;

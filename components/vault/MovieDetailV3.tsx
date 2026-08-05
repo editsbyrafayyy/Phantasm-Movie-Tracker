@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers, BookOpen, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers, BookOpen, RotateCcw, Copy, Link2 } from 'lucide-react';
 import { SCORE_FIELDS } from '@/lib/config';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast, { type ToastType } from '@/components/ui/Toast';
@@ -70,6 +70,41 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
     });
   }, [movie?.poster_url, movie?.backdrop_url]);
 
+  // Feature 25: Save to Recently Viewed in localStorage
+  useEffect(() => {
+    if (!entry.id || !movie || typeof window === 'undefined') return;
+    try {
+      const storageKey = 'vault_recently_viewed';
+      const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const filtered = existing.filter((item: { id: string }) => item.id !== entry.id);
+      const updated = [
+        {
+          id: entry.id,
+          title: movie.title ?? 'Unknown',
+          poster_url: movie.poster_url ?? movie.backdrop_url ?? null,
+          year: movie.year ?? null,
+          total: entry.total ?? null,
+          viewedAt: Date.now(),
+        },
+        ...filtered,
+      ].slice(0, 10);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch {
+      /* ignore storage error */
+    }
+  }, [entry.id, entry.total, movie]);
+
+  // Feature 1: "More Like This From Your Vault" based on subgenre & score proximity
+  const computedSimilar = useMemo(() => {
+    const basePool = (similar && similar.length > 0)
+      ? similar
+      : allEntries.filter(e => e.id !== entry.id && e.subgenre === entry.subgenre);
+
+    return [...basePool]
+      .sort((a, b) => Math.abs((a.total ?? 0) - (entry.total ?? 0)) - Math.abs((b.total ?? 0) - (entry.total ?? 0)))
+      .slice(0, 10);
+  }, [similar, allEntries, entry]);
+
 
   async function toggleMustWatch() {
     setTogglingMustWatch(true);
@@ -96,6 +131,30 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
       setToast({ message: 'Failed to update. Try again.', type: 'error' });
     } finally {
       setTogglingMustWatch(false);
+    }
+  }
+
+  async function copySummary() {
+    const recPart = entry.recommend ? ` [${entry.recommend}]` : '';
+    const scorePart = entry.total !== null && entry.total > 0 ? ` — ${entry.total}/10` : '';
+    const yearPart = movie.year ? ` (${movie.year})` : '';
+    const text = `${title}${yearPart}${scorePart}${recPart} on Vault`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast({ message: 'Summary copied to clipboard!', type: 'success' });
+    } catch {
+      setToast({ message: 'Failed to copy summary', type: 'error' });
+    }
+  }
+
+  async function copyLink() {
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/vault/${entry.id}` : '';
+    try {
+      await navigator.clipboard.writeText(url);
+      setToast({ message: 'Direct link copied to clipboard!', type: 'success' });
+    } catch {
+      setToast({ message: 'Failed to copy link', type: 'error' });
     }
   }
 
@@ -176,8 +235,16 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
 
           {/* Genre chips */}
           <div className="backdrop-chips">
-            {entry.subgenre && <span className="backdrop-chip">{entry.subgenre}</span>}
-            {entry.secondary_tag && <span className="backdrop-chip">{entry.secondary_tag}</span>}
+            {entry.subgenre && (
+              <Link href={`/vault?subgenre=${encodeURIComponent(entry.subgenre)}`} className="backdrop-chip" style={{ cursor: 'pointer' }}>
+                {entry.subgenre}
+              </Link>
+            )}
+            {entry.secondary_tag && (
+              <Link href={`/vault?subgenre=${encodeURIComponent(entry.secondary_tag)}`} className="backdrop-chip" style={{ cursor: 'pointer' }}>
+                {entry.secondary_tag}
+              </Link>
+            )}
           </div>
 
           {/* OMDb meta strip — moved above score */}
@@ -241,6 +308,24 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
                 >
                   <Layers size={14} />
                   Save to Stack
+                </button>
+                <button
+                  onClick={copySummary}
+                  className="btn-edit"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  title="Copy review summary to clipboard"
+                >
+                  <Copy size={14} />
+                  Copy Summary
+                </button>
+                <button
+                  onClick={copyLink}
+                  className="btn-edit"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  title="Copy direct link to clipboard"
+                >
+                  <Link2 size={14} />
+                  Copy Link
                 </button>
               </>
             )}
@@ -440,9 +525,9 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
           {/* More Like This Subsection */}
           <div className="detail-subsection">
             <h4 className="detail-subsection-title">More Like This</h4>
-            {similar.length > 0 ? (
+            {computedSimilar.length > 0 ? (
               <div className="similar-row">
-                {similar.slice(0, 10).map(e => {
+                {computedSimilar.slice(0, 10).map(e => {
                   const simImg = e.movie.poster_url ?? e.movie.backdrop_url ?? null;
                   return (
                     <Link key={e.id} href={`/vault/${e.id}`} className="similar-card">

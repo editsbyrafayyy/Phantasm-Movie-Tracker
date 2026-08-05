@@ -24,6 +24,8 @@ movie-tracker-*.json
 CLAUDE.md
 Screenshots/
 Claude Skills/
+gemini_context.md 
+
 # ── OS / Editor ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

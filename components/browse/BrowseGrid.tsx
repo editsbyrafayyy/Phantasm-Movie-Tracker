@@ -232,8 +232,17 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           </div>
 
           {movies.length === 0 && (
-            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.4)', padding: '60px 0' }}>
-              No items match your search.
+            <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.5)', padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <p style={{ margin: 0, fontSize: 15 }}>No items match your search{searchQuery ? ` for "${searchQuery}"` : ''}.</p>
+              {searchQuery && (
+                <button
+                  className="btn-edit"
+                  onClick={() => setSearchQuery('')}
+                  style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  Clear Search Filter
+                </button>
+              )}
             </div>
           )}
 
