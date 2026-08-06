@@ -42,7 +42,7 @@ export default function RecentlyViewedRow() {
   };
 
   return (
-    <section className="category-section" style={{ position: 'relative', marginTop: 32, marginBottom: 32 }}>
+    <section className="category-section recently-viewed-row" style={{ position: 'relative' }}>
       <div className="category-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Clock size={14} style={{ color: 'var(--red)' }} />

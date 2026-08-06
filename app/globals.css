@@ -2441,8 +2441,15 @@ select:focus-visible {
   scroll-padding-left: 48px;
 }
 .category-scroll-track::-webkit-scrollbar { display:none; }
-@media (max-width:640px) { 
-  .category-scroll-track { padding:16px 24px 16px; gap:12px; scroll-padding-left: 24px; } 
+
+/* Recently Viewed row uses a tighter track padding so a 1-item row
+   doesn't leave a phantom empty block before the next section. */
+.recently-viewed-row .category-scroll-track {
+  padding-bottom: 16px;
+}
+
+@media (max-width:640px) {
+  .category-scroll-track { padding:16px 24px 16px; gap:12px; scroll-padding-left: 24px; }
 }
 
 .category-scroll-btn {
