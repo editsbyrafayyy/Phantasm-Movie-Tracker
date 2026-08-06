@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, X, CheckCircle, ImageOff, Star } from 'lucide-react';
+import { Stethoscope, X, CheckCircle, ImageOff, Star } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 
 export default function VaultHealthCheckModal() {
@@ -45,9 +45,9 @@ export default function VaultHealthCheckModal() {
       <button
         onClick={() => setIsOpen(true)}
         className="btn-edit"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, width: '100%', justifyContent: 'center', marginTop: 12 }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, width: '100%', justifyContent: 'center', marginBottom: 24 }}
       >
-        <Activity size={15} style={{ color: 'var(--accent)' }} />
+        <Stethoscope size={15} style={{ color: 'var(--accent)' }} />
         <span>Run Vault Health Check</span>
       </button>
 
@@ -100,7 +100,7 @@ export default function VaultHealthCheckModal() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Activity size={18} style={{ color: 'var(--accent)' }} />
+                  <Stethoscope size={18} style={{ color: 'var(--accent)' }} />
                   <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                     Vault Health Check
                   </h3>
