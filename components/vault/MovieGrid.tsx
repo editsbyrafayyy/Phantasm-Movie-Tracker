@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Film, LayoutGrid, Grid, CheckSquare, Square, Copy, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { staggerContainer } from '@/lib/motion';
@@ -17,7 +17,12 @@ interface MovieGridProps {
 
 export default function MovieGrid({ entries }: MovieGridProps) {
   const [filtered, setFiltered] = useState<Entry[]>(entries);
+  // SSR-safe: initialize to default, read localStorage after mount
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
+  useEffect(() => {
+    const saved = localStorage.getItem('vault_grid_density');
+    if (saved === 'comfortable' || saved === 'compact') setDensity(saved);
+  }, []);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'loading' } | null>(null);
@@ -68,7 +73,10 @@ export default function MovieGrid({ entries }: MovieGridProps) {
 
         <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', padding: 3, borderRadius: 8, border: '1px solid var(--border)' }}>
           <button
-            onClick={() => setDensity('comfortable')}
+            onClick={() => {
+            setDensity('comfortable');
+            localStorage.setItem('vault_grid_density', 'comfortable');
+          }}
             style={{
               background: density === 'comfortable' ? 'var(--surface)' : 'transparent',
               color: density === 'comfortable' ? 'var(--text)' : 'var(--text-muted)',
@@ -88,7 +96,10 @@ export default function MovieGrid({ entries }: MovieGridProps) {
             Comfortable
           </button>
           <button
-            onClick={() => setDensity('compact')}
+            onClick={() => {
+            setDensity('compact');
+            localStorage.setItem('vault_grid_density', 'compact');
+          }}
             style={{
               background: density === 'compact' ? 'var(--surface)' : 'transparent',
               color: density === 'compact' ? 'var(--text)' : 'var(--text-muted)',
@@ -143,7 +154,7 @@ export default function MovieGrid({ entries }: MovieGridProps) {
           animate="animate"
           aria-label={`${filtered.length} films`}
         >
-          {filtered.map(entry => {
+          {filtered.map((entry, idx) => {
             const isSelected = selectedIds.includes(entry.id);
             return (
               <div
@@ -167,7 +178,7 @@ export default function MovieGrid({ entries }: MovieGridProps) {
                     {isSelected ? <CheckSquare size={16} color="#fff" /> : <Square size={16} color="rgba(255,255,255,0.6)" />}
                   </div>
                 )}
-                <MovieCard entry={entry} />
+                <MovieCard entry={entry} priority={idx < 8} />
               </div>
             );
           })}

@@ -31,8 +31,10 @@ export default function TopRatedList({ data }: TopRatedListProps) {
                   width={36}
                   height={52}
                   className="top-rated-poster-img"
+                  sizes="48px"
+                  loading="lazy"
                   placeholder="blur"
-                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElFTkSuQmCC"
                 />
               ) : (
                 <div className="top-rated-poster-fallback">

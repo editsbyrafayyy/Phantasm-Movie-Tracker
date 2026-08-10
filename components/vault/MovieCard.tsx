@@ -13,9 +13,10 @@ import WatchlistButton from '@/components/watchlist/WatchlistButton';
 
 interface MovieCardProps {
   entry: Entry;
+  priority?: boolean;
 }
 
-export default function MovieCard({ entry }: MovieCardProps) {
+export default function MovieCard({ entry, priority = false }: MovieCardProps) {
   const { user } = useAuth();
   const { movie, total, recommend, subgenre } = entry;
   const poster    = movie?.poster_url ?? null;
@@ -63,6 +64,8 @@ export default function MovieCard({ entry }: MovieCardProps) {
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
               className="movie-card-img"
+              priority={priority}
+              loading={priority ? undefined : 'lazy'}
               placeholder="blur"
               blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
             />

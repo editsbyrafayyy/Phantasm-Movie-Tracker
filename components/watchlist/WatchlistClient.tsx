@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Film, Search, ChevronUp, ChevronDown } from 'lucide-react';
@@ -29,11 +29,42 @@ function timeAgo(dateStr: string): string {
 
 type SortKey = 'custom' | 'recent' | 'year' | 'title' | 'type';
 
+const ORDER_KEY = 'vault_watchlist_order';
+
+/** Load saved custom order (array of IDs) from localStorage */
+function loadSavedOrder(): string[] | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(ORDER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+/** Apply saved order to items list */
+function applySavedOrder(items: WatchlistRow[], order: string[]): WatchlistRow[] {
+  const orderMap = new Map(order.map((id, i) => [id, i]));
+  return [...items].sort((a, b) => {
+    const ia = orderMap.get(a.id) ?? Infinity;
+    const ib = orderMap.get(b.id) ?? Infinity;
+    return ia - ib;
+  });
+}
+
 export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
-  const [listItems, setListItems] = useState(items);
+  const [listItems, setListItems] = useState<WatchlistRow[]>(() => {
+    const saved = loadSavedOrder();
+    return saved ? applySavedOrder(items, saved) : items;
+  });
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('custom');
   const [mediaFilter, setMediaFilter] = useState<'all' | 'movie' | 'tv'>('all');
+
+  /** Persist order to localStorage, debounced */
+  const saveOrder = useCallback((updated: WatchlistRow[]) => {
+    try {
+      localStorage.setItem(ORDER_KEY, JSON.stringify(updated.map(i => i.id)));
+    } catch { /* ignore */ }
+  }, []);
 
   function moveItem(index: number, direction: 'up' | 'down') {
     // Find the real index in listItems when working with filtered view
@@ -43,6 +74,7 @@ export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
     const updated = [...listItems];
     [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
     setListItems(updated);
+    saveOrder(updated);
   }
 
   const filtered = useMemo(() => {

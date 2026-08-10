@@ -10,8 +10,10 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const movieId = searchParams.get('movie_id');
-  const countOnly = searchParams.get('count') === 'true';
+  const movieId    = searchParams.get('movie_id');
+  const countOnly  = searchParams.get('count') === 'true';
+  const onThisDay  = searchParams.get('onThisDay') === 'true';
+  const yearParam  = searchParams.get('year');
 
   if (movieId && countOnly) {
     const { count, error } = await supabase
@@ -30,6 +32,30 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // ── On This Day: server-side date filter — returns at most 1 entry ──────────
+  if (onThisDay) {
+    const today = new Date();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const currentYear = today.getFullYear();
+    // Match any entry where watched_at ends with '-MM-DD' from a prior year
+    const { data, error } = await supabase
+      .from('diary_entries')
+      .select('id, movie_id, watched_at, rewatch, movie:movies (id, title, poster_url, year)')
+      .eq('user_id', user.id)
+      .like('watched_at', `%-${mm}-${dd}`)
+      .lt('watched_at', `${currentYear}-01-01`)
+      .order('watched_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      return NextResponse.json({ diary: [] });
+    }
+    return NextResponse.json({ diary: data ?? [] }, {
+      headers: { 'Cache-Control': 'private, max-age=3600, stale-while-revalidate=86400' },
+    });
+  }
+
   let query = supabase
     .from('diary_entries')
     .select('*, movie:movies (*)')
@@ -39,6 +65,13 @@ export async function GET(req: NextRequest) {
 
   if (movieId) {
     query = query.eq('movie_id', movieId);
+  }
+
+  // ── Year filter for CalendarHeatmap — only fetch entries for a given year ───
+  if (yearParam && /^\d{4}$/.test(yearParam)) {
+    query = query
+      .gte('watched_at', `${yearParam}-01-01`)
+      .lte('watched_at', `${yearParam}-12-31`);
   }
 
   const { data, error } = await query;
@@ -51,6 +84,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ diary: data ?? [] }, {
     headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=60' },
   });
+
 }
 
 export async function POST(req: NextRequest) {

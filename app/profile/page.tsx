@@ -9,6 +9,9 @@ import ScoreHistograms from '@/components/stats/ScoreHistograms';
 import TopRatedList    from '@/components/stats/TopRatedList';
 import ScoreDistribution from '@/components/stats/ScoreDistribution';
 import VaultWrapped    from '@/components/stats/VaultWrapped';
+import RatingDriftChart from '@/components/stats/RatingDriftChart';
+import TasteFingerprint from '@/components/stats/TasteFingerprint';
+import CalendarHeatmap  from '@/components/stats/CalendarHeatmap';
 import ProfileEdit     from '@/components/profile/ProfileEdit';
 import ExportButton    from '@/components/profile/ExportButton';
 import VaultHealthCheckModal from '@/components/profile/VaultHealthCheckModal';
@@ -113,19 +116,28 @@ export default async function ProfilePage() {
           <SummaryStrip stats={stats} />
 
           <div className="stats-charts-grid">
-            {/* Row 1: Genre breakdown (left) + Recommendation breakdown (right) */}
-            <GenreDonut    data={stats.bySubgenre} />
-            <RecommendBars data={stats.byRecommend} />
+              {/* Row 1: Genre breakdown (left) + Recommendation breakdown (right) */}
+              <GenreDonut    data={stats.bySubgenre} />
+              <RecommendBars data={stats.byRecommend} />
 
-            {/* Row 2: Top rated (left) + Score distribution (right) */}
-            <TopRatedList data={stats.topRated} />
-            <ScoreDistribution entries={typedEntries} />
+              {/* Row 2: Top rated (left) + Score distribution (right) */}
+              <TopRatedList data={stats.topRated} />
+              <ScoreDistribution entries={typedEntries} />
 
-            {/* Row 3: Score histograms full width */}
-            <div className="stats-histograms-full">
-              <ScoreHistograms data={stats.scoresByField} />
+              {/* Row 3: Rating Drift Chart — full width */}
+              <RatingDriftChart entries={typedEntries} />
+
+              {/* Row 4: Personal Taste Fingerprint — full width */}
+              <TasteFingerprint entries={typedEntries} />
+
+              {/* Row 5: Calendar Heatmap — full width */}
+              <CalendarHeatmap />
+
+              {/* Row 6: Score histograms full width */}
+              <div className="stats-histograms-full">
+                <ScoreHistograms data={stats.scoresByField} />
+              </div>
             </div>
-          </div>
         </div>
       ) : (
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 48, textAlign: 'center', color: 'var(--text-muted)' }}>

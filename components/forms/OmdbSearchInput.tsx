@@ -54,13 +54,26 @@ export default function OmdbSearchInput({
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const q = e.target.value;
-    const imdbMatch = q.match(/tt\d{7,8}/i);
 
+    // Feature: Paste-a-Link — detect full IMDb URLs (imdb.com/title/tt...) or bare IDs
+    const imdbMatch = q.match(/tt\d{7,8}/i);
     if (imdbMatch) {
       const imdbId = imdbMatch[0];
-      onTitleChange(q);
+      // If it was a full URL, display just the ID for clarity
+      const displayVal = q.startsWith('http') ? imdbId : q;
+      onTitleChange(displayVal);
       if (debounceRef.current) clearTimeout(debounceRef.current);
       search(imdbId);
+      return;
+    }
+
+    // Feature: Paste-a-Link — detect TMDB URLs (themoviedb.org/movie/12345 or /tv/12345)
+    const tmdbMatch = q.match(/themoviedb\.org\/(movie|tv)\/(\d+)/i);
+    if (tmdbMatch) {
+      const tmdbId = tmdbMatch[2];
+      onTitleChange(`tmdb:${tmdbId}`);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      search(`tmdb:${tmdbId}`);
       return;
     }
 

@@ -14,11 +14,22 @@ export const getOwnerEntries = unstable_cache(
     const supabase = createServiceClient();
     const { data } = await supabase
       .from('entries')
-      .select('*, movie:movies (*)')
+      .select(`
+        id, user_id, movie_id, created_at,
+        total, atmosphere, story, characters, rewatchability, recommend,
+        subgenre, review_notes, custom_tags,
+        must_watch, watchlist,
+        movie:movies (
+          id, title, year, runtime_min,
+          poster_url, backdrop_url,
+          omdb_id, tmdb_id,
+          director, cast, plot
+        )
+      `)
       .eq('user_id', OWNER_ID)
       .order('created_at', { ascending: false });
 
-    return (data ?? []) as Entry[];
+    return ((data ?? []) as unknown) as Entry[];
   },
   ['owner-entries'],
   { revalidate: 300, tags: ['owner-entries'] }

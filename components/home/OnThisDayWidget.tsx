@@ -23,36 +23,23 @@ export default function OnThisDayWidget() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    fetch('/api/diary')
+    // Use targeted server-side filter — returns at most 1 matching entry
+    fetch('/api/diary?onThisDay=true')
       .then(r => r.json())
       .then(data => {
         const entries = data.diary ?? [];
         if (!entries.length) return;
-
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const targetMd = `${mm}-${dd}`;
-
-        for (const entry of entries) {
-          if (!entry.watched_at || !entry.movie) continue;
-          const watchedDate = new Date(entry.watched_at);
-          const entryYear = watchedDate.getFullYear();
-          const entryMd = entry.watched_at.slice(5, 10);
-
-          if (entryMd === targetMd && entryYear < currentYear) {
-            const yearsAgo = currentYear - entryYear;
-            setMatch({
-              id: entry.id,
-              movie_id: entry.movie_id,
-              watched_at: entry.watched_at,
-              yearsAgo,
-              movie: entry.movie,
-            });
-            break;
-          }
-        }
+        const entry = entries[0];
+        if (!entry.watched_at || !entry.movie) return;
+        const entryYear = new Date(entry.watched_at).getFullYear();
+        const currentYear = new Date().getFullYear();
+        setMatch({
+          id: entry.id,
+          movie_id: entry.movie_id,
+          watched_at: entry.watched_at,
+          yearsAgo: currentYear - entryYear,
+          movie: entry.movie,
+        });
       })
       .catch(() => {});
   }, []);

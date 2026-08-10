@@ -43,13 +43,16 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
 
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting]     = useState(false);
-  const [toast, setToast]           = useState<{ message: string; type: ToastType } | null>(null);
+  const [toast, setToast]           = useState<{ message: string; type: ToastType; onUndo?: () => void } | null>(null);
   const [mustWatch, setMustWatch] = useState(!!entry.must_watch);
   const [togglingMustWatch, setTogglingMustWatch] = useState(false);
   const [stackModalOpen, setStackModalOpen] = useState(false);
   const [diaryModalOpen, setDiaryModalOpen] = useState(false);
   const [watchCount, setWatchCount] = useState<number>(0);
   const [ambientColor, setAmbientColor] = useState<string | null>(null);
+  const [customTags, setCustomTags] = useState<string[]>(entry.custom_tags ?? []);
+  const [tagInput, setTagInput] = useState('');
+  const [savingTags, setSavingTags] = useState(false);
 
   const { movie } = entry;
 
@@ -62,12 +65,14 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
   }, [movie?.id]);
 
   useEffect(() => {
+    let isMounted = true;
     const poster = movie?.poster_url ?? movie?.backdrop_url;
     if (!poster) return;
     const proxiedUrl = `/_next/image?url=${encodeURIComponent(poster)}&w=256&q=50`;
     extractDominantColor(proxiedUrl).then(color => {
-      if (color) setAmbientColor(color);
+      if (isMounted && color) setAmbientColor(color);
     });
+    return () => { isMounted = false; };
   }, [movie?.poster_url, movie?.backdrop_url]);
 
   // Feature 25: Save to Recently Viewed in localStorage
@@ -110,19 +115,29 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
     setTogglingMustWatch(true);
     const nextVal = !mustWatch;
     setMustWatch(nextVal);
-    
+
     try {
       const res = await fetch(`/api/movies/${entry.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ must_watch: nextVal }),
       });
-      
+
       if (!res.ok) throw new Error('Toggle failed');
-      
+
       setToast({
-        message: nextVal ? "Added to Must Watch" : "Removed from Must Watch",
-        type: 'success'
+        message: nextVal ? 'Added to Must Watch' : 'Removed from Must Watch',
+        type: 'success',
+        onUndo: async () => {
+          // Revert the toggle
+          setMustWatch(!nextVal);
+          await fetch(`/api/movies/${entry.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ must_watch: !nextVal }),
+          }).catch(() => {});
+          router.refresh();
+        },
       });
       router.refresh();
     } catch (err) {
@@ -146,6 +161,36 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
     } catch {
       setToast({ message: 'Failed to copy summary', type: 'error' });
     }
+  }
+
+  async function saveCustomTags(nextTags: string[]) {
+    setSavingTags(true);
+    try {
+      await fetch(`/api/movies/${entry.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ custom_tags: nextTags }),
+      });
+    } catch {
+      /* non-critical — tags will still show locally */
+    } finally {
+      setSavingTags(false);
+    }
+  }
+
+  function addTag(raw: string) {
+    const tag = raw.trim().replace(/^#+/, '').replace(/[^\w\s-]/g, '').trim().toLowerCase();
+    if (!tag || customTags.includes(tag) || customTags.length >= 10) return;
+    const next = [...customTags, tag];
+    setCustomTags(next);
+    setTagInput('');
+    saveCustomTags(next);
+  }
+
+  function removeTag(tag: string) {
+    const next = customTags.filter(t => t !== tag);
+    setCustomTags(next);
+    saveCustomTags(next);
   }
 
   async function copyLink() {
@@ -387,7 +432,62 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
             </blockquote>
           )}
 
-
+          {/* Custom Tags — owner-only editable chip panel */}
+          {isOwner && (
+            <div className="custom-tags-panel">
+              <div className="custom-tags-header">
+                <span className="custom-tags-label">Tags</span>
+                {savingTags && <span className="custom-tags-saving">saving…</span>}
+              </div>
+              <div className="custom-tags-chips">
+                {customTags.map(tag => (
+                  <span key={tag} className="custom-tag-chip">
+                    #{tag}
+                    <button
+                      className="custom-tag-remove"
+                      onClick={() => removeTag(tag)}
+                      aria-label={`Remove tag ${tag}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {customTags.length < 10 && (
+                  <input
+                    className="custom-tag-input"
+                    type="text"
+                    placeholder="+ add tag"
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        addTag(tagInput);
+                      }
+                      if (e.key === 'Backspace' && !tagInput && customTags.length > 0) {
+                        removeTag(customTags[customTags.length - 1]);
+                      }
+                    }}
+                    onBlur={() => { if (tagInput.trim()) addTag(tagInput); }}
+                    maxLength={24}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+          {/* For non-owners: show tags read-only if they exist */}
+          {!isOwner && customTags.length > 0 && (
+            <div className="custom-tags-panel" style={{ pointerEvents: 'none' }}>
+              <div className="custom-tags-header">
+                <span className="custom-tags-label">Tags</span>
+              </div>
+              <div className="custom-tags-chips">
+                {customTags.map(tag => (
+                  <span key={tag} className="custom-tag-chip">#{tag}</span>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Vault ratings section — labeled clearly for guests */}
           <div className="vault-ratings-section">
             <div className="vault-ratings-header">
@@ -630,6 +730,7 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
           message={toast.message}
           type={toast.type}
           onDismiss={() => setToast(null)}
+          onUndo={toast.onUndo}
         />
       )}
       {/* List Manager Modal */}

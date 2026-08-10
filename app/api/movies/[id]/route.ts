@@ -50,7 +50,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let body: Partial<MovieFormData> & { must_watch?: boolean; notes?: string | null };
+  let body: Partial<MovieFormData> & { must_watch?: boolean; notes?: string | null; custom_tags?: string[] | null };
   try {
     body = await req.json();
   } catch {
@@ -344,6 +344,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       bonus:         body.bonus      ?? 0,
       total,
       notes:         body.notes !== undefined ? (body.notes?.trim() || null) : undefined,
+      custom_tags:   body.custom_tags !== undefined ? (body.custom_tags ?? []) : undefined,
       must_watch:    (body.must_watch !== undefined && user.id === OWNER_ID) ? body.must_watch : undefined,
     })
     .eq('id', id)

@@ -4873,6 +4873,88 @@ select:focus-visible {
   font-style: italic;
 }
 
+/* ── Custom Tags Panel (Feature 11) ───────────────────────────────────── */
+.custom-tags-panel {
+  margin: 12px 0 4px;
+  padding: 10px 14px 12px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+}
+.custom-tags-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.custom-tags-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.custom-tags-saving {
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+.custom-tags-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-height: 28px;
+}
+.custom-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: rgba(230, 50, 50, 0.1);
+  border: 1px solid rgba(230, 50, 50, 0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--red);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  transition: background 0.15s;
+}
+.custom-tag-chip:hover {
+  background: rgba(230, 50, 50, 0.18);
+}
+.custom-tag-remove {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 1px;
+  opacity: 0.6;
+  transition: opacity 0.1s;
+  display: flex;
+  align-items: center;
+}
+.custom-tag-remove:hover { opacity: 1; }
+.custom-tag-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  min-width: 80px;
+  flex: 1;
+  padding: 2px 4px;
+  caret-color: var(--red);
+}
+.custom-tag-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
 /* ── Horror Mood Picker ──────────────────────────────────────────────────────── */
 .mood-picker-wrapper {
   margin-bottom: 20px;

@@ -37,8 +37,6 @@ export default function VaultWrapped({ entries, year }: WrappedProps) {
     return d.startsWith(String(year));
   }), [entries, year]);
 
-  const allTime = useMemo(() => entries.filter(e => (e.total ?? 0) > 0), [entries]);
-
   if (thisYear.length < 3) return null; // not enough data for a "Wrapped" section
 
   // Compute wrapped stats

@@ -39,6 +39,7 @@ export interface Entry {
   total:         number | null;
   must_watch?: boolean;
   notes?:        string | null;
+  custom_tags?:  string[] | null;  // User-defined hashtag chips (Feature 11)
   created_at:    string;
   updated_at:    string;
   movie:         Movie;              // joined from movies table

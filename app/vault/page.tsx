@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { createServiceClient, createServerSupabaseClient } from '@/lib/supabase/server';
+import { getOwnerEntries } from '@/lib/data';
 import MovieGrid from '@/components/vault/MovieGrid';
 import { VaultSkeleton } from '@/components/vault/VaultSkeleton';
 import type { Entry } from '@/lib/types';
@@ -15,23 +16,36 @@ async function VaultContent() {
   const { data: { user } } = await userSupabase.auth.getUser();
 
   const ownerId = process.env.OWNER_USER_ID;
-  const targetUserId = user ? user.id : ownerId;
 
-  if (!targetUserId) {
-    return (
-      <div className="vault-error" style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
-        <p>Vault configuration is incomplete. Please sign in or configure OWNER_USER_ID.</p>
-      </div>
-    );
+  // ── Unauthenticated: serve owner's cached vault (no DB hit) ──
+  if (!user) {
+    if (!ownerId) {
+      return (
+        <div className="vault-error" style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
+          <p>Vault configuration is incomplete. Please sign in or configure OWNER_USER_ID.</p>
+        </div>
+      );
+    }
+    const entries = await getOwnerEntries();
+    return <MovieGrid entries={entries} />;
   }
 
+  // ── Authenticated: fetch user's own vault fresh, narrow columns ──
   const supabase = createServiceClient();
-
-  // Fetch all entries for the target user (either authenticated user or owner fallback)
   const { data: entries, error } = await supabase
     .from('entries')
-    .select('*, movie:movies (*)')
-    .eq('user_id', targetUserId)
+    .select(`
+      id, user_id, movie_id, created_at,
+      total, atmosphere, story, characters, rewatchability, recommend,
+      subgenre, review_notes, custom_tags, must_watch, watchlist,
+      movie:movies (
+        id, title, year, runtime_min,
+        poster_url, backdrop_url,
+        omdb_id, tmdb_id,
+        director, cast, plot
+      )
+    `)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -42,8 +56,7 @@ async function VaultContent() {
     );
   }
 
-  const safeEntries: Entry[] = (entries ?? []) as Entry[];
-
+  const safeEntries: Entry[] = ((entries ?? []) as unknown) as Entry[];
   return <MovieGrid entries={safeEntries} />;
 }
 
