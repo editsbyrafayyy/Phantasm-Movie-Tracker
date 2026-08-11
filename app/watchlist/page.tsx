@@ -6,7 +6,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { Bookmark, Film } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Watch Later — Vault',
+  title: 'Watch Later — Phantasm',
   description: 'Your personal horror watchlist.',
 };
 

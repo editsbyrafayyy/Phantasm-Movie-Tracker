@@ -4,7 +4,7 @@ import UpdateMovieForm from '@/components/forms/UpdateMovieForm';
 import Spinner from '@/components/ui/Spinner';
 
 export const metadata: Metadata = {
-  title: 'Edit Ratings — Vault',
+  title: 'Edit Ratings — Phantasm',
 };
 
 export default function UpdatePage() {

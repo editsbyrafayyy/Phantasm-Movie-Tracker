@@ -10,43 +10,51 @@ import WatchlistButton from '@/components/watchlist/WatchlistButton';
 import OptionWheel from '@/components/browse/OptionWheel';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
-// Horror sub-genre labels → TMDB genre keyword IDs (used as `with_keywords` param)
+// Horror sub-genre labels
 // "All" resets the filter; others narrow discovery to that horror flavour
 const GENRE_ITEMS = [
   'All',
   'Slasher',
   'Supernatural',
-  'Psychological',
-  'Found Footage',
-  'Body Horror',
-  'Survival Horror',
-  'Paranormal',
-  'Creature Feature',
-  'Gothic Horror',
-  'Cosmic Horror',
   'Zombie',
   'Vampire',
   'Haunted House',
+  'Found Footage',
+  'Paranormal',
+  'Psychological',
+  'Creature Feature',
+  'Gothic Horror',
+  'Body Horror',
   'Cult Classic',
+  'Survival Horror',
 ];
 
-// Maps label → TMDB keyword ID string (comma-separated if needed)
-// These are real TMDB keyword IDs for horror sub-genres
-const GENRE_KEYWORD_MAP: Record<string, string> = {
-  'Slasher':         '10339',
-  'Supernatural':    '9663',
-  'Psychological':   '9951',
-  'Found Footage':   '207166',
-  'Body Horror':     '166090',
-  'Survival Horror': '180547',
-  'Paranormal':      '9717',
-  'Creature Feature':'163376',
-  'Gothic Horror':   '11804',
-  'Cosmic Horror':   '282898',
-  'Zombie':          '12377',
-  'Vampire':         '5613',
-  'Haunted House':   '10283',
-  'Cult Classic':    '4379',
+// Genre filter strategy per label.
+// 'keyword' uses TMDB with_keywords (reliable, direct DB tag).
+// 'query'   falls back to the search endpoint with a horror-scoped query.
+// Verified keyword IDs from TMDB database (checked against real data):
+//   zombie       = 12377   vampire    = 5613   slasher = 10339
+//   haunted-house= 10283   found-footage = 14301
+//   supernatural = 9663    cult-film  = 4379
+interface GenreFilter {
+  type: 'keyword' | 'query';
+  value: string;
+}
+
+const GENRE_FILTER_MAP: Record<string, GenreFilter> = {
+  'Slasher':         { type: 'keyword', value: '10339' },
+  'Supernatural':    { type: 'keyword', value: '9663' },
+  'Zombie':          { type: 'keyword', value: '12377' },
+  'Vampire':         { type: 'keyword', value: '5613' },
+  'Haunted House':   { type: 'keyword', value: '10283' },
+  'Found Footage':   { type: 'keyword', value: '14301' },
+  'Paranormal':      { type: 'query',   value: 'paranormal horror' },
+  'Psychological':   { type: 'query',   value: 'psychological thriller horror' },
+  'Creature Feature':{ type: 'query',   value: 'monster creature horror' },
+  'Gothic Horror':   { type: 'query',   value: 'gothic horror dark' },
+  'Body Horror':     { type: 'query',   value: 'body horror' },
+  'Cult Classic':    { type: 'keyword', value: '4379' },
+  'Survival Horror': { type: 'query',   value: 'survival horror wilderness' },
 };
 
 interface BrowseGridProps {
@@ -90,12 +98,19 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
 
         let endpoint: string;
         if (activeQuery) {
+          // User typed something — use search
           endpoint = `/api/tmdb/search?query=${encodeURIComponent(activeQuery)}&page=${page}&type=${mediaType}`;
+        } else if (genreFilter && GENRE_FILTER_MAP[genreFilter]) {
+          const f = GENRE_FILTER_MAP[genreFilter];
+          if (f.type === 'keyword') {
+            // Reliable TMDB keyword — use discover with keyword filter
+            endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}&with_keywords=${f.value}`;
+          } else {
+            // Use search endpoint scoped to horror (genre 27 enforced server-side)
+            endpoint = `/api/tmdb/search?query=${encodeURIComponent(f.value)}&page=${page}&type=${mediaType}`;
+          }
         } else {
-          const kwParam = genreFilter && GENRE_KEYWORD_MAP[genreFilter]
-            ? `&with_keywords=${GENRE_KEYWORD_MAP[genreFilter]}`
-            : '';
-          endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}${kwParam}`;
+          endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}`;
         }
 
         const res = await fetch(endpoint);

@@ -81,9 +81,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch diary entries' }, { status: 500 });
   }
 
+  // ── Heatmap fallback: if diary_entries is empty for this year, use entries.created_at ──
+  // This covers users who log films via the vault (entries table) but haven't used the diary
+  if (yearParam && /^\d{4}$/.test(yearParam) && (!data || data.length === 0)) {
+    const { data: vaultEntries } = await supabase
+      .from('entries')
+      .select('id, movie_id, created_at')
+      .eq('user_id', user.id)
+      .gte('created_at', `${yearParam}-01-01`)
+      .lte('created_at', `${yearParam}-12-31`)
+      .order('created_at', { ascending: false });
+
+    // Shape vault entries to match the DiaryEntry interface the heatmap expects
+    const shaped = (vaultEntries ?? []).map(e => ({
+      id: e.id,
+      watched_at: e.created_at?.slice(0, 10) ?? '',
+    }));
+    return NextResponse.json({ diary: shaped }, {
+      headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=60' },
+    });
+  }
+
   return NextResponse.json({ diary: data ?? [] }, {
     headers: { 'Cache-Control': 'private, max-age=10, stale-while-revalidate=60' },
   });
+
 
 }
 

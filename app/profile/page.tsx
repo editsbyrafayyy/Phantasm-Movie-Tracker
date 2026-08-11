@@ -21,7 +21,7 @@ import SignOutButton   from '@/components/profile/SignOutButton';
 import type { Entry, Profile } from '@/lib/types';
 
 export const metadata: Metadata = {
-  title: 'Profile — Vault',
+  title: 'Profile — Phantasm',
 };
 
 export default async function ProfilePage() {

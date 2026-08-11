@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single();
 
   const title = (data as { movie: { title: string } } | null)?.movie?.title ?? 'Film Detail';
-  return { title: `${title} — Vault` };
+  return { title: `${title} — Phantasm` };
 }
 
 export default async function VaultEntryPage({ params }: Props) {

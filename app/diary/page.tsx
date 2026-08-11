@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import DiaryFeedClient from '@/components/diary/DiaryFeedClient';
 
 export const metadata: Metadata = {
-  title: 'Diary — Vault',
+  title: 'Diary — Phantasm',
   description: 'Your horror movie watch history and rewatch log.',
 };
 

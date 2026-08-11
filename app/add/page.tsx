@@ -4,7 +4,7 @@ import AddMovieForm from '@/components/forms/AddMovieForm';
 import Spinner from '@/components/ui/Spinner';
 
 export const metadata: Metadata = {
-  title: 'Add a Movie — Vault',
+  title: 'Add a Movie — Phantasm',
 };
 
 export default function AddMoviePage() {
