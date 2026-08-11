@@ -28,6 +28,16 @@ const RECOMMEND_STYLE: Record<string, { color: string; border: string; bg: strin
   Garbage: { color: '#6b6b6b', border: '#6b6b6b', bg: 'rgba(107,107,107,0.12)' },
 };
 
+function boostColor(rgb: string | null): string {
+  if (!rgb) return 'transparent';
+  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!match) return rgb;
+  const [r, g, b] = [+match[1], +match[2], +match[3]];
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+  if (luminance < 25) return 'rgb(180, 30, 30)';
+  return rgb;
+}
+
 interface MovieDetailV3Props {
   entry:      Entry;
   similar:    Entry[];
@@ -228,6 +238,15 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
       className="detail-v3-page"
       style={ambientColor ? { '--film-ambient': ambientColor } as React.CSSProperties : undefined}
     >
+      {/* Film Ambient Border Glow */}
+      <div
+        className="detail-ambient-glow"
+        style={{
+          '--glow-color': boostColor(ambientColor),
+          opacity: ambientColor ? 1 : 0,
+        } as React.CSSProperties}
+        aria-hidden="true"
+      />
 
 
       {/* Fixed back button */}
