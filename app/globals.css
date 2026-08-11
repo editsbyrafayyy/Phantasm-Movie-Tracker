@@ -2491,6 +2491,120 @@ select:focus-visible {
   display:block;
 }
 
+/* ── Browse Layout — OptionWheel rail + main content ── */
+.browse-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* Left rail that holds the OptionWheel */
+.browse-genre-rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 100px; /* clear the top navbar */
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(8, 8, 8, 0.6);
+  overflow: hidden;
+}
+
+/* Active genre label pill shown below the wheel */
+.browse-genre-active-label {
+  position: absolute;
+  bottom: 32px;
+  left: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e63232;
+  opacity: 0.85;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* The main content area gets a modifier to remove its own side padding
+   since the outer grid already provides the gutter via the rail */
+.browse-container--inset {
+  padding: 40px 40px 40px 32px;
+  min-height: 100vh;
+  background: var(--bg);
+}
+@media (max-width: 1024px) {
+  .browse-container--inset {
+    padding: 28px 24px 60px 24px;
+  }
+}
+
+/* On mobile: collapse the layout to single column, wheel shrinks to a
+   compact horizontal scroll strip at the top */
+@media (max-width: 768px) {
+  .browse-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .browse-genre-rail {
+    position: relative;
+    height: 72px;
+    top: 0;
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0;
+    padding: 0 16px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .browse-genre-rail::-webkit-scrollbar { display: none; }
+
+  /* On mobile the wheel becomes a flat horizontal chip row */
+  .browse-genre-rail .option-wheel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 72px;
+    width: max-content;
+    overflow: visible;
+    cursor: default;
+  }
+  .browse-genre-rail .option-wheel__item {
+    position: static;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    margin-right: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.55);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .browse-genre-rail .option-wheel__item--selected {
+    background: rgba(230, 50, 50, 0.15);
+    border-color: rgba(230, 50, 50, 0.45);
+    color: #e63232;
+  }
+
+  .browse-genre-active-label { display: none; }
+
+  .browse-container--inset {
+    padding: 24px 16px 60px 16px;
+  }
+}
+
 .browse-container {
   padding: 40px;
   min-height: 100vh;
@@ -2798,12 +2912,11 @@ select:focus-visible {
 /* ── Hero Carousel ───────────────────────────────────────────────────────── */
 .hero-carousel {
   position:relative;
-  border: 1px solid rgba(255,255,255,0.1);
   width: 100%;
   height: 70vh;
   min-height: 460px;
   overflow: hidden;
-  background: #080808;
+  background: transparent;
 }
 @media (min-width: 1024px) {
   .hero-carousel {
@@ -2811,6 +2924,25 @@ select:focus-visible {
     min-height: 550px;
   }
 }
+
+/* MorphSlider wrapper — bounded inset card on desktop */
+.hero-morph-wrapper {
+  position: relative;
+  width: calc(100% - 48px);
+  margin: 0 24px;
+  height: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #0c0c0e;
+}
+@media (min-width: 1280px) {
+  .hero-morph-wrapper {
+    width: calc(100% - 80px);
+    margin: 0 40px;
+  }
+}
+
 
 .hero-slide-bg {
   position: absolute;

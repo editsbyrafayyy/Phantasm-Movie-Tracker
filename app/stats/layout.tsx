@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import StreamRail from '@/components/layout/StreamRail';
 
 export const metadata = {
-  title: 'My Stats — Vault',
-  description: 'Visualize your film vault statistics',
+  title: 'My Stats — Phantasm',
+  description: 'Visualize your Phantasm film statistics',
 };
 
 export default function StatsLayout({ children }: { children: ReactNode }) {

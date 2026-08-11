@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import StreamRail from '@/components/layout/StreamRail';
 
 export const metadata = {
-  title: 'Log Film — Vault',
+  title: 'Log Film — Phantasm',
   description: 'Log and rate a new film',
 };
 

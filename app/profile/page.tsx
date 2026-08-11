@@ -8,7 +8,7 @@ import RecommendBars   from '@/components/stats/RecommendBars';
 import ScoreHistograms from '@/components/stats/ScoreHistograms';
 import TopRatedList    from '@/components/stats/TopRatedList';
 import ScoreDistribution from '@/components/stats/ScoreDistribution';
-import VaultWrapped    from '@/components/stats/VaultWrapped';
+import PhantasmWrapped from '@/components/stats/PhantasmWrapped';
 import RatingDriftChart from '@/components/stats/RatingDriftChart';
 import TasteFingerprint from '@/components/stats/TasteFingerprint';
 import CalendarHeatmap  from '@/components/stats/CalendarHeatmap';
@@ -111,7 +111,7 @@ export default async function ProfilePage() {
             <h1 className="page-title-serif" style={{ fontSize: 'clamp(32px, 5vw, 42px)' }}>Statistics.</h1>
           </header>
 
-          <VaultWrapped entries={typedEntries} year={new Date().getFullYear()} />
+          <PhantasmWrapped entries={typedEntries} year={new Date().getFullYear()} />
 
           <SummaryStrip stats={stats} />
 

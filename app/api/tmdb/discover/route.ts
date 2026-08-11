@@ -65,6 +65,9 @@ export async function GET(req: NextRequest) {
   } else {
     // Default (non-mood) discover
     tmdbUrl.searchParams.set('sort_by', 'popularity.desc');
+    // Forward optional keyword filter from genre wheel
+    const withKeywords = searchParams.get('with_keywords');
+    if (withKeywords) tmdbUrl.searchParams.set('with_keywords', withKeywords);
     // Exclude unreleased future media
     const today = new Date().toISOString().split('T')[0];
     if (type === 'tv') {

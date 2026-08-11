@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import StreamRail from '@/components/layout/StreamRail';
 
 export const metadata = {
-  title: 'Edit Rating — Vault',
+  title: 'Edit Rating — Phantasm',
   description: 'Edit your film ratings',
 };
 

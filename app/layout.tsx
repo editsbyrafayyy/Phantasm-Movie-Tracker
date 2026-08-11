@@ -24,8 +24,8 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
-  title:       'Horror Movie Tracker — Vault',
-  description: 'Log and rate horror movies from any device. Your personal mobile-first horror film vault.',
+  title:       'Phantasm — Horror Film Tracker',
+  description: 'Log and rate horror films from any device. Your personal mobile-first horror film collection.',
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },

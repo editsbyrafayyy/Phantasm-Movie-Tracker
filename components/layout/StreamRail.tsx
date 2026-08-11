@@ -53,7 +53,7 @@ export default function StreamRail() {
               className="navbar-logo-icon-img" 
               style={{ borderRadius: '4px', objectFit: 'cover' }}
             />
-            <span className="navbar-logo-text">VAULT</span>
+            <span className="navbar-logo-text">PHANTASM</span>
           </Link>
 
           {/* Desktop Navigation Links */}

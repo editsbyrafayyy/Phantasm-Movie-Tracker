@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import Image from 'next/image';
 import Link  from 'next/link';
 import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 import { extractDominantColor } from '@/lib/posterColor';
 import CircularGallery from '@/components/ui/CircularGallery';
+import MorphSlider from '@/components/browse/MorphSlider';
+import type { MorphSliderRef } from '@/components/browse/MorphSlider';
 
 interface HeroCarouselProps {
   slides:      Entry[];
@@ -15,25 +16,22 @@ interface HeroCarouselProps {
   totalFilms:  number;
 }
 
-const AUTO_ADVANCE_MS = 6000;
-
 export default function HeroCarousel({
   slides,
   canStream,
   ownerName,
   totalFilms,
 }: HeroCarouselProps) {
+  // current drives both desktop (MorphSlider) and mobile (CircularGallery)
   const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Touch tracking
-  const touchStartX = useRef<number | null>(null);
+  // Ref for imperative MorphSlider control
+  const morphRef = useRef<MorphSliderRef | null>(null);
 
   // Mobile state & cache
   const [isMobile, setIsMobile] = useState(false);
   const [glowColors, setGlowColors] = useState<Record<number, string>>({});
-  const [glowColor, setGlowColor] = useState<string>('var(--red)');
+  const [glowColor, setGlowColor]  = useState<string>('var(--red)');
 
   // Detect mobile breakpoint
   useEffect(() => {
@@ -44,21 +42,13 @@ export default function HeroCarousel({
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Color extraction for glow
+  // Color extraction for mobile glow
   useEffect(() => {
     if (!isMobile) return;
     const entry = slides[current];
     const src = entry?.movie.poster_url ?? entry?.movie.backdrop_url ?? null;
-    if (!src) {
-      setGlowColor('var(--red)');
-      return;
-    }
-
-    if (glowColors[current]) {
-      setGlowColor(glowColors[current]);
-      return;
-    }
-
+    if (!src) { setGlowColor('var(--red)'); return; }
+    if (glowColors[current]) { setGlowColor(glowColors[current]); return; }
     extractDominantColor(src).then(color => {
       const resolved = color ?? 'var(--red)';
       setGlowColors(prev => ({ ...prev, [current]: resolved }));
@@ -66,184 +56,136 @@ export default function HeroCarousel({
     });
   }, [current, isMobile, slides]);
 
-  const goTo = useCallback((idx: number) => {
-    if (animating || idx === current) return;
-    setAnimating(true);
-    setCurrent(idx);
-    setTimeout(() => setAnimating(false), 600);
-  }, [animating, current]);
-
+  // Arrow handlers — drive MorphSlider imperatively on desktop; update current for overlay
   const prev = useCallback(() => {
-    goTo((current - 1 + slides.length) % slides.length);
-  }, [current, slides.length, goTo]);
+    morphRef.current?.prev();
+  }, []);
 
   const next = useCallback(() => {
-    goTo((current + 1) % slides.length);
-  }, [current, slides.length, goTo]);
+    morphRef.current?.next();
+  }, []);
 
-  const nextRef = useRef(next);
-  useEffect(() => {
-    nextRef.current = next;
-  });
+  const goTo = useCallback((idx: number) => {
+    morphRef.current?.goTo(idx);
+  }, []);
 
-  // Auto-advance
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    const timer = setTimeout(() => {
-      nextRef.current();
-    }, AUTO_ADVANCE_MS);
-    return () => clearTimeout(timer);
-  }, [current, slides.length]);
+  // MorphSlider items — backdrop preferred, poster as fallback
+  const morphItems = useMemo(() => slides.map(s => ({
+    image: s.movie.backdrop_url ?? s.movie.poster_url ?? '',
+    caption: s.movie.title,
+  })), [slides]);
 
-  // Touch swipe
-  function onTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0].clientX;
-  }
-  function onTouchEnd(e: React.TouchEvent) {
-    if (touchStartX.current === null) return;
-    const delta = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(delta) > 40) {
-      if (delta < 0) {
-        next();
-      } else {
-        prev();
-      }
-    }
-    touchStartX.current = null;
-  }
-
+  // Mobile circular gallery items
   const galleryItems = useMemo(() => slides.map(s => ({
     image: s.movie.poster_url ?? s.movie.backdrop_url ?? '',
-    text: s.movie.title
+    text: s.movie.title,
   })), [slides]);
 
   if (!slides.length) return null;
 
   const entry = slides[current];
   const movie = entry.movie;
-  const posterSrc = movie.poster_url ?? movie.backdrop_url ?? null;
 
   return (
-    <div
-      className="hero-carousel"
-      onTouchStart={isMobile ? undefined : onTouchStart}
-      onTouchEnd={isMobile ? undefined : onTouchEnd}
-    >
-      {/* Slide images — all rendered, CSS opacity transition between them */}
-      {slides.map((s, i) => {
-        const backdropImg = s.movie.backdrop_url ?? null;
-        const posterImg   = s.movie.poster_url   ?? null;
-        const img = backdropImg ?? posterImg;
-        return img ? (
+    <div className="hero-carousel">
+
+      {/* ── DESKTOP: MorphSlider — bounded, inset, rounded ── */}
+      {!isMobile && (
+        <div className="hero-morph-wrapper">
+          <MorphSlider
+            ref={morphRef}
+            items={morphItems}
+            transition="melt"
+            intensity={0.5}
+            aberration={0.3}
+            drift={0.35}
+            autoplay
+            autoplayDelay={6}
+            radius={20}
+            overlayColor="#0c0c0e"
+            showCaptions={false}
+            showControls={false}
+            showIndicators={false}
+            onSlideChange={(i: number) => setCurrent(i)}
+          />
+
+          {/* Gradient overlays on top of the morph canvas */}
+          <div className="hero-gradient-left"  />
+          <div className="hero-gradient-bottom" />
+
+          {/* Content overlay — driven by current (synced from MorphSlider via onSlideChange) */}
           <div
-            key={s.id}
-            className="hero-slide-bg"
-            style={{ opacity: i === current ? 1 : 0 }}
-            aria-hidden={i !== current}
+            className="hero-content"
+            key={current}
+            style={{ animation: 'heroFadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both' }}
           >
-            <Image
-              src={img}
-              alt={s.movie.title}
-              fill
-              style={{
-                objectFit: 'cover',
-                objectPosition: 'center top',
-              }}
-              sizes="100vw"
-              priority={i === 0}
-              placeholder="blur"
-              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElFTkSuQmCC"
-            />
+            <p className="hero-eyebrow">
+              {ownerName}&apos;s Phantasm &middot; {totalFilms} Films Rated
+            </p>
+
+            <h1 className="hero-title">{movie.title}</h1>
+
+            {entry.total !== null && entry.total > 0 && (
+              <div className="hero-score-row">
+                <span className="hero-score">{entry.total}</span>
+                <span className="hero-score-denom">/ 10</span>
+              </div>
+            )}
+
+            {movie.year && (
+              <p className="hero-meta">
+                {movie.year}
+                {movie.director && <> &middot; {movie.director}</>}
+                {movie.runtime_min && <> &middot; {movie.runtime_min} min</>}
+              </p>
+            )}
+
+            <div className="hero-actions">
+              {entry.id && (
+                <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-watch">
+                  <Play size={14} fill="white" color="white" />
+                  Watch Now
+                </Link>
+              )}
+              <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-edit">
+                View Details
+              </Link>
+            </div>
           </div>
-        ) : null;
-      })}
 
-      {/* Gradient overlays */}
-      <div className="hero-gradient-left"  />
-      <div className="hero-gradient-bottom" />
-
-      {/* Content — animates on slide change */}
-      <div
-        className="hero-content"
-        key={current}
-        style={{ animation: 'heroFadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both' }}
-      >
-        <p className="hero-eyebrow">
-          {ownerName}&apos;s Vault &middot; {totalFilms} Films Rated
-        </p>
-
-        <h1 className="hero-title">{movie.title}</h1>
-
-        {entry.total !== null && entry.total > 0 && (
-          <div className="hero-score-row">
-            <span className="hero-score">{entry.total}</span>
-            <span className="hero-score-denom">/ 10</span>
-          </div>
-        )}
-
-        {movie.year && (
-          <p className="hero-meta">
-            {movie.year}
-            {movie.director && <> &middot; {movie.director}</>}
-            {movie.runtime_min && <> &middot; {movie.runtime_min} min</>}
-          </p>
-        )}
-
-        <div className="hero-actions">
-          {entry.id && (
-            <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-watch">
-              <Play size={14} fill="white" color="white" />
-              Watch Now
-            </Link>
+          {/* Arrow buttons — existing styling, drive MorphSlider imperatively */}
+          {slides.length > 1 && (
+            <>
+              <button className="hero-arrow hero-arrow-left" onClick={prev} aria-label="Previous film">
+                <ChevronLeft size={22} />
+              </button>
+              <button className="hero-arrow hero-arrow-right" onClick={next} aria-label="Next film">
+                <ChevronRight size={22} />
+              </button>
+            </>
           )}
-          <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-edit">
-            View Details
-          </Link>
-        </div>
-      </div>
 
-      {/* Arrow buttons */}
-      {slides.length > 1 && (
-        <>
-          <button
-            className="hero-arrow hero-arrow-left"
-            onClick={prev}
-            aria-label="Previous film"
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <button
-            className="hero-arrow hero-arrow-right"
-            onClick={next}
-            aria-label="Next film"
-          >
-            <ChevronRight size={22} />
-          </button>
-        </>
-      )}
-
-      {/* Dot indicators */}
-      {slides.length > 1 && (
-        <div className="hero-dots">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              className={`hero-dot${i === current ? ' active' : ''}`}
-              onClick={() => goTo(i)}
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
+          {/* Dot indicators */}
+          {slides.length > 1 && (
+            <div className="hero-dots">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  className={`hero-dot${i === current ? ' active' : ''}`}
+                  onClick={() => goTo(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── MOBILE: poster-led layout ────── */}
+      {/* ── MOBILE: poster-led layout (unchanged) ── */}
       {isMobile && (
         <div className="hero-mobile-wrap">
           {/* Ambient glow */}
-          <div
-            className="hero-mobile-glow"
-            style={{ background: glowColor }}
-          />
+          <div className="hero-mobile-glow" style={{ background: glowColor }} />
 
           {/* Centered WebGL poster gallery */}
           <div className="hero-mobile-gallery-container">
@@ -254,16 +196,14 @@ export default function HeroCarousel({
               borderRadius={0.05}
               scrollEase={0.03}
               currentIndex={current}
-              onChange={(index) => {
-                setCurrent(index);
-              }}
+              onChange={(index) => setCurrent(index)}
             />
           </div>
 
           {/* Text block */}
           <div className="hero-mobile-content">
             <p className="hero-eyebrow">
-              {ownerName}&apos;s Vault &middot; {totalFilms} Films Rated
+              {ownerName}&apos;s Phantasm &middot; {totalFilms} Films Rated
             </p>
             <h1 className="hero-title">{movie.title}</h1>
             {entry.total !== null && entry.total > 0 && (
@@ -298,7 +238,7 @@ export default function HeroCarousel({
                 <button
                   key={i}
                   className={`hero-dot${i === current ? ' active' : ''}`}
-                  onClick={() => goTo(i)}
+                  onClick={() => setCurrent(i)}
                   aria-label={`Go to slide ${i + 1}`}
                 />
               ))}

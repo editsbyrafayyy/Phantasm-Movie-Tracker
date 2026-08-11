@@ -1,5 +1,5 @@
 {
-  "name": "horror-tracker",
+  "name": "phantasm",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.107.0",
     "framer-motion": "^12.40.0",
     "googleapis": "^173.0.0",
+    "gsap": "^3.15.0",
     "lucide-react": "^1.17.0",
     "next": "16.2.6",
     "nextjs-toploader": "^3.9.17",

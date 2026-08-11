@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import StreamRail from '@/components/layout/StreamRail';
 
 export const metadata = {
-  title: 'Profile — Vault',
-  description: 'Manage your vault account',
+  title: 'Profile — Phantasm',
+  description: 'Manage your Phantasm account',
 };
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
