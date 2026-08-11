@@ -3063,44 +3063,6 @@ select:focus-visible {
   flex-wrap: wrap;
 }
 
-.hero-arrow {
-  position: absolute;
-  top: 30%;
-  transform: translateY(-50%);
-  z-index: 3;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(8, 8, 8, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.hero-arrow:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.hero-arrow-left {
-  left: 20px;
-}
-
-.hero-arrow-right {
-  right: 20px;
-}
-
-@media (max-width: 640px) {
-  .hero-arrow {
-    display: none; /* Hide arrows on mobile, rely on touch swipe */
-  }
-}
-
 .hero-dots {
   position: absolute;
   bottom: 50px;
@@ -3172,11 +3134,6 @@ select:focus-visible {
 
   /* Bottom gradient also hidden — text is below the image, not on top */
   .hero-gradient-bottom {
-    display: none !important;
-  }
-
-  /* Hide desktop arrows */
-  .hero-arrow {
     display: none !important;
   }
 

@@ -17,7 +17,7 @@ dist/
 .env.test.local
 .env.production.local
 *.json.key
-movie-tracker-*.json
+movie-tracker-*.json`
 
 # ── Documentation and Planning ────────────────────────────────────────────────
 *.md

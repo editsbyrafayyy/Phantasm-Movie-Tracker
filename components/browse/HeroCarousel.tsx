@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link  from 'next/link';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 import { extractDominantColor } from '@/lib/posterColor';
 import CircularGallery from '@/components/ui/CircularGallery';
@@ -56,15 +56,7 @@ export default function HeroCarousel({
     });
   }, [current, isMobile, slides]);
 
-  // Arrow handlers — drive MorphSlider imperatively on desktop; update current for overlay
-  const prev = useCallback(() => {
-    morphRef.current?.prev();
-  }, []);
-
-  const next = useCallback(() => {
-    morphRef.current?.next();
-  }, []);
-
+  // Dot handler — drive MorphSlider imperatively when a dot is clicked
   const goTo = useCallback((idx: number) => {
     morphRef.current?.goTo(idx);
   }, []);
@@ -152,18 +144,6 @@ export default function HeroCarousel({
               </Link>
             </div>
           </div>
-
-          {/* Arrow buttons — existing styling, drive MorphSlider imperatively */}
-          {slides.length > 1 && (
-            <>
-              <button className="hero-arrow hero-arrow-left" onClick={prev} aria-label="Previous film">
-                <ChevronLeft size={22} />
-              </button>
-              <button className="hero-arrow hero-arrow-right" onClick={next} aria-label="Next film">
-                <ChevronRight size={22} />
-              </button>
-            </>
-          )}
 
           {/* Dot indicators */}
           {slides.length > 1 && (
