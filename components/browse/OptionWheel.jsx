@@ -9,7 +9,8 @@ const DEFAULT_ITEMS = [
 const OptionWheel = ({
   items = DEFAULT_ITEMS,
   defaultSelected = 3,
-  onChange,
+  onChange = (_a, _b) => { void _a; void _b; },
+  onSettle = (_a, _b) => { void _a; void _b; },
   textColor = '#a6a6a6',
   activeColor = '#ffffff',
   side = 'left',
@@ -36,6 +37,7 @@ const OptionWheel = ({
   const lastRef = useRef(0);
   const cfgRef = useRef({});
   const onChangeRef = useRef(onChange);
+  const onSettleRef = useRef(onSettle);
   const selectedRef = useRef(defaultSelected);
   const wheelTimerRef = useRef(null);
   const dragRef = useRef(null);
@@ -49,6 +51,7 @@ const OptionWheel = ({
   const remPx = typeof window !== 'undefined' ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16 : 16;
 
   onChangeRef.current = onChange;
+  onSettleRef.current = onSettle;
   cfgRef.current = {
     count: items.length,
     items,
@@ -146,6 +149,7 @@ const OptionWheel = ({
       selectedRef.current = idx;
       setSelectedIndex(idx);
       onChangeRef.current?.(idx, cfg.items[idx]);
+      if (snap) onSettleRef.current?.(idx, cfg.items[idx]);
       playTick();
     }
     startLoop();

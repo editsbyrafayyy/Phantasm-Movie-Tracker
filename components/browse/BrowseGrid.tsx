@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, Search } from 'lucide-react';
@@ -31,30 +31,36 @@ const GENRE_ITEMS = [
 
 // Genre filter strategy per label.
 // 'keyword' uses TMDB with_keywords (reliable, direct DB tag).
-// 'query'   falls back to the search endpoint with a horror-scoped query.
+// All genres are keyword-based; the discover endpoint enforces Horror+Thriller
+// (movies) / Mystery+Sci-Fi+Horror+Thriller (TV) server-side.
 // Verified keyword IDs from TMDB database (checked against real data):
-//   zombie       = 12377   vampire    = 5613   slasher = 10339
-//   haunted-house= 10283   found-footage = 14301
-//   supernatural = 9663    cult-film  = 4379
+//   zombie           = 12377   vampire           = 5613   slasher        = 10339
+//   haunted-house    = 10283   found-footage     = 14301
+//   supernatural     = 9663    cult-film         = 4379
+//   body-horror      = 10654   gothic            = 4344
+//   creature-feature = 162086  psychological-horror = 10890
+//   survival-horror  = 10629   ghost             = 5480
 interface GenreFilter {
   type: 'keyword' | 'query';
   value: string;
 }
 
 const GENRE_FILTER_MAP: Record<string, GenreFilter> = {
-  'Slasher':         { type: 'keyword', value: '10339' },
-  'Supernatural':    { type: 'keyword', value: '9663' },
-  'Zombie':          { type: 'keyword', value: '12377' },
-  'Vampire':         { type: 'keyword', value: '5613' },
-  'Haunted House':   { type: 'keyword', value: '10283' },
-  'Found Footage':   { type: 'keyword', value: '14301' },
-  'Paranormal':      { type: 'query',   value: 'paranormal horror' },
-  'Psychological':   { type: 'query',   value: 'psychological thriller horror' },
-  'Creature Feature':{ type: 'query',   value: 'monster creature horror' },
-  'Gothic Horror':   { type: 'query',   value: 'gothic horror dark' },
-  'Body Horror':     { type: 'query',   value: 'body horror' },
-  'Cult Classic':    { type: 'keyword', value: '4379' },
-  'Survival Horror': { type: 'query',   value: 'survival horror wilderness' },
+  'Slasher':          { type: 'keyword', value: '10339'  },
+  'Supernatural':     { type: 'keyword', value: '9663'   },
+  'Zombie':           { type: 'keyword', value: '12377'  },
+  'Vampire':          { type: 'keyword', value: '5613'   },
+  'Haunted House':    { type: 'keyword', value: '10283'  },
+  'Found Footage':    { type: 'keyword', value: '14301'  },
+  'Body Horror':      { type: 'keyword', value: '10654'  },
+  'Gothic Horror':    { type: 'keyword', value: '4344'   },
+  'Creature Feature': { type: 'keyword', value: '162086' },
+  'Cult Classic':     { type: 'keyword', value: '4379'   },
+  'Survival Horror':  { type: 'keyword', value: '10629'  },
+  'Psychological':    { type: 'keyword', value: '10890'  },
+  // Paranormal: 'ghost' (5480) is the closest well-populated keyword. OR with
+  // 'supernatural' (9663) as a fallback so the result set stays broad.
+  'Paranormal':       { type: 'keyword', value: '5480|9663' },
 };
 
 interface BrowseGridProps {
@@ -73,6 +79,10 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   const [activeQuery, setActiveQuery] = useState('');
   // null = "All" (no filter), string = active genre label
   const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  // True while a genre swap fetch is in flight (drives the dim overlay)
+  const [swappingGenre, setSwappingGenre] = useState(false);
+  // Debounce timer for wheel-driven genre changes
+  const genreDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -84,8 +94,14 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Clear any pending genre debounce on unmount
+  useEffect(() => () => {
+    if (genreDebounceRef.current) clearTimeout(genreDebounceRef.current);
+  }, []);
+
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     const fetchMovies = async () => {
       try {
@@ -102,18 +118,14 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           endpoint = `/api/tmdb/search?query=${encodeURIComponent(activeQuery)}&page=${page}&type=${mediaType}`;
         } else if (genreFilter && GENRE_FILTER_MAP[genreFilter]) {
           const f = GENRE_FILTER_MAP[genreFilter];
-          if (f.type === 'keyword') {
-            // Reliable TMDB keyword — use discover with keyword filter
-            endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}&with_keywords=${f.value}`;
-          } else {
-            // Use search endpoint scoped to horror (genre 27 enforced server-side)
-            endpoint = `/api/tmdb/search?query=${encodeURIComponent(f.value)}&page=${page}&type=${mediaType}`;
-          }
+          // All genre filters are keyword-based; the discover endpoint enforces
+          // Horror+Thriller (movies) / Mystery+Sci-Fi+Horror+Thriller (TV).
+          endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}&with_keywords=${f.value}`;
         } else {
           endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}`;
         }
 
-        const res = await fetch(endpoint);
+        const res = await fetch(endpoint, { signal: controller.signal });
         if (!res.ok) throw new Error('Failed to fetch');
 
         const data = await res.json();
@@ -126,15 +138,20 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           setMovies(prev => page === 1 ? newMovies : [...prev, ...newMovies]);
           if (data.total_pages && page >= data.total_pages) setHasMore(false);
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
         console.error(err);
       } finally {
-        if (active) { setLoading(false); setLoadingMore(false); }
+        if (active) {
+          setLoading(false);
+          setLoadingMore(false);
+          setSwappingGenre(false);
+        }
       }
     };
 
     fetchMovies();
-    return () => { active = false; };
+    return () => { active = false; controller.abort(); };
   }, [page, mediaType, activeQuery, genreFilter]);
 
   const handleTabChange = (type: 'movie' | 'tv') => {
@@ -146,10 +163,15 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   };
 
   const handleGenreChange = (_index: number, item: string) => {
-    const newFilter = item === 'All' ? null : item;
-    setGenreFilter(newFilter);
-    setPage(1);
-    setHasMore(true);
+    // Debounce so a single wheel gesture (which can fire onSettle a few times
+    // during the glide) only triggers one filter swap.
+    if (genreDebounceRef.current) clearTimeout(genreDebounceRef.current);
+    genreDebounceRef.current = setTimeout(() => {
+      setGenreFilter(item === 'All' ? null : item);
+      setPage(1);
+      setHasMore(true);
+      setSwappingGenre(true);
+    }, 200);
   };
 
   return (
@@ -174,7 +196,7 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           loop={false}
           draggable
           soundUrl=""
-          onChange={handleGenreChange}
+          onSettle={handleGenreChange}
         />
         {/* Active label indicator below wheel */}
         <div className="browse-genre-active-label">
@@ -249,6 +271,23 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           </div>
         ) : (
           <>
+            <div style={{ position: 'relative' }}>
+              {swappingGenre && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(0,0,0,0.55)',
+                    backdropFilter: 'blur(2px)',
+                    WebkitBackdropFilter: 'blur(2px)',
+                    zIndex: 5,
+                    pointerEvents: 'none',
+                    transition: 'opacity 180ms ease',
+                    borderRadius: 4,
+                  }}
+                />
+              )}
             <div className="browse-grid">
               {movies.map((movie, idx) => (
                 <Link
@@ -302,6 +341,7 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
                   )}
                 </Link>
               ))}
+            </div>
             </div>
 
             {movies.length === 0 && (
