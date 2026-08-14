@@ -2652,6 +2652,66 @@ select:focus-visible {
   color:var(--text-muted);
 }
 
+/* ── Browse Infinite Scroll Status ────────────────────────────────────────── */
+.browse-infinite-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0 24px;
+  width: 100%;
+}
+
+.browse-infinite-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.browse-end-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 0 24px;
+  width: 100%;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.browse-end-line {
+  height: 1px;
+  width: 60px;
+  background: var(--border);
+}
+
+.browse-error-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px;
+  background: var(--surface-2);
+  border: 1px solid rgba(230, 50, 50, 0.3);
+  border-radius: 8px;
+  margin: 32px auto;
+  max-width: 420px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
 /* ── Video Player Page ───────────────────────────────────────────────────── */
 .player-page {
   min-height:100vh;

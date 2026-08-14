@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/ratelimit';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
@@ -23,8 +24,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'TMDB API Key missing' }, { status: 500 });
   }
 
+  // Enforce IP rate limiting (60 requests per minute per IP)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  if (!rateLimit(ip, 60, 60_000)) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please slow down.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': '60',
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
+  }
+
   const { searchParams } = new URL(req.url);
-  const page     = searchParams.get('page') || '1';
+  const rawPage  = parseInt(searchParams.get('page') || '1', 10);
+  const page     = Math.min(Math.max(1, isNaN(rawPage) ? 1 : rawPage), 500);
   const language = searchParams.get('with_original_language');
   const country  = searchParams.get('with_origin_country');
   const type     = searchParams.get('type') || 'movie';
@@ -40,7 +57,7 @@ export async function GET(req: NextRequest) {
   } else {
     tmdbUrl.searchParams.set('with_genres', '27,53');
   }
-  tmdbUrl.searchParams.set('page', page);
+  tmdbUrl.searchParams.set('page', String(page));
   tmdbUrl.searchParams.set('include_adult', 'false');
   
   if (isMood) {
@@ -111,10 +128,15 @@ export async function GET(req: NextRequest) {
       data.results = data.results.filter((movie: { poster_path: string | null }) => movie.poster_path);
     }
     
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    });
   } catch (err: unknown) {
     console.error('TMDB Discover Error:', err);
     return NextResponse.json({ error: 'Failed to fetch from TMDB' }, { status: 500 });
   }
 }
+
 

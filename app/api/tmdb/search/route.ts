@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/ratelimit';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
@@ -7,18 +8,41 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'TMDB API Key missing' }, { status: 500 });
   }
 
+  // Enforce IP rate limiting (60 requests per minute per IP)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  if (!rateLimit(ip, 60, 60_000)) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please slow down.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': '60',
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('query');
-  const page = searchParams.get('page') || '1';
+  const rawPage = parseInt(searchParams.get('page') || '1', 10);
+  const page = Math.min(Math.max(1, isNaN(rawPage) ? 1 : rawPage), 500);
   const type = searchParams.get('type') || 'movie';
 
   if (!query) {
-    return NextResponse.json({ results: [], page: 1, total_pages: 1, total_results: 0 });
+    return NextResponse.json(
+      { results: [], page: 1, total_pages: 1, total_results: 0 },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   }
 
   const tmdbUrl = new URL(`https://api.themoviedb.org/3/search/${type === 'tv' ? 'tv' : 'movie'}`);
   tmdbUrl.searchParams.set('query', query);
-  tmdbUrl.searchParams.set('page', page);
+  tmdbUrl.searchParams.set('page', String(page));
   tmdbUrl.searchParams.set('include_adult', 'false');
 
   const fetchWithFallback = async () => {
@@ -69,9 +93,14 @@ export async function GET(req: NextRequest) {
       });
     }
     
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    });
   } catch (err: any) {
     console.error('TMDB Search Error:', err);
     return NextResponse.json({ error: 'Failed to fetch from TMDB' }, { status: 500 });
   }
 }
+
