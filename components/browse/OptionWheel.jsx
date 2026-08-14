@@ -39,6 +39,8 @@ const OptionWheel = ({
   const onChangeRef = useRef(onChange);
   const onSettleRef = useRef(onSettle);
   const selectedRef = useRef(defaultSelected);
+  const lastSettledRef = useRef(defaultSelected);
+  const isInteractingRef = useRef(false);
   const wheelTimerRef = useRef(null);
   const dragRef = useRef(null);
   const dragMovedRef = useRef(false);
@@ -109,9 +111,13 @@ const OptionWheel = ({
       playTick();
     }
 
-    // Fire onSettle only when the wheel has finished gliding to its final rest position
+    // Fire onSettle only when the wheel has finished gliding to its final rest position AND user interacted
     if (settled) {
-      onSettleRef.current?.(currentIdx, cfg.items[currentIdx]);
+      if (isInteractingRef.current && currentIdx !== lastSettledRef.current) {
+        lastSettledRef.current = currentIdx;
+        onSettleRef.current?.(currentIdx, cfg.items[currentIdx]);
+      }
+      isInteractingRef.current = false;
     }
 
     const els = itemRefs.current;
@@ -152,12 +158,13 @@ const OptionWheel = ({
     rafRef.current = requestAnimationFrame(runFrame);
   }, [runFrame]);
 
-  const applyTarget = useCallback((value, snap) => {
+  const applyTarget = useCallback((value, snap, isUserAction = false) => {
     const cfg = cfgRef.current;
     let v = value;
     if (!cfg.loop) v = Math.min(Math.max(v, 0), Math.max(cfg.count - 1, 0));
     if (snap) v = Math.round(v);
     targetRef.current = v;
+    if (isUserAction) isInteractingRef.current = true;
     startLoop();
   }, [startLoop]);
 
@@ -169,9 +176,9 @@ const OptionWheel = ({
       const cfg = cfgRef.current;
       const delta = e.deltaMode === 1 ? e.deltaY * 24 : e.deltaY;
       const step = Math.max(-1, Math.min(1, delta / cfg.rowH));
-      applyTarget(targetRef.current + step, false);
+      applyTarget(targetRef.current + step, false, true);
       if (wheelTimerRef.current) clearTimeout(wheelTimerRef.current);
-      wheelTimerRef.current = setTimeout(() => applyTarget(targetRef.current, true), 140);
+      wheelTimerRef.current = setTimeout(() => applyTarget(targetRef.current, true, true), 140);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => {
@@ -195,14 +202,14 @@ const OptionWheel = ({
       dragMovedRef.current = true;
       rootRef.current?.setPointerCapture(drag.id);
     }
-    if (dragMovedRef.current) applyTarget(drag.start - dy / cfgRef.current.rowH, false);
+    if (dragMovedRef.current) applyTarget(drag.start - dy / cfgRef.current.rowH, false, true);
   }, [applyTarget]);
 
   const handlePointerEnd = useCallback(() => {
     if (!dragRef.current) return;
     dragRef.current = null;
     setIsDragging(false);
-    if (dragMovedRef.current) applyTarget(targetRef.current, true);
+    if (dragMovedRef.current) applyTarget(targetRef.current, true, true);
   }, [applyTarget]);
 
   const handleItemClick = useCallback(index => {
@@ -214,7 +221,7 @@ const OptionWheel = ({
       if (d > cfg.count / 2) d -= cfg.count;
       else if (d < -cfg.count / 2) d += cfg.count;
     }
-    applyTarget(cur + d, true);
+    applyTarget(cur + d, true, true);
   }, [applyTarget]);
 
   const handleKeyDown = useCallback(e => {
@@ -223,11 +230,11 @@ const OptionWheel = ({
     else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') delta = 1;
     if (delta == null) return;
     e.preventDefault();
-    applyTarget(Math.round(targetRef.current) + delta, true);
+    applyTarget(Math.round(targetRef.current) + delta, true, true);
   }, [applyTarget]);
 
   useEffect(() => {
-    applyTarget(targetRef.current, false);
+    applyTarget(targetRef.current, false, false);
   }, [items, fontSize, spacing, curve, tilt, blur, fade, minOpacity, side, loop, smoothing, applyTarget]);
 
   useEffect(() => () => {

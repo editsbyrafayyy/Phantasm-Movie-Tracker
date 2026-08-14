@@ -420,9 +420,11 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   };
 
   const handleGenreChange = (_index: number, item: string) => {
+    const nextGenre = item === 'All' ? null : item;
+    if (nextGenre === genreFilter) return;
     if (genreDebounceRef.current) clearTimeout(genreDebounceRef.current);
     genreDebounceRef.current = setTimeout(() => {
-      setGenreFilter(item === 'All' ? null : item);
+      setGenreFilter(nextGenre);
       setPage(1);
       setHasMore(true);
       setSwappingGenre(true);
@@ -436,14 +438,24 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   };
 
   const handleWheelSettle = (_idx: number, item: string) => {
+    const nextGenre = item === 'All' ? null : item;
     setActiveWheelGenre(item);
-    setGenreFilter(item === 'All' ? null : item);
+    if (nextGenre === genreFilter) return;
+    setGenreFilter(nextGenre);
     setPage(1);
     setHasMore(true);
     setSwappingGenre(true);
     setFetchError(null);
     errorCountRef.current = 0;
   };
+
+  // Safety timer to ensure swappingGenre blur overlay always unblurs even if network request is aborted or cached
+  useEffect(() => {
+    if (swappingGenre) {
+      const t = setTimeout(() => setSwappingGenre(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [swappingGenre]);
 
   const handleRetry = useCallback(() => {
     errorCountRef.current = 0;
