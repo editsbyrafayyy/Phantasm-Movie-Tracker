@@ -226,11 +226,89 @@ export default function VideoPlayerClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imdbId, tmdbId]); // only re-run if the movie changes
 
+  // Listen for video progress postMessages from supported embed providers
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const currentMediaId = tmdbId || imdbId;
+    if (!currentMediaId) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (!data || typeof data !== 'object') return;
+
+        let curTime: number | undefined;
+        let dur: number | undefined;
+        let prog: number | undefined;
+
+        if (typeof data.currentTime === 'number' && typeof data.duration === 'number') {
+          curTime = data.currentTime;
+          dur = data.duration;
+        } else if (typeof data.time === 'number' && typeof data.duration === 'number') {
+          curTime = data.time;
+          dur = data.duration;
+        } else if (typeof data.progress === 'number') {
+          prog = data.progress <= 1 ? Math.round(data.progress * 100) : Math.round(data.progress);
+        } else if (typeof data.percentage === 'number') {
+          prog = Math.round(data.percentage);
+        }
+
+        if (curTime && dur && dur > 0) {
+          prog = Math.round((curTime / dur) * 100);
+        }
+
+        if (typeof prog === 'number' && prog > 0) {
+          const HISTORY_KEY = 'vault_watch_history';
+          const raw = localStorage.getItem(HISTORY_KEY);
+          if (raw) {
+            const list: Array<{ id: string; [key: string]: any }> = JSON.parse(raw);
+            const idx = list.findIndex(e => e.id === currentMediaId);
+            if (idx !== -1) {
+              list[idx].progress = prog;
+              if (curTime) list[idx].currentTime = curTime;
+              if (dur) list[idx].duration = dur;
+              if (prog >= 90) {
+                list[idx].completed = true;
+              }
+              localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+            }
+          }
+        }
+      } catch { /* ignore malformed postMessages */ }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [tmdbId, imdbId]);
+
+  const syncWatchHistoryCompletion = (isComplete: boolean) => {
+    try {
+      const currentMediaId = tmdbId || imdbId;
+      if (!currentMediaId) return;
+      const HISTORY_KEY = 'vault_watch_history';
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (raw) {
+        const list: Array<{ id: string; [key: string]: any }> = JSON.parse(raw);
+        const idx = list.findIndex(e => e.id === currentMediaId);
+        if (idx !== -1) {
+          list[idx].completed = isComplete;
+          if (isComplete) list[idx].progress = 100;
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+        }
+      }
+    } catch { /* ignore */ }
+  };
+
   const toggleWatched = (s: number, epNum: number) => {
     const key = `${s}:${epNum}`;
     const newWatched = { ...watchedEpisodes, [key]: !watchedEpisodes[key] };
     setWatchedEpisodes(newWatched);
     localStorage.setItem(`watched:${tmdbId || imdbId}`, JSON.stringify(newWatched));
+
+    const totalEps = episodes.length;
+    const watchedEpsCount = episodes.filter(ep => newWatched[`${activeSeason}:${ep.episode_number}`]).length;
+    const isShowComplete = totalEps > 0 && (watchedEpsCount / totalEps) >= 0.9;
+    syncWatchHistoryCompletion(isShowComplete);
   };
 
   const seasonEpisodesCount = episodes.length;
@@ -239,12 +317,14 @@ export default function VideoPlayerClient({
   const isAllWatched = seasonEpisodesCount > 0 && episodes.every(ep => watchedEpisodes[`${activeSeason}:${ep.episode_number}`]);
 
   const toggleSelectAll = () => {
+    const willWatch = !isAllWatched;
     const newWatched = { ...watchedEpisodes };
     episodes.forEach(ep => {
-      newWatched[`${activeSeason}:${ep.episode_number}`] = !isAllWatched;
+      newWatched[`${activeSeason}:${ep.episode_number}`] = willWatch;
     });
     setWatchedEpisodes(newWatched);
     localStorage.setItem(`watched:${tmdbId || imdbId}`, JSON.stringify(newWatched));
+    syncWatchHistoryCompletion(willWatch);
   };
 
   const failed = sources.length === 0;
