@@ -109,6 +109,27 @@ const GENRE_FILTER_MAP: Record<string, GenreFilterConfig> = {
   },
 };
 
+const GENRE_DESCRIPTIONS: Record<string, string> = {
+  'All': 'Explore the deepest corners of the horror catalog, from modern acclaimed blockbusters to underground cult gems.',
+  'Slasher': 'Masked killers, sharp blades, rising body counts, and classic final girl confrontations.',
+  'Psychological': 'Mind games, fractured realities, overwhelming paranoia, and psychological dread.',
+  'Supernatural & Ghosts': 'Haunted spirits, eerie apparitions, poltergeists, and otherworldly spectral dread.',
+  'Occult & Demonic': 'Sinister cults, dark rituals, demonic possessions, exorcisms, and ancient evil.',
+  'Folk Horror': 'Pagan rituals, ancient folklore, and insidious terror rooted in isolated rural communities.',
+  'Creature Feature': 'Monstrous beasts, giant predators, biological anomalies, and extraterrestrial horrors.',
+  'Zombie': 'Viral outbreaks, flesh-eating undead swarms, and harrowing post-apocalyptic survival.',
+  'Vampire': 'Gothic bloodsuckers, immortal aristocratic predators, and nocturnal dread.',
+  'Found Footage': 'Recovered camcorder tapes, handheld POV immersion, and terrifying mockumentaries.',
+  'Body Horror': 'Grotesque physical mutations, biological decay, visceral infections, and bodily terror.',
+  'Gothic Horror': 'Victorian dread, crumbling ancestral castles, gloomy atmosphere, and dark romance.',
+  'Survival Horror': 'Claustrophobic death traps, wilderness isolation, and the desperate instinct to stay alive.',
+  'Sci-Fi Horror': 'Deep space isolation, lethal xenomorphs, and chilling technological nightmares.',
+  'Horror Comedy': 'Campy bloodshed, pitch-black humor, and hilarious macabre chaos.',
+  'Gore & Extreme': 'Uncompromising violence, intense visceral splatter, and relentless shock horror.',
+  'Haunted House': 'Creaking floorboards, malevolent dwellings, and sinister domestic spaces.',
+  'Cult Classic': 'Midnight movie favorites, grindhouse gems, and enduring B-movie masterpieces.',
+};
+
 // ── In-Memory Page Cache (Client-side anti-abuse & zero-latency navigation) ──
 interface CacheEntry {
   results: TmdbDiscoverMovie[];
@@ -140,16 +161,20 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   const [swappingGenre, setSwappingGenre] = useState(false);
   const [fetchError, setFetchError]   = useState<string | null>(null);
   const [retryToken, setRetryToken]   = useState(0);
-  const [isWheelHovered, setIsWheelHovered] = useState(false);
 
-  // Concurrency, rate control & hover refs
+  // Full-screen desktop wheel overlay states
+  const [isWheelOpen, setIsWheelOpen]           = useState(false);
+  const [isOverlayActive, setIsOverlayActive]   = useState(false);
+  const [activeWheelGenre, setActiveWheelGenre] = useState<string>('All');
+
+  // Concurrency, rate control & dismissal refs
   const sentinelRef           = useRef<HTMLDivElement | null>(null);
   const isFetchingRef         = useRef(false);
   const lastFetchTimeRef      = useRef(0);
   const errorCountRef         = useRef(0);
   const activeAbortCtrlRef    = useRef<AbortController | null>(null);
   const genreDebounceRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hoverLeaveTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeGraceTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -167,24 +192,61 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   useEffect(() => {
     return () => {
       if (genreDebounceRef.current) clearTimeout(genreDebounceRef.current);
-      if (hoverLeaveTimerRef.current) clearTimeout(hoverLeaveTimerRef.current);
+      if (closeGraceTimerRef.current) clearTimeout(closeGraceTimerRef.current);
       activeAbortCtrlRef.current?.abort();
     };
   }, []);
 
-  const handleWheelMouseEnter = () => {
-    if (hoverLeaveTimerRef.current) {
-      clearTimeout(hoverLeaveTimerRef.current);
-      hoverLeaveTimerRef.current = null;
+  const openWheelOverlay = () => {
+    if (closeGraceTimerRef.current) {
+      clearTimeout(closeGraceTimerRef.current);
+      closeGraceTimerRef.current = null;
     }
-    setIsWheelHovered(true);
+    setActiveWheelGenre(genreFilter ?? 'All');
+    setIsWheelOpen(true);
+    requestAnimationFrame(() => {
+      setIsOverlayActive(true);
+    });
   };
 
-  const handleWheelMouseLeave = () => {
-    hoverLeaveTimerRef.current = setTimeout(() => {
-      setIsWheelHovered(false);
-    }, 60);
+  const closeWheelOverlay = useCallback(() => {
+    if (closeGraceTimerRef.current) {
+      clearTimeout(closeGraceTimerRef.current);
+      closeGraceTimerRef.current = null;
+    }
+    setIsOverlayActive(false);
+    setTimeout(() => {
+      setIsWheelOpen(false);
+    }, 320);
+  }, []);
+
+  const handleOverlayMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If mouse moves past 52% of screen width into the empty area, start grace timer to close
+    const threshold = window.innerWidth * 0.52;
+    if (e.clientX > threshold) {
+      if (!closeGraceTimerRef.current) {
+        closeGraceTimerRef.current = setTimeout(() => {
+          closeWheelOverlay();
+        }, 220);
+      }
+    } else {
+      if (closeGraceTimerRef.current) {
+        clearTimeout(closeGraceTimerRef.current);
+        closeGraceTimerRef.current = null;
+      }
+    }
   };
+
+  // Close overlay on Escape key
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isWheelOpen) {
+        closeWheelOverlay();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isWheelOpen, closeWheelOverlay]);
 
   // Main Data Fetching Engine
   useEffect(() => {
@@ -369,6 +431,20 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
     }, 200);
   };
 
+  const handleWheelChange = (_idx: number, item: string) => {
+    setActiveWheelGenre(item);
+  };
+
+  const handleWheelSettle = (_idx: number, item: string) => {
+    setActiveWheelGenre(item);
+    setGenreFilter(item === 'All' ? null : item);
+    setPage(1);
+    setHasMore(true);
+    setSwappingGenre(true);
+    setFetchError(null);
+    errorCountRef.current = 0;
+  };
+
   const handleRetry = useCallback(() => {
     errorCountRef.current = 0;
     setFetchError(null);
@@ -377,36 +453,29 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
 
   return (
     <div className="browse-layout">
-      {/* ── Genre Wheel Rail — left sidebar ── */}
+      {/* ── Genre Wheel Rail — compact resting desktop sidebar ── */}
       <aside
-        className={`browse-genre-rail ${isWheelHovered ? 'browse-genre-rail--expanded' : ''}`}
+        className="browse-genre-rail"
         aria-label="Filter by genre"
-        aria-expanded={isWheelHovered}
-        onMouseEnter={handleWheelMouseEnter}
-        onMouseLeave={handleWheelMouseLeave}
+        onMouseEnter={openWheelOverlay}
+        onClick={openWheelOverlay}
       >
-        {/* Subtle hint that illuminates when rail is expanded */}
-        <div className="browse-genre-rail-hint" aria-hidden="true">
-          <span className="browse-genre-rail-hint-dot" />
-          <span>Scroll or click subgenres</span>
-        </div>
-
         <OptionWheel
-          key={genreFilter ?? 'all'}
+          key={`resting-${genreFilter ?? 'all'}`}
           items={GENRE_ITEMS}
           defaultSelected={genreFilter ? GENRE_ITEMS.indexOf(genreFilter) : 0}
           side="left"
-          fontSize={isWheelHovered ? 1.85 : 1.45}
-          spacing={isWheelHovered ? 1.45 : 1.32}
-          inset={isWheelHovered ? 32 : 20}
-          curve={isWheelHovered ? 1.05 : 0.9}
-          tilt={isWheelHovered ? 8 : 7}
-          blur={isWheelHovered ? 0.4 : 1.4}
-          fade={isWheelHovered ? 0.16 : 0.28}
-          minOpacity={isWheelHovered ? 0.22 : 0.06}
+          fontSize={1.45}
+          spacing={1.32}
+          inset={20}
+          curve={0.9}
+          tilt={7}
+          blur={1.4}
+          fade={0.28}
+          minOpacity={0.06}
           smoothing={180}
           activeColor="#e63232"
-          textColor={isWheelHovered ? 'rgba(255,255,255,0.48)' : 'rgba(255,255,255,0.32)'}
+          textColor="rgba(255,255,255,0.32)"
           loop={false}
           draggable
           soundUrl=""
@@ -418,11 +487,65 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
         </div>
       </aside>
 
-      {/* ── Screen Vignette Overlay on Hover ── */}
-      <div
-        className={`browse-vignette-overlay ${isWheelHovered ? 'browse-vignette-overlay--active' : ''}`}
-        aria-hidden="true"
-      />
+      {/* ── Full-Screen Desktop Genre Discovery Overlay ── */}
+      {isWheelOpen && (
+        <div
+          className={`browse-fullscreen-overlay ${isOverlayActive ? 'browse-fullscreen-overlay--active' : ''}`}
+          onClick={closeWheelOverlay}
+          onMouseMove={handleOverlayMouseMove}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Horror Subgenre Selector"
+        >
+          {/* Left Zone: Giant 3D OptionWheel with unconstrained horizontal width */}
+          <div
+            className="browse-fullscreen-wheel-zone"
+            onClick={e => e.stopPropagation()}
+          >
+            <OptionWheel
+              key={`fullscreen-${genreFilter ?? 'all'}`}
+              items={GENRE_ITEMS}
+              defaultSelected={genreFilter ? GENRE_ITEMS.indexOf(genreFilter) : 0}
+              side="left"
+              fontSize={2.5}
+              spacing={1.42}
+              inset={80}
+              curve={1.15}
+              tilt={8}
+              blur={0.5}
+              fade={0.16}
+              minOpacity={0.22}
+              smoothing={180}
+              activeColor="#e63232"
+              textColor="rgba(255,255,255,0.45)"
+              loop={false}
+              draggable
+              soundUrl=""
+              onChange={handleWheelChange}
+              onSettle={handleWheelSettle}
+            />
+          </div>
+
+          {/* Right Zone: Atmospheric Subgenre HUD / Preview */}
+          <div className="browse-fullscreen-hud-zone">
+            <div className="browse-fullscreen-hud-badge">
+              <span className="browse-fullscreen-hud-dot" />
+              <span>HORROR SUBGENRE</span>
+            </div>
+            <h2 className="browse-fullscreen-hud-title">{activeWheelGenre}</h2>
+            <p className="browse-fullscreen-hud-desc">
+              {GENRE_DESCRIPTIONS[activeWheelGenre] || GENRE_DESCRIPTIONS['All']}
+            </p>
+            <div className="browse-fullscreen-hud-footer">
+              <span>Scroll wheel to spin</span>
+              <span>•</span>
+              <span>Click genre to select</span>
+              <span>•</span>
+              <span>Click empty space to close</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Main Content ── */}
       <div className="browse-container browse-container--inset">
