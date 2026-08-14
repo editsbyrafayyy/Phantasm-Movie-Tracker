@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Eye, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import MoodPicker from '@/components/browse/MoodPicker';
+import WatchHistoryRow from '@/components/stream/WatchHistoryRow';
 import WatchlistButton from '@/components/watchlist/WatchlistButton';
 import OptionWheel from '@/components/browse/OptionWheel';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
@@ -218,6 +219,9 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
                 : 'Explore the deepest corners of the horror catalog.'}
             </p>
           </div>
+
+          {/* Pick Up Where You Left Off */}
+          <WatchHistoryRow />
 
           {/* Mood Picker */}
           <MoodPicker />

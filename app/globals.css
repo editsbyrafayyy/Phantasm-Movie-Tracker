@@ -2246,18 +2246,10 @@ select:focus-visible {
   padding-top: 0 !important; /* Space handled by outer main element */
 }
 
-/* ── Streaming Hero Carousel ────────────────────────────────────────────── */
-.stream-hero {
-  position:relative;
-  height:520px;
-  overflow:hidden;
-  background:#000;
-}
-@media (max-width:640px) { .stream-hero { height:280px; } }
-
 /* ── Watch History Row ───────────────────────────────────────── */
 .watch-history-section {
-  padding: 20px 40px 4px;
+  padding: 0 0 16px;
+  width: 100%;
 }
 .watch-history-header {
   display: flex;
@@ -2356,70 +2348,10 @@ select:focus-visible {
 }
 .watch-history-card:hover .watch-history-title { color: var(--text); }
 @media (max-width: 768px) {
-  .watch-history-section { padding: 16px 20px 4px; }
+  .watch-history-section { padding: 0 0 12px; }
   .watch-history-card { width: 90px; }
   .watch-history-poster { width: 90px; height: 135px; }
 }
-.stream-hero-img {
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-.stream-hero-gradient {
-  position:absolute;
-  inset:0;
-  background:
-    linear-gradient(to right, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.4) 65%, transparent 100%),
-    linear-gradient(to top, rgba(8,8,8,0.7) 0%, transparent 50%);
-}
-.stream-hero-content {
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  padding:48px;
-}
-@media (max-width:640px) { .stream-hero-content { padding:24px; } }
-.stream-hero-title {
-  font-family:var(--font-sans);
-  font-size:clamp(24px,4vw,42px);
-  font-weight:700;
-  color:#ffffff;
-  margin-bottom:12px;
-  line-height:1.1;
-}
-.stream-hero-btns { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px; }
-.stream-hero-dots {
-  display:flex;
-  gap:6px;
-  margin-bottom:4px;
-  position: absolute;
-  right: 48px;
-  left: auto;
-  bottom: 50px;
-}
-@media (max-width: 640px) {
-  .stream-hero-dots {
-    position: static;
-    right: auto;
-    bottom: auto;
-    margin-bottom: 12px;
-  }
-}
-.stream-hero-dot {
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:rgba(255,255,255,0.3);
-  border:none;
-  cursor:pointer;
-  padding:0;
-  transition:background 0.2s, transform 0.2s;
-}
-.stream-hero-dot.active { background:#fff; transform:scale(1.3); }
 
 /* ── Category Row ───────────────────────────────────────────────────────── */
 .category-section { margin-bottom:32px; overflow: visible; }
@@ -4219,61 +4151,7 @@ select:focus-visible {
   pointer-events: none;
 }
 
-.stream-tab-wrapper {
-  display: flex;
-  justify-content: center;
-  padding: 24px 20px 24px 20px;
-  background: var(--bg);
-  position: relative;
-  z-index: 1;
-}
 
-.stream-tab-toggle {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-}
-
-@media (max-width: 768px) {
-  .stream-tab-wrapper {
-    padding: 16px 20px 16px 20px; /* mobile */
-  }
-  .browse-container {
-    padding-left: 20px !important;
-    padding-right: 20px !important;
-  }
-}
-
-.stream-tab-btn {
-  padding: 8px 24px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.6);
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  -webkit-appearance: none;
-  appearance: none;
-  outline: none;
-}
-
-.stream-tab-btn:hover:not(.active) {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.stream-tab-btn.active {
-  background: var(--red) !important;
-  color: #fff !important;
-  -webkit-appearance: none;
-  appearance: none;
-}
 
 /* ── On This Day in Horror Widget ───────────────────────────────────────────── */
 .otd-section {
