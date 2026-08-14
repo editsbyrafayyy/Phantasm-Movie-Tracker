@@ -17,6 +17,9 @@ const ALLOWED_MOOD_PARAMS = [
   'first_air_date.gte',
   'first_air_date.lte',
   'with_keywords',
+  'without_keywords',
+  'with_genres',
+  'without_genres',
 ] as const;
 
 export async function GET(req: NextRequest) {
@@ -47,15 +50,27 @@ export async function GET(req: NextRequest) {
   const type     = searchParams.get('type') || 'movie';
   const isMood   = searchParams.has('mood');
 
+  const incomingGenres          = searchParams.get('with_genres');
+  const incomingWithoutGenres   = searchParams.get('without_genres');
+  const incomingKeywords        = searchParams.get('with_keywords');
+  const incomingWithoutKeywords = searchParams.get('without_keywords');
+
   // Base discover URL
   const tmdbUrl = new URL(`https://api.themoviedb.org/3/discover/${type === 'tv' ? 'tv' : 'movie'}`);
   
   // Enforce horror/thriller/sci-fi genres and exclude animation/anime/family/etc for TV
   if (type === 'tv') {
-    tmdbUrl.searchParams.set('with_genres', '9648|10765|27|53');
-    tmdbUrl.searchParams.set('without_genres', '16,10762,10751,10764,10766,10767,10763,99');
+    tmdbUrl.searchParams.set('with_genres', incomingGenres || '9648|10765|27|53');
+    tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres || '16,10762,10751,10764,10766,10767,10763,99');
   } else {
-    tmdbUrl.searchParams.set('with_genres', '27,53');
+    // Default to Horror (27). If caller specified a genre combination (e.g. '27,35' for comedy or '27,878' for sci-fi), use it.
+    tmdbUrl.searchParams.set('with_genres', incomingGenres || '27');
+    if (incomingWithoutGenres) {
+      tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres);
+    } else {
+      // Exclude animation (16) and family (10751) to filter out kids/cartoons
+      tmdbUrl.searchParams.set('without_genres', '16,10751');
+    }
   }
   tmdbUrl.searchParams.set('page', String(page));
   tmdbUrl.searchParams.set('include_adult', 'false');
@@ -82,9 +97,9 @@ export async function GET(req: NextRequest) {
   } else {
     // Default (non-mood) discover
     tmdbUrl.searchParams.set('sort_by', 'popularity.desc');
-    // Forward optional keyword filter from genre wheel
-    const withKeywords = searchParams.get('with_keywords');
-    if (withKeywords) tmdbUrl.searchParams.set('with_keywords', withKeywords);
+    // Forward optional keyword filters
+    if (incomingKeywords) tmdbUrl.searchParams.set('with_keywords', incomingKeywords);
+    if (incomingWithoutKeywords) tmdbUrl.searchParams.set('without_keywords', incomingWithoutKeywords);
     // Exclude unreleased future media
     const today = new Date().toISOString().split('T')[0];
     if (type === 'tv') {

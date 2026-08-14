@@ -15,39 +15,98 @@ import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 const GENRE_ITEMS = [
   'All',
   'Slasher',
-  'Supernatural',
+  'Psychological',
+  'Supernatural & Ghosts',
+  'Occult & Demonic',
+  'Folk Horror',
+  'Creature Feature',
   'Zombie',
   'Vampire',
-  'Haunted House',
   'Found Footage',
-  'Paranormal',
-  'Psychological',
-  'Creature Feature',
-  'Gothic Horror',
   'Body Horror',
-  'Cult Classic',
+  'Gothic Horror',
   'Survival Horror',
+  'Sci-Fi Horror',
+  'Horror Comedy',
+  'Gore & Extreme',
+  'Haunted House',
+  'Cult Classic',
 ];
 
-interface GenreFilter {
-  type: 'keyword' | 'query';
-  value: string;
+interface GenreFilterConfig {
+  genres?: string;
+  keywords?: string;
+  withoutGenres?: string;
 }
 
-const GENRE_FILTER_MAP: Record<string, GenreFilter> = {
-  'Slasher':          { type: 'keyword', value: '10339'  },
-  'Supernatural':     { type: 'keyword', value: '9663'   },
-  'Zombie':           { type: 'keyword', value: '12377'  },
-  'Vampire':          { type: 'keyword', value: '5613'   },
-  'Haunted House':    { type: 'keyword', value: '10283'  },
-  'Found Footage':    { type: 'keyword', value: '14301'  },
-  'Body Horror':      { type: 'keyword', value: '10654'  },
-  'Gothic Horror':    { type: 'keyword', value: '4344'   },
-  'Creature Feature': { type: 'keyword', value: '162086' },
-  'Cult Classic':     { type: 'keyword', value: '4379'   },
-  'Survival Horror':  { type: 'keyword', value: '10629'  },
-  'Psychological':    { type: 'keyword', value: '10890'  },
-  'Paranormal':       { type: 'keyword', value: '5480|9663' },
+const GENRE_FILTER_MAP: Record<string, GenreFilterConfig> = {
+  'Slasher': {
+    genres: '27',
+    keywords: '10339|12339|209714|9748|2626',
+  },
+  'Psychological': {
+    genres: '27|53|9648',
+    keywords: '10890|15001|9714|12554|214488|10787',
+  },
+  'Supernatural & Ghosts': {
+    genres: '27',
+    keywords: '5480|18035|10283|12552|156212|303334',
+  },
+  'Occult & Demonic': {
+    genres: '27',
+    keywords: '6158|2618|18035|303334|1523|10123|12552',
+  },
+  'Folk Horror': {
+    genres: '27',
+    keywords: '158718|1599|218579|6158|2618|180495',
+  },
+  'Creature Feature': {
+    genres: '27',
+    keywords: '1299|228809|1308|9951|173934|162086|10683',
+  },
+  'Zombie': {
+    genres: '27',
+    keywords: '12377|186565|10292|4458',
+  },
+  'Vampire': {
+    genres: '27',
+    keywords: '5613|3133',
+  },
+  'Found Footage': {
+    genres: '27',
+    keywords: '14301|209715|180497|180498',
+  },
+  'Body Horror': {
+    genres: '27',
+    keywords: '10654|180489|180491|180492',
+  },
+  'Gothic Horror': {
+    genres: '27',
+    keywords: '4344|180495|10283',
+  },
+  'Survival Horror': {
+    genres: '27|53',
+    keywords: '10683|10629|158713|156212|10787|10084',
+  },
+  'Sci-Fi Horror': {
+    genres: '27,878',
+    keywords: '9951|4565|180489|1612',
+  },
+  'Horror Comedy': {
+    genres: '27,35',
+  },
+  'Gore & Extreme': {
+    genres: '27',
+    keywords: '180493|10654|9748|10714|2306',
+  },
+  'Haunted House': {
+    genres: '27',
+    keywords: '10283|12552|18035',
+  },
+  'Cult Classic': {
+    genres: '27|53',
+    keywords: '4379|9716|209714',
+  },
 };
 
 // ── In-Memory Page Cache (Client-side anti-abuse & zero-latency navigation) ──
@@ -162,7 +221,14 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           endpoint = `/api/tmdb/search?query=${encodeURIComponent(activeQuery)}&page=${page}&type=${mediaType}`;
         } else if (genreFilter && GENRE_FILTER_MAP[genreFilter]) {
           const f = GENRE_FILTER_MAP[genreFilter];
-          endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}&with_keywords=${f.value}`;
+          const params = new URLSearchParams({
+            page: String(page),
+            type: mediaType,
+          });
+          if (f.genres) params.set('with_genres', f.genres);
+          if (f.keywords) params.set('with_keywords', f.keywords);
+          if (f.withoutGenres) params.set('without_genres', f.withoutGenres);
+          endpoint = `/api/tmdb/discover?${params.toString()}`;
         } else {
           endpoint = `/api/tmdb/discover?page=${page}&type=${mediaType}`;
         }
@@ -297,8 +363,9 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
       {/* ── Genre Wheel Rail — left sidebar ── */}
       <aside className="browse-genre-rail" aria-label="Filter by genre">
         <OptionWheel
+          key={genreFilter ?? 'all'}
           items={GENRE_ITEMS}
-          defaultSelected={0}
+          defaultSelected={genreFilter ? GENRE_ITEMS.indexOf(genreFilter) : 0}
           side="left"
           fontSize={1.55}
           spacing={1.35}
