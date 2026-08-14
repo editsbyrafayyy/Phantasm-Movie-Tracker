@@ -83,6 +83,20 @@ const OptionWheel = ({
     if (settled) next = target;
     posRef.current = next;
 
+    // Track active index as the wheel glides
+    const currentIdx = ((Math.round(next) % cfg.count) + cfg.count) % cfg.count;
+    if (currentIdx !== selectedRef.current) {
+      selectedRef.current = currentIdx;
+      setSelectedIndex(currentIdx);
+      onChangeRef.current?.(currentIdx, cfg.items[currentIdx]);
+      playTick();
+    }
+
+    // Fire onSettle only when the wheel has finished gliding to its final rest position
+    if (settled) {
+      onSettleRef.current?.(currentIdx, cfg.items[currentIdx]);
+    }
+
     const els = itemRefs.current;
     const n = cfg.count;
     const mirror = cfg.side === 'right' ? -1 : 1;
@@ -113,7 +127,7 @@ const OptionWheel = ({
     }
 
     rafRef.current = settled ? null : requestAnimationFrame(runFrame);
-  }, []);
+  }, [playTick]);
 
   const startLoop = useCallback(() => {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
@@ -144,16 +158,8 @@ const OptionWheel = ({
     if (!cfg.loop) v = Math.min(Math.max(v, 0), Math.max(cfg.count - 1, 0));
     if (snap) v = Math.round(v);
     targetRef.current = v;
-    const idx = ((Math.round(v) % cfg.count) + cfg.count) % cfg.count;
-    if (idx !== selectedRef.current) {
-      selectedRef.current = idx;
-      setSelectedIndex(idx);
-      onChangeRef.current?.(idx, cfg.items[idx]);
-      if (snap) onSettleRef.current?.(idx, cfg.items[idx]);
-      playTick();
-    }
     startLoop();
-  }, [startLoop, playTick]);
+  }, [startLoop]);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -202,8 +208,8 @@ const OptionWheel = ({
   const handleItemClick = useCallback(index => {
     if (dragMovedRef.current) return;
     const cfg = cfgRef.current;
-    const cur = targetRef.current;
-    let d = index - (((cur % cfg.count) + cfg.count) % cfg.count);
+    const cur = posRef.current;
+    let d = index - (((Math.round(cur) % cfg.count) + cfg.count) % cfg.count);
     if (cfg.loop && cfg.count > 1) {
       if (d > cfg.count / 2) d -= cfg.count;
       else if (d < -cfg.count / 2) d += cfg.count;

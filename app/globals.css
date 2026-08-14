@@ -2493,24 +2493,28 @@ select:focus-visible {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: radial-gradient(circle at 35% 50%, rgba(12, 12, 12, 0.92) 0%, rgba(3, 3, 3, 0.98) 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: radial-gradient(circle at 32% 50%, rgba(12, 12, 12, 0.94) 0%, rgba(2, 2, 2, 0.98) 100%);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
   display: flex;
   align-items: center;
   justify-content: flex-start;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              backdrop-filter 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+              -webkit-backdrop-filter 0.38s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: default;
 }
 
 .browse-fullscreen-overlay--active {
   opacity: 1;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   pointer-events: auto;
 }
 
-/* Left Zone: unconstrained 3D wheel width */
+/* Left Zone: unconstrained 3D wheel width with fluid slide and scale */
 .browse-fullscreen-wheel-zone {
   position: absolute;
   left: 0;
@@ -2521,26 +2525,45 @@ select:focus-visible {
   height: 100vh;
   overflow: visible;
   z-index: 10;
+  opacity: 0;
+  transform: translateX(-40px) scale(0.95);
+  filter: blur(4px);
+  transition: opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
 }
 
-/* Right Zone: atmospheric HUD preview */
+.browse-fullscreen-overlay--active .browse-fullscreen-wheel-zone {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  filter: blur(0px);
+}
+
+/* Right Zone: atmospheric HUD preview with staggered slide-in */
 .browse-fullscreen-hud-zone {
   position: absolute;
   right: 8vw;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) translateX(35px);
   max-width: 440px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   pointer-events: none;
   z-index: 5;
-  animation: hudFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0;
+  filter: blur(4px);
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s,
+              transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s,
+              filter 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
+  will-change: opacity, transform, filter;
 }
 
-@keyframes hudFadeIn {
-  from { opacity: 0; transform: translateY(calc(-50% + 12px)); }
-  to   { opacity: 1; transform: translateY(-50%); }
+.browse-fullscreen-overlay--active .browse-fullscreen-hud-zone {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+  filter: blur(0px);
 }
 
 .browse-fullscreen-hud-badge {
