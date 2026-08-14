@@ -69,6 +69,23 @@ const OptionWheel = ({
     soundVolume
   };
 
+  const playTick = useCallback(() => {
+    const { soundUrl, soundVolume } = cfgRef.current;
+    if (!soundUrl) return;
+    const now = performance.now();
+    if (now - lastTickRef.current < 70) return;
+    lastTickRef.current = now;
+    if (!audioRef.current || audioUrlRef.current !== soundUrl) {
+      audioRef.current = new Audio(soundUrl);
+      audioRef.current.preload = 'auto';
+      audioUrlRef.current = soundUrl;
+    }
+    const audio = audioRef.current;
+    audio.volume = Math.min(Math.max(soundVolume, 0), 1);
+    audio.currentTime = 0;
+    audio.play()?.catch(() => {});
+  }, []);
+
   const runFrame = useCallback(now => {
     const dt = Math.min((now - lastRef.current) / 1000, 0.05);
     lastRef.current = now;
@@ -134,23 +151,6 @@ const OptionWheel = ({
     lastRef.current = performance.now();
     rafRef.current = requestAnimationFrame(runFrame);
   }, [runFrame]);
-
-  const playTick = useCallback(() => {
-    const { soundUrl, soundVolume } = cfgRef.current;
-    if (!soundUrl) return;
-    const now = performance.now();
-    if (now - lastTickRef.current < 70) return;
-    lastTickRef.current = now;
-    if (!audioRef.current || audioUrlRef.current !== soundUrl) {
-      audioRef.current = new Audio(soundUrl);
-      audioRef.current.preload = 'auto';
-      audioUrlRef.current = soundUrl;
-    }
-    const audio = audioRef.current;
-    audio.volume = Math.min(Math.max(soundVolume, 0), 1);
-    audio.currentTime = 0;
-    audio.play()?.catch(() => {});
-  }, []);
 
   const applyTarget = useCallback((value, snap) => {
     const cfg = cfgRef.current;

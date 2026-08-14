@@ -9,6 +9,8 @@ import RouletteTrigger from '@/components/home/RouletteTrigger';
 import ActivityFeed    from '@/components/home/ActivityFeed';
 import OnThisDayWidget from '@/components/home/OnThisDayWidget';
 import RecentlyViewedRow from '@/components/home/RecentlyViewedRow';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { getOwnerEntries } from '@/lib/data';
 import type { Entry } from '@/lib/types';
 
 const SUBGENRE_ORDER = [
@@ -26,9 +28,6 @@ const SUBGENRE_ORDER = [
   'Horror Comedy',
   'Thriller (Non-Horror)',
 ];
-
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { getOwnerEntries } from '@/lib/data';
 
 export const metadata = {
   title: "Vault — Horror Film Tracker",
