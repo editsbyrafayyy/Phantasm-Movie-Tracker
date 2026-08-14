@@ -81,6 +81,9 @@ export default function DiaryLogModal({
 
       setToast({ message: 'Watch logged in your Diary!', type: 'success' });
       if (onSuccess) onSuccess();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('vault_diary_updated'));
+      }
       setTimeout(() => {
         onClose();
       }, 1000);

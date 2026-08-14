@@ -365,9 +365,10 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
                   onClick={() => setDiaryModalOpen(true)}
                   className="btn-edit"
                   style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  title="Log a watch to your Diary"
                 >
                   <BookOpen size={14} />
-                  Log Watch
+                  Log This Movie
                 </button>
                 <button
                   onClick={() => setStackModalOpen(true)}
@@ -721,7 +722,12 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
               <span>IMDb</span>
               <span>{movie.imdb_rating ?? '—'}</span>
             </div>
-            <div className="vault-meta-row">
+            <div
+              className="vault-meta-row"
+              onClick={() => canStream && setDiaryModalOpen(true)}
+              style={{ cursor: canStream ? 'pointer' : 'default' }}
+              title={canStream ? 'Click to log a watch' : undefined}
+            >
               <span>Watch Log</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: watchCount > 1 ? 'var(--red)' : 'var(--text-dim)' }}>
                 {watchCount > 1 && <RotateCcw size={11} />}

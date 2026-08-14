@@ -57,6 +57,12 @@ export default function MobileBottomNav() {
             <Film size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
             <span>My Vault</span>
           </Link>
+          <Link href="/add" className={`mobile-bottom-nav-link mobile-bottom-nav-add${isActive('/add')}`} prefetch={true}>
+            <div className="mobile-nav-add-icon">
+              <Plus size={18} strokeWidth={2.5} />
+            </div>
+            <span>Log Film</span>
+          </Link>
           <Link href="/diary" className={`mobile-bottom-nav-link${isActive('/diary')}`} prefetch={true}>
             <BookOpen size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
             <span>Diary</span>
@@ -64,10 +70,6 @@ export default function MobileBottomNav() {
           <Link href="/stream" className={`mobile-bottom-nav-link${isActive('/stream')}`} prefetch={true}>
             <Play size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
             <span>Stream</span>
-          </Link>
-          <Link href="/watchlist" className={`mobile-bottom-nav-link${isActive('/watchlist')}`} prefetch={true}>
-            <Bookmark size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            <span>Watch Later</span>
           </Link>
         </>
       ) : (

@@ -4733,6 +4733,38 @@ select:focus-visible {
     filter: drop-shadow(0 0 8px rgba(230, 50, 50, 0.45));
   }
 
+  .mobile-bottom-nav-link.mobile-bottom-nav-add .mobile-nav-add-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: rgba(230, 50, 50, 0.14);
+    border: 1px solid rgba(230, 50, 50, 0.35);
+    color: var(--red);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-bottom-nav-link.mobile-bottom-nav-add .mobile-nav-add-icon svg {
+    color: inherit;
+    filter: none;
+    transform: none;
+  }
+
+  .mobile-bottom-nav-link.mobile-bottom-nav-add.active .mobile-nav-add-icon,
+  .mobile-bottom-nav-link.mobile-bottom-nav-add:active .mobile-nav-add-icon {
+    background: var(--red);
+    color: #ffffff;
+    border-color: var(--red);
+    box-shadow: 0 0 12px rgba(230, 50, 50, 0.6);
+    transform: translateY(-1px) scale(1.06);
+  }
+
+  .mobile-bottom-nav-link.mobile-bottom-nav-add.active .mobile-nav-add-icon svg {
+    color: #ffffff;
+  }
+
   .home-vault-section {
     padding: 0 24px;
     margin-top: 24px;
@@ -4885,47 +4917,7 @@ select:focus-visible {
   }
 }
 
-/* Enable custom horizontal scrollbars on desktop viewports for cast/similar/browse rows */
-@media (hover: hover) {
-  .cast-row,
-  .similar-row,
-  .browse-scroll-track,
-  .category-scroll-track {
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(255, 255, 255, 0.18) transparent !important;
-  }
 
-  .cast-row::-webkit-scrollbar,
-  .similar-row::-webkit-scrollbar,
-  .browse-scroll-track::-webkit-scrollbar,
-  .category-scroll-track::-webkit-scrollbar {
-    display: block !important;
-    height: 6px !important;
-  }
-
-  .cast-row::-webkit-scrollbar-track,
-  .similar-row::-webkit-scrollbar-track,
-  .browse-scroll-track::-webkit-scrollbar-track,
-  .category-scroll-track::-webkit-scrollbar-track {
-    background: transparent !important;
-  }
-
-  .cast-row::-webkit-scrollbar-thumb,
-  .similar-row::-webkit-scrollbar-thumb,
-  .browse-scroll-track::-webkit-scrollbar-thumb,
-  .category-scroll-track::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15) !important;
-    border-radius: 999px !important;
-    border: none !important;
-  }
-
-  .cast-row::-webkit-scrollbar-thumb:hover,
-  .similar-row::-webkit-scrollbar-thumb:hover,
-  .browse-scroll-track::-webkit-scrollbar-thumb:hover,
-  .category-scroll-track::-webkit-scrollbar-thumb:hover {
-    background: var(--red) !important;
-  }
-}
 /* ── Profile Page Background Glow ────────────────────────────────────────── */
 .profile-bg-glow {
   position: relative;
