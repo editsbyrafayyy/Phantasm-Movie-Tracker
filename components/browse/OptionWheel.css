@@ -27,12 +27,18 @@
   white-space: nowrap;
   font-size: var(--ow-font-size);
   line-height: 1;
-  font-weight: 200;
+  font-weight: 300;
   transform-origin: left center;
   cursor: pointer;
   will-change: transform, opacity, filter;
   /* --ow-p goes 0 -> 1 as an option approaches the middle of the wheel */
   color: color-mix(in srgb, var(--ow-active-color) calc(var(--ow-p, 0) * 100%), var(--ow-text-color));
+  transition: color 0.15s ease, text-shadow 0.2s ease;
+}
+
+.option-wheel__item:hover {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(230, 50, 50, 0.5);
 }
 
 .option-wheel--right .option-wheel__item {
@@ -42,5 +48,6 @@
 }
 
 .option-wheel__item--selected {
-  font-weight: 500;
+  font-weight: 600;
+  text-shadow: 0 0 16px rgba(230, 50, 50, 0.6);
 }

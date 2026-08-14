@@ -2445,6 +2445,7 @@ select:focus-visible {
   grid-template-columns: 220px 1fr;
   min-height: 100vh;
   background: var(--bg);
+  position: relative;
 }
 
 /* Left rail that holds the OptionWheel */
@@ -2452,20 +2453,67 @@ select:focus-visible {
   position: sticky;
   top: 0;
   height: 100vh;
+  width: 220px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding-top: 100px; /* clear the top navbar */
   border-right: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(8, 8, 8, 0.6);
-  overflow: hidden;
+  background: rgba(8, 8, 8, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: visible;
+  z-index: 40;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.35s ease,
+              border-color 0.35s ease,
+              box-shadow 0.35s ease;
+}
+
+/* Rail Hovered / Expanded State (Desktop) */
+.browse-genre-rail--expanded {
+  width: 380px;
+  background: rgba(10, 10, 10, 0.96);
+  border-right: 1px solid rgba(230, 50, 50, 0.28);
+  box-shadow: 24px 0 80px rgba(0, 0, 0, 0.95), 4px 0 24px rgba(230, 50, 50, 0.08);
+}
+
+/* Subtle micro-hint when rail is expanded */
+.browse-genre-rail-hint {
+  position: absolute;
+  top: 72px;
+  left: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.3s ease 0.08s, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.08s;
+  pointer-events: none;
+}
+
+.browse-genre-rail--expanded .browse-genre-rail-hint {
+  opacity: 0.9;
+  transform: translateY(0);
+}
+
+.browse-genre-rail-hint-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e63232;
+  box-shadow: 0 0 8px rgba(230, 50, 50, 0.8);
 }
 
 /* Active genre label pill shown below the wheel */
 .browse-genre-active-label {
   position: absolute;
   bottom: 32px;
-  left: 20px;
+  left: 24px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -2474,6 +2522,29 @@ select:focus-visible {
   opacity: 0.85;
   pointer-events: none;
   white-space: nowrap;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.browse-genre-rail--expanded .browse-genre-active-label {
+  transform: translateX(4px);
+  opacity: 1;
+}
+
+/* ── Screen Vignette Overlay ──────────────────────────────────────────────── */
+.browse-vignette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 190px 50%, rgba(8, 8, 8, 0.35) 0%, rgba(4, 4, 4, 0.88) 100%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.browse-vignette-overlay--active {
+  opacity: 1;
 }
 
 /* The main content area gets a modifier to remove its own side padding
@@ -2497,9 +2568,11 @@ select:focus-visible {
     grid-template-rows: auto 1fr;
   }
 
-  .browse-genre-rail {
+  .browse-genre-rail,
+  .browse-genre-rail--expanded {
     position: relative;
     height: 72px;
+    width: 100%;
     top: 0;
     flex-direction: row;
     align-items: center;
@@ -2507,6 +2580,7 @@ select:focus-visible {
     padding: 0 16px;
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: none;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;

@@ -140,14 +140,16 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   const [swappingGenre, setSwappingGenre] = useState(false);
   const [fetchError, setFetchError]   = useState<string | null>(null);
   const [retryToken, setRetryToken]   = useState(0);
+  const [isWheelHovered, setIsWheelHovered] = useState(false);
 
-  // Concurrency & rate control refs
+  // Concurrency, rate control & hover refs
   const sentinelRef           = useRef<HTMLDivElement | null>(null);
   const isFetchingRef         = useRef(false);
   const lastFetchTimeRef      = useRef(0);
   const errorCountRef         = useRef(0);
   const activeAbortCtrlRef    = useRef<AbortController | null>(null);
   const genreDebounceRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverLeaveTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -165,9 +167,24 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   useEffect(() => {
     return () => {
       if (genreDebounceRef.current) clearTimeout(genreDebounceRef.current);
+      if (hoverLeaveTimerRef.current) clearTimeout(hoverLeaveTimerRef.current);
       activeAbortCtrlRef.current?.abort();
     };
   }, []);
+
+  const handleWheelMouseEnter = () => {
+    if (hoverLeaveTimerRef.current) {
+      clearTimeout(hoverLeaveTimerRef.current);
+      hoverLeaveTimerRef.current = null;
+    }
+    setIsWheelHovered(true);
+  };
+
+  const handleWheelMouseLeave = () => {
+    hoverLeaveTimerRef.current = setTimeout(() => {
+      setIsWheelHovered(false);
+    }, 60);
+  };
 
   // Main Data Fetching Engine
   useEffect(() => {
@@ -361,23 +378,35 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   return (
     <div className="browse-layout">
       {/* ── Genre Wheel Rail — left sidebar ── */}
-      <aside className="browse-genre-rail" aria-label="Filter by genre">
+      <aside
+        className={`browse-genre-rail ${isWheelHovered ? 'browse-genre-rail--expanded' : ''}`}
+        aria-label="Filter by genre"
+        aria-expanded={isWheelHovered}
+        onMouseEnter={handleWheelMouseEnter}
+        onMouseLeave={handleWheelMouseLeave}
+      >
+        {/* Subtle hint that illuminates when rail is expanded */}
+        <div className="browse-genre-rail-hint" aria-hidden="true">
+          <span className="browse-genre-rail-hint-dot" />
+          <span>Scroll or click subgenres</span>
+        </div>
+
         <OptionWheel
           key={genreFilter ?? 'all'}
           items={GENRE_ITEMS}
           defaultSelected={genreFilter ? GENRE_ITEMS.indexOf(genreFilter) : 0}
           side="left"
-          fontSize={1.55}
-          spacing={1.35}
-          inset={20}
-          curve={0.9}
-          tilt={7}
-          blur={1.5}
-          fade={0.28}
-          minOpacity={0.06}
+          fontSize={isWheelHovered ? 1.85 : 1.45}
+          spacing={isWheelHovered ? 1.45 : 1.32}
+          inset={isWheelHovered ? 32 : 20}
+          curve={isWheelHovered ? 1.05 : 0.9}
+          tilt={isWheelHovered ? 8 : 7}
+          blur={isWheelHovered ? 0.4 : 1.4}
+          fade={isWheelHovered ? 0.16 : 0.28}
+          minOpacity={isWheelHovered ? 0.22 : 0.06}
           smoothing={180}
           activeColor="#e63232"
-          textColor="rgba(255,255,255,0.38)"
+          textColor={isWheelHovered ? 'rgba(255,255,255,0.48)' : 'rgba(255,255,255,0.32)'}
           loop={false}
           draggable
           soundUrl=""
@@ -388,6 +417,12 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           {genreFilter ?? 'All'}
         </div>
       </aside>
+
+      {/* ── Screen Vignette Overlay on Hover ── */}
+      <div
+        className={`browse-vignette-overlay ${isWheelHovered ? 'browse-vignette-overlay--active' : ''}`}
+        aria-hidden="true"
+      />
 
       {/* ── Main Content ── */}
       <div className="browse-container browse-container--inset">
