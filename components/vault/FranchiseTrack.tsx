@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Film, Layers, CheckCircle2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Film, Clapperboard, CheckCircle2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMovieFranchise, FRANCHISE_TOTALS } from '@/lib/config';
 import type { Entry } from '@/lib/types';
 
@@ -130,7 +130,7 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
       <div className="franchise-track-header">
         <div className="franchise-title-group">
           <div className="franchise-kicker">
-            <Layers size={13} className="franchise-icon" />
+            <Clapperboard size={12} className="franchise-icon" />
             <span>FRANCHISE CHRONOLOGY</span>
           </div>
           <div className="franchise-main-title">
