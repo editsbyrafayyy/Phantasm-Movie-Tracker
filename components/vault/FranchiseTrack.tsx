@@ -106,16 +106,6 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
     setIsDragging(false);
   };
 
-  // Mouse Wheel horizontal support
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
-      el.scrollLeft += e.deltaY;
-      updateScrollState();
-    }
-  };
-
   if (!franchiseName || series.length < 2) return null;
 
   const isComplete = series.length >= totalFilms && totalFilms > 0;
@@ -192,7 +182,6 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
-          onWheel={handleWheel}
         >
           {series.map(entry => {
             const isCurrent = entry.id === currentEntry.id;

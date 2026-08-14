@@ -77,16 +77,6 @@ export default function TmdbRow({ label, movies }: Props) {
     setIsDragging(false);
   };
 
-  // Mouse wheel horizontal translation
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
-      el.scrollLeft += e.deltaY;
-      updateScrollState();
-    }
-  };
-
   if (!movies.length) return null;
 
   return (
@@ -131,7 +121,6 @@ export default function TmdbRow({ label, movies }: Props) {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
-          onWheel={handleWheel}
         >
           {movies.slice(0, 20).map(movie => (
             <Link

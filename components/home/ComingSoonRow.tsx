@@ -77,16 +77,6 @@ export default function ComingSoonRow({ films }: Props) {
     setIsDragging(false);
   };
 
-  // Mouse wheel horizontal translation
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
-      el.scrollLeft += e.deltaY;
-      updateScrollState();
-    }
-  };
-
   if (!films.length) return null;
 
   return (
@@ -127,7 +117,6 @@ export default function ComingSoonRow({ films }: Props) {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
-          onWheel={handleWheel}
         >
           {films.map(film => {
             const posterUrl = film.poster_path

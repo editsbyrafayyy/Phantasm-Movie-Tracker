@@ -79,16 +79,6 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
     setIsDragging(false);
   };
 
-  // Mouse wheel horizontal translation
-  const handleWheel = (e: React.WheelEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) {
-      el.scrollLeft += e.deltaY;
-      updateScrollState();
-    }
-  };
-
   if (entries.length === 0) return null;
 
   return (
@@ -133,7 +123,6 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
-          onWheel={handleWheel}
         >
           {entries.map(entry => {
             const { movie } = entry;
