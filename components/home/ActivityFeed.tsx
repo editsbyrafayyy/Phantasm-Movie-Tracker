@@ -8,12 +8,17 @@ export default async function ActivityFeed() {
     .from('entries')
     .select(`
       id,
+      created_at,
       updated_at,
       total,
       recommend,
       subgenre,
+      secondary_tag,
+      must_watch,
+      notes,
+      user_id,
       movie:movies(title, poster_url, year),
-      profile:profiles(username, display_name)
+      profile:profiles(username, display_name, avatar_url)
     `)
     .order('updated_at', { ascending: false })
     .limit(30);

@@ -4512,90 +4512,146 @@ select:focus-visible {
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(230, 50, 50, 0.1);
   letter-spacing: 0.2px;
 }
 .roulette-trigger-btn:hover {
   background: var(--surface-2);
-  border-color: var(--border-strong);
-  color: var(--text);
+  border-color: var(--red);
+  color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 20px rgba(230, 50, 50, 0.25);
 }
 
+/* Modal Overlay: Elevated z-index 1200 to sit above top navbar (z-index 1000) */
 .roulette-overlay {
   position: fixed;
   inset: 0;
-  z-index: 200;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(6px);
+  z-index: 1200;
+  background: rgba(4, 4, 4, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: max(32px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
+/* Modal Panel: Centered, horror glow border, optimized max-height and custom scrollbar */
 .roulette-panel {
+  position: relative;
   width: 100%;
-  max-width: 520px;
-  max-height: 90svh;
-  overflow-y: auto;
-  background: var(--surface);
-  border: 1px solid var(--border-mid);
+  max-width: 540px;
+  max-height: min(88svh, 780px);
+  margin: auto;
+  background: linear-gradient(180deg, #131313 0%, #0c0c0c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
-  padding: 24px 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  scrollbar-width: none;
+  gap: 14px;
+  box-shadow: 
+    0 0 0 1px rgba(230, 50, 50, 0.12),
+    0 24px 64px -12px rgba(0, 0, 0, 0.9),
+    0 0 40px -10px rgba(230, 50, 50, 0.18);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(230, 50, 50, 0.35) transparent;
 }
-.roulette-panel::-webkit-scrollbar { display: none; }
 
-@media (min-width: 640px) {
+.roulette-panel::-webkit-scrollbar {
+  width: 5px;
+}
+.roulette-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.roulette-panel::-webkit-scrollbar-thumb {
+  background: rgba(230, 50, 50, 0.35);
+  border-radius: 4px;
+}
+.roulette-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--red);
+}
+
+@media (max-width: 640px) {
   .roulette-panel {
-    padding: 28px;
+    padding: 18px 16px;
+    gap: 12px;
+    border-radius: 16px;
+    max-height: min(86svh, calc(100svh - 48px));
   }
 }
 
+/* Header */
 .roulette-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  padding-bottom: 4px;
 }
-.roulette-header-left { display: flex; flex-direction: column; gap: 2px; }
+.roulette-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .roulette-eyebrow {
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--red);
   font-family: var(--font-sans);
+  text-shadow: 0 0 10px rgba(230, 50, 50, 0.4);
 }
 .roulette-title {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
-  color: var(--text);
-  font-family: var(--font-sans);
+  color: #fff;
+  font-family: var(--font-display-neue), var(--font-display), sans-serif;
+  letter-spacing: 0.8px;
+  line-height: 1.1;
+}
+@media (max-width: 640px) {
+  .roulette-title {
+    font-size: 20px;
+  }
 }
 .roulette-close {
-  background: var(--surface-2);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text-dim);
-  padding: 8px;
+  padding: 6px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.roulette-close:hover { background: var(--surface-3); color: var(--text); }
+.roulette-close:hover {
+  background: rgba(230, 50, 50, 0.15);
+  border-color: rgba(230, 50, 50, 0.4);
+  color: #fff;
+}
 
 /* Filters */
-.roulette-filters { display: flex; flex-direction: column; gap: 12px; }
-.roulette-filter-group { display: flex; flex-direction: column; gap: 6px; }
+.roulette-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.roulette-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 .roulette-filter-label {
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -4604,59 +4660,71 @@ select:focus-visible {
 .roulette-chip-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 .roulette-chip {
-  padding: 5px 12px;
+  padding: 4px 11px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   font-family: var(--font-sans);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   color: var(--text-dim);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
-.roulette-chip:hover { border-color: var(--border-strong); color: var(--text); }
+.roulette-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--text);
+}
 .roulette-chip.active {
   background: var(--red);
   border-color: var(--red);
   color: #fff;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(230, 50, 50, 0.4);
 }
 
 .roulette-pool-count {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
   font-family: var(--font-sans);
   text-align: center;
+  letter-spacing: 0.2px;
 }
 
-/* Result area */
+/* Result Area */
 .roulette-result-area {
-  min-height: 160px;
+  min-height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   overflow: hidden;
   position: relative;
 }
 
-/* Idle state */
+/* Idle State */
 .roulette-idle {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 24px;
+  gap: 8px;
+  padding: 20px;
 }
-.roulette-idle-icon { font-size: 36px; opacity: 0.5; }
+.roulette-idle-icon {
+  font-size: 32px;
+  color: var(--red);
+  opacity: 0.65;
+  filter: drop-shadow(0 0 8px rgba(230, 50, 50, 0.35));
+}
 .roulette-idle-text {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-muted);
   font-family: var(--font-sans);
   text-align: center;
@@ -4674,33 +4742,41 @@ select:focus-visible {
 
 .roulette-glitch {
   position: relative;
-  width: 120px;
-  height: 180px;
+  width: 110px;
+  height: 165px;
   border-radius: 8px;
   overflow: hidden;
   animation: rouletteGlitch 0.15s steps(1) infinite;
+  box-shadow: 0 0 20px rgba(230, 50, 50, 0.3);
 }
 .roulette-glitch-frame {
   position: absolute;
   inset: 0;
 }
 
-/* Result card */
+/* Result Card */
 .roulette-result-card {
   display: flex;
-  gap: 16px;
-  padding: 16px;
+  gap: 14px;
+  padding: 14px;
   width: 100%;
 }
 .roulette-result-poster {
   position: relative;
-  width: 90px;
-  height: 135px;
+  width: 85px;
+  height: 128px;
   border-radius: 8px;
   overflow: hidden;
   background: var(--surface-3);
   flex-shrink: 0;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+@media (max-width: 640px) {
+  .roulette-result-poster {
+    width: 75px;
+    height: 112px;
+  }
 }
 .roulette-poster-fallback {
   height: 100%;
@@ -4713,27 +4789,28 @@ select:focus-visible {
 .roulette-result-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   flex: 1;
   min-width: 0;
+  justify-content: center;
 }
 .roulette-result-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--text);
+  color: #fff;
   font-family: var(--font-sans);
   line-height: 1.25;
 }
 .roulette-result-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 .roulette-result-meta span {
   font-size: 11px;
-  color: var(--text-muted);
-  background: var(--surface-3);
-  padding: 2px 8px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 7px;
   border-radius: 4px;
   font-family: var(--font-sans);
 }
@@ -4744,28 +4821,31 @@ select:focus-visible {
   margin-top: 2px;
 }
 .roulette-score-val {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--red);
   font-family: var(--font-sans);
   line-height: 1;
+  text-shadow: 0 0 10px rgba(230, 50, 50, 0.35);
 }
 .roulette-score-denom {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .roulette-recommend {
   margin-left: 6px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 4px;
   border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.roulette-recommend--peak    { color: #9b59f5; border-color: #9b59f5; background: rgba(155,89,245,0.12); }
-.roulette-recommend--yes     { color: #52b044; border-color: #52b044; background: rgba(82,176,68,0.12); }
-.roulette-recommend--no      { color: #e63232; border-color: #e63232; background: rgba(230,50,50,0.12); }
-.roulette-recommend--garbage { color: #6b6b6b; border-color: #6b6b6b; background: rgba(107,107,107,0.12); }
+.roulette-recommend--peak    { color: #b785ff; border-color: rgba(155,89,245,0.4); background: rgba(155,89,245,0.14); }
+.roulette-recommend--yes     { color: #6ee35d; border-color: rgba(82,176,68,0.4); background: rgba(82,176,68,0.14); }
+.roulette-recommend--no      { color: #ff5252; border-color: rgba(230,50,50,0.4); background: rgba(230,50,50,0.14); }
+.roulette-recommend--garbage { color: #999; border-color: rgba(107,107,107,0.4); background: rgba(107,107,107,0.14); }
 
 .roulette-result-actions {
   display: flex;
@@ -4777,42 +4857,50 @@ select:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 7px 14px;
+  padding: 6px 12px;
   background: var(--red);
   color: #fff;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 7px;
+  font-size: 11.5px;
   font-weight: 600;
   text-decoration: none;
   font-family: var(--font-sans);
-  transition: background 0.15s;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 10px rgba(230, 50, 50, 0.3);
 }
-.roulette-btn-watch:hover { background: var(--red-dark); }
+.roulette-btn-watch:hover {
+  background: var(--red-dark);
+  box-shadow: 0 0 14px rgba(230, 50, 50, 0.5);
+}
 .roulette-btn-detail {
   display: inline-flex;
   align-items: center;
-  padding: 7px 14px;
-  background: var(--surface-3);
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-dim);
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 7px;
+  font-size: 11.5px;
   font-weight: 600;
   text-decoration: none;
   font-family: var(--font-sans);
   border: 1px solid var(--border);
-  transition: all 0.15s;
+  transition: all 0.15s ease;
 }
-.roulette-btn-detail:hover { color: var(--text); border-color: var(--border-strong); }
+.roulette-btn-detail:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+}
 
-/* Spin button */
+/* Spin Button */
 .roulette-spin-btn {
   width: 100%;
-  padding: 15px;
-  background: #fff;
+  padding: 13px 20px;
+  background: #ffffff;
   color: #080808;
   border: none;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
@@ -4820,15 +4908,23 @@ select:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s;
-  letter-spacing: 0.2px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 .roulette-spin-btn:hover:not(:disabled) {
-  background: rgba(255,255,255,0.9);
+  background: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(255,255,255,0.1);
+  box-shadow: 0 0 20px rgba(230, 50, 50, 0.3), 0 4px 20px rgba(255, 255, 255, 0.2);
 }
-.roulette-spin-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.roulette-spin-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.roulette-spin-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 
 /* ── Member Activity Feed ────────────────────────────────────────────────────── */
 .activity-section {
@@ -4977,6 +5073,36 @@ select:focus-visible {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
+.activity-badge-must-watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff4d4d;
+  background: rgba(230, 50, 50, 0.15);
+  border: 1px solid rgba(230, 50, 50, 0.4);
+  padding: 1px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 0 8px rgba(230, 50, 50, 0.2);
+}
+.activity-badge-notes {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.activity-must-watch-target {
+  color: #ff5252;
+  font-weight: 600;
 }
 .activity-score {
   font-size: 13px;
