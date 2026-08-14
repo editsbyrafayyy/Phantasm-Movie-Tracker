@@ -94,7 +94,7 @@ export default async function HomePage() {
       )}
 
       {/* ── On This Day Nostalgia Banner ───────────────── */}
-      <div style={{ marginTop: 24 }}>
+      <div className="home-on-this-day-wrapper" style={{ marginTop: 24, marginBottom: 16 }}>
         <OnThisDayWidget />
       </div>
 
@@ -103,11 +103,8 @@ export default async function HomePage() {
 
       {/* ── Must Watch ────────────────────────────────── */}
       {mustWatchEntries.length > 0 && (
-        <section className="home-must-watch-row" style={{ marginTop: 80, marginBottom: 40 }}>
-          <div className="home-vault-section" style={{ marginTop: 0 }}>
-            <h2 className="section-label" style={{ marginBottom: 24 }}>Must Watch</h2>
-          </div>
-          <CategoryRow label="" entries={mustWatchEntries} />
+        <section className="home-must-watch-row" style={{ marginTop: 36, marginBottom: 12 }}>
+          <CategoryRow label="Must Watch" entries={mustWatchEntries} />
         </section>
       )}
 
