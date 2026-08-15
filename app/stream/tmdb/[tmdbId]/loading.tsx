@@ -1,39 +1,72 @@
-export default function Loading() {
+export default function StreamDetailLoading() {
   return (
     <div className="detail-v3-page">
-      {/* Hero Skeleton */}
-      <div className="backdrop-hero" style={{ background: '#0a0a0a' }}>
-        <div className="absolute inset-0 bg-white/[0.02] animate-pulse" />
+      {/* ── Backdrop Hero Skeleton ─────────────────────────────── */}
+      <div className="backdrop-hero" style={{ background: '#0a0a0a', position: 'relative' }}>
+        <div className="skeleton" style={{ position: 'absolute', inset: 0, borderRadius: 0, opacity: 0.35 }} />
         <div className="backdrop-hero-gradient" />
+
         <div className="backdrop-hero-content">
-          <div className="h-4 w-24 bg-white/[0.05] rounded animate-pulse mb-4" />
-          <div className="h-12 w-3/4 bg-white/[0.05] rounded-lg animate-pulse mb-6" />
-          <div className="flex gap-2 mb-6">
-            <div className="h-6 w-20 bg-white/[0.05] rounded-full animate-pulse" />
-            <div className="h-6 w-20 bg-white/[0.05] rounded-full animate-pulse" />
+          <div className="skeleton" style={{ width: 120, height: 16, borderRadius: 4, marginBottom: 14 }} />
+          <div className="skeleton" style={{ width: 'clamp(280px, 55%, 600px)', height: 48, borderRadius: 6, marginBottom: 16 }} />
+
+          <div className="backdrop-meta" style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+            <div className="skeleton" style={{ width: 45, height: 16, borderRadius: 4 }} />
+            <div className="skeleton" style={{ width: 65, height: 16, borderRadius: 4 }} />
+            <div className="skeleton" style={{ width: 80, height: 16, borderRadius: 4 }} />
           </div>
-          <div className="h-5 w-64 bg-white/[0.05] rounded animate-pulse" />
+
+          <div className="backdrop-actions" style={{ display: 'flex', gap: 10 }}>
+            <div className="skeleton" style={{ width: 130, height: 42, borderRadius: 8 }} />
+            <div className="skeleton" style={{ width: 130, height: 42, borderRadius: 8 }} />
+            <div className="skeleton" style={{ width: 130, height: 42, borderRadius: 8 }} />
+          </div>
         </div>
       </div>
 
-      <div className="detail-overview-grid" style={{ marginTop: 40 }}>
+      {/* ── Overview Grid Skeleton ─────────────────────────────── */}
+      <div className="detail-overview-grid">
         <div className="detail-overview-main">
-          <div className="h-4 w-full bg-white/[0.03] rounded animate-pulse mb-3" />
-          <div className="h-4 w-full bg-white/[0.03] rounded animate-pulse mb-3" />
-          <div className="h-4 w-2/3 bg-white/[0.03] rounded animate-pulse mb-12" />
+          {/* Plot */}
+          <div style={{ marginBottom: 36 }}>
+            <div className="skeleton" style={{ width: '100%', height: 16, borderRadius: 4, marginBottom: 8 }} />
+            <div className="skeleton" style={{ width: '92%', height: 16, borderRadius: 4, marginBottom: 8 }} />
+            <div className="skeleton" style={{ width: '68%', height: 16, borderRadius: 4 }} />
+          </div>
 
-          {/* Similar Section Skeleton */}
-          <div className="h-6 w-48 bg-white/[0.05] rounded animate-pulse mb-6" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="aspect-[2/3] rounded-lg bg-white/[0.04] animate-pulse" />
-            ))}
+          {/* Cast Subsection Skeleton */}
+          <div className="detail-subsection" style={{ marginBottom: 40 }}>
+            <div className="skeleton" style={{ width: 60, height: 18, borderRadius: 4, marginBottom: 16 }} />
+            <div style={{ display: 'flex', gap: 14, overflow: 'hidden' }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} style={{ width: 130, flexShrink: 0, display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div className="skeleton" style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div className="skeleton" style={{ width: '80%', height: 12, borderRadius: 3, marginBottom: 4 }} />
+                    <div className="skeleton" style={{ width: '50%', height: 10, borderRadius: 3 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Similar Movies Carousel Skeleton */}
+          <div className="similar-section">
+            <div className="skeleton" style={{ width: 140, height: 18, borderRadius: 4, marginBottom: 16 }} />
+            <div style={{ display: 'flex', gap: 14, overflow: 'hidden' }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} style={{ width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div className="skeleton" style={{ width: 140, height: 210, borderRadius: 8, animationDelay: `${i * 45}ms` }} />
+                  <div className="skeleton" style={{ width: '80%', height: 12, borderRadius: 3 }} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <aside className="detail-overview-side">
-          <div className="h-32 w-full bg-white/[0.03] rounded-xl animate-pulse mb-6" />
-          <div className="h-48 w-full bg-white/[0.03] rounded-xl animate-pulse" />
+        {/* Sidebar Column */}
+        <aside className="detail-sidebar-v3">
+          <div className="skeleton" style={{ width: '100%', aspectRatio: '2/3', borderRadius: 12, marginBottom: 20 }} />
         </aside>
       </div>
     </div>

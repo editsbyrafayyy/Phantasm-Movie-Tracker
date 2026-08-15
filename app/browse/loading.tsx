@@ -1,33 +1,60 @@
 export default function BrowseLoading() {
   return (
-    <div className="browse-container">
-      {/* Search and Navigation Header Skeleton */}
-      <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <div className="skeleton h-10 w-64 mb-2" />
-            <div className="skeleton h-5 w-80" />
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <div className="browse-container browse-container--inset" style={{ padding: '40px 48px 80px' }}>
+        {/* Header Title Skeleton */}
+        <div style={{ marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="browse-header-container">
+            <div className="skeleton" style={{ width: 240, height: 38, borderRadius: 8, marginBottom: 8 }} />
+            <div className="skeleton" style={{ width: 340, height: 16, borderRadius: 4 }} />
           </div>
 
-          {/* Media Type Tabs Skeleton */}
-          <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8 }}>
-            <div className="skeleton h-8 w-24 rounded-md" />
-            <div className="skeleton h-8 w-24 rounded-md" />
+          {/* Controls Bar: Media toggle & Search & Mood button */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.05)', padding: 4, borderRadius: 8, width: 'fit-content' }}>
+              <div className="skeleton" style={{ width: 85, height: 32, borderRadius: 6 }} />
+              <div className="skeleton" style={{ width: 95, height: 32, borderRadius: 6 }} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="skeleton" style={{ width: '100%', maxWidth: 400, height: 42, borderRadius: 4 }} />
+              <div className="skeleton" style={{ width: 140, height: 42, borderRadius: 8 }} />
+            </div>
           </div>
         </div>
 
-        {/* Global Search Bar Skeleton */}
-        <div className="skeleton h-10 w-full max-w-[400px]" />
-      </div>
-
-      <div className="browse-grid">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="flex flex-col gap-2">
-            <div className="skeleton aspect-[2/3] w-full" />
-            <div className="skeleton h-4 w-3/4 mt-2" />
-            <div className="skeleton h-3 w-1/2" />
-          </div>
-        ))}
+        {/* Browse Grid Skeletons */}
+        <div className="browse-grid">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div
+                className="skeleton"
+                style={{
+                  width: '100%',
+                  aspectRatio: '2/3',
+                  borderRadius: 8,
+                  animationDelay: `${i * 35}ms`,
+                  position: 'relative',
+                }}
+              >
+                <div
+                  className="skeleton"
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    left: 8,
+                    width: 44,
+                    height: 20,
+                    borderRadius: 4,
+                    background: 'rgba(255,255,255,0.1)',
+                  }}
+                />
+              </div>
+              <div className="skeleton" style={{ width: '85%', height: 14, borderRadius: 3, animationDelay: `${i * 35 + 20}ms` }} />
+              <div className="skeleton" style={{ width: '45%', height: 11, borderRadius: 3, animationDelay: `${i * 35 + 40}ms` }} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

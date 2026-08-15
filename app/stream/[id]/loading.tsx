@@ -1,89 +1,83 @@
-export default function Loading() {
+export default function WatchLoading() {
   return (
     <div className="watch-page">
       <div className="watch-layout">
-        
-        {/* Left Column: Player & Sources */}
+        {/* Left Column: Video Player & Source Selection */}
         <div className="watch-player-col" style={{ padding: '24px' }}>
           {/* Header Row */}
           <div className="watch-back-header" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div className="h-6 w-8 bg-white/[0.05] rounded animate-pulse" />
-            <div className="h-6 w-48 bg-white/[0.05] rounded animate-pulse" />
+            <div className="skeleton" style={{ width: 32, height: 32, borderRadius: 6 }} />
+            <div className="skeleton" style={{ width: 220, height: 20, borderRadius: 4 }} />
           </div>
 
-          {/* 16:9 Video Player Wrap */}
-          <div 
-            className="watch-iframe-container bg-white/[0.03] animate-pulse" 
-            style={{ width: '100%', aspectRatio: '16/9', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}
+          {/* 16:9 Video Player Container Skeleton */}
+          <div
+            className="skeleton"
+            style={{
+              width: '100%',
+              aspectRatio: '16/9',
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.06)',
+              marginBottom: 16,
+            }}
           />
 
-          {/* Under player controls */}
-          <div className="watch-actions-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 12 }}>
-            <div>
-              <div className="h-3 w-24 bg-white/[0.05] rounded animate-pulse mb-2" />
-              <div className="h-6 w-64 bg-white/[0.05] rounded animate-pulse" />
-            </div>
-            
-            <div style={{ display: 'flex', gap: 8 }}>
-              <div className="h-10 w-10 bg-white/[0.05] rounded-lg animate-pulse" />
-              <div className="h-10 w-10 bg-white/[0.05] rounded-lg animate-pulse" />
-            </div>
+          {/* Under player controls row */}
+          <div className="watch-actions-row" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 16 }}>
+            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 8 }} />
+            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 8 }} />
           </div>
 
-          <div className="h-12 w-full bg-white/[0.04] rounded-lg animate-pulse mb-6" />
+          {/* Warning banner placeholder */}
+          <div className="skeleton" style={{ width: '100%', height: 44, borderRadius: 8, marginBottom: 24 }} />
 
-          {/* Server provider grid */}
+          {/* Server provider grid skeleton */}
           <div className="watch-server-grid-container" style={{ marginBottom: 24 }}>
-            <div className="h-4 w-32 bg-white/[0.05] rounded animate-pulse mb-3" />
+            <div className="skeleton" style={{ width: 140, height: 16, borderRadius: 4, marginBottom: 12 }} />
             <div className="watch-server-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-9 w-full bg-white/[0.04] rounded-lg animate-pulse" />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="skeleton" style={{ height: 38, borderRadius: 8, animationDelay: `${i * 40}ms` }} />
               ))}
             </div>
           </div>
         </div>
 
         {/* Right Column: Sidebar */}
-        <div className="watch-sidebar" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', background: '#0a0a0a', padding: '24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <aside className="watch-sidebar" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', background: '#0a0a0a', padding: '24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Poster & metadata */}
           <div className="watch-sidebar-poster-card" style={{ display: 'flex', gap: 16 }}>
-            <div className="w-[90px] h-[130px] bg-white/[0.05] rounded-lg flex-shrink-0 animate-pulse" />
-            <div className="watch-sidebar-meta" style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', flex: 1 }}>
-              <div className="h-3 w-3/4 bg-white/[0.05] rounded animate-pulse" />
-              <div className="h-3 w-full bg-white/[0.05] rounded animate-pulse" />
-              <div className="h-3 w-1/2 bg-white/[0.05] rounded animate-pulse" />
+            <div className="skeleton" style={{ width: 90, height: 130, borderRadius: 8, flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', flex: 1 }}>
+              <div className="skeleton" style={{ width: '90%', height: 18, borderRadius: 4 }} />
+              <div className="skeleton" style={{ width: '60%', height: 13, borderRadius: 3 }} />
+              <div className="skeleton" style={{ width: '40%', height: 13, borderRadius: 3 }} />
             </div>
           </div>
 
+          {/* Synopsis */}
           <div>
-            <div className="h-6 w-full bg-white/[0.05] rounded animate-pulse mb-2" />
-            <div className="h-4 w-16 bg-white/[0.05] rounded animate-pulse" />
+            <div className="skeleton" style={{ width: 100, height: 14, borderRadius: 3, marginBottom: 8 }} />
+            <div className="skeleton" style={{ width: '100%', height: 12, borderRadius: 3, marginBottom: 4 }} />
+            <div className="skeleton" style={{ width: '90%', height: 12, borderRadius: 3, marginBottom: 4 }} />
+            <div className="skeleton" style={{ width: '65%', height: 12, borderRadius: 3 }} />
           </div>
 
-          <div className="h-24 w-full bg-white/[0.04] rounded-lg animate-pulse" />
-
-          <div style={{ display: 'flex', gap: 6 }}>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-6 w-16 bg-white/[0.05] rounded-md animate-pulse" />
-            ))}
-          </div>
-
+          {/* Cast Members */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-            <div className="h-4 w-24 bg-white/[0.05] rounded animate-pulse mb-3" />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <div className="h-9 w-9 rounded-full bg-white/[0.05] flex-shrink-0 animate-pulse" />
+            <div className="skeleton" style={{ width: 90, height: 14, borderRadius: 3, marginBottom: 12 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="skeleton" style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <div className="h-3 w-20 bg-white/[0.05] rounded animate-pulse mb-2" />
-                    <div className="h-2 w-24 bg-white/[0.05] rounded animate-pulse" />
+                    <div className="skeleton" style={{ width: '60%', height: 12, borderRadius: 3, marginBottom: 4 }} />
+                    <div className="skeleton" style={{ width: '40%', height: 10, borderRadius: 3 }} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-
+        </aside>
       </div>
     </div>
   );
