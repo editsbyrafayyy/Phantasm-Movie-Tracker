@@ -14,17 +14,18 @@ interface RouletteModalProps {
   onClose:   () => void;
 }
 
-type DecadeFilter = 'Any' | '70s' | '80s' | '90s' | '00s' | '10s' | '20s';
+type DecadeFilter = 'Any' | 'Pre-70s' | '70s' | '80s' | '90s' | '00s' | '10s' | '20s';
 type RuntimeFilter = 'Any' | 'Under 90 min' | '90–120 min' | 'Over 120 min';
 
 const DECADE_RANGES: Record<DecadeFilter, [number, number] | null> = {
-  'Any':   null,
-  '70s':   [1970, 1979],
-  '80s':   [1980, 1989],
-  '90s':   [1990, 1999],
-  '00s':   [2000, 2009],
-  '10s':   [2010, 2019],
-  '20s':   [2020, 2029],
+  'Any':     null,
+  'Pre-70s': [1900, 1969],
+  '70s':     [1970, 1979],
+  '80s':     [1980, 1989],
+  '90s':     [1990, 1999],
+  '00s':     [2000, 2009],
+  '10s':     [2010, 2019],
+  '20s':     [2020, 2029],
 };
 
 const RUNTIME_RANGES: Record<RuntimeFilter, [number, number] | null> = {
@@ -129,7 +130,7 @@ export default function RouletteModal({ entries, canStream, onClose }: RouletteM
             <div className="roulette-filter-group">
               <span className="roulette-filter-label">Genre</span>
               <div className="roulette-chip-row">
-                {['Any', ...SUBGENRES.slice(0, 6)].map(s => (
+                {['Any', ...SUBGENRES].map(s => (
                   <button
                     key={s}
                     className={`roulette-chip${subgenre === s ? ' active' : ''}`}

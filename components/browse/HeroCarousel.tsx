@@ -134,12 +134,15 @@ export default function HeroCarousel({
 
             <div className="hero-actions">
               {entry.id && (
-                <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-watch">
+                <Link
+                  href={canStream ? `/stream/${movie.omdb_id || movie.tmdb_id || entry.id}` : `/login?next=${encodeURIComponent(`/stream/${movie.omdb_id || movie.tmdb_id || entry.id}`)}`}
+                  className="btn-watch"
+                >
                   <Play size={14} fill="white" color="white" />
                   Watch Now
                 </Link>
               )}
-              <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-edit">
+              <Link href={`/vault/${entry.id}`} className="btn-edit">
                 View Details
               </Link>
             </div>
@@ -201,11 +204,14 @@ export default function HeroCarousel({
             )}
             <div className="hero-actions">
               {entry.id && (
-                <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-watch">
+                <Link
+                  href={canStream ? `/stream/${movie.omdb_id || movie.tmdb_id || entry.id}` : `/login?next=${encodeURIComponent(`/stream/${movie.omdb_id || movie.tmdb_id || entry.id}`)}`}
+                  className="btn-watch"
+                >
                   <Play size={14} fill="white" color="white" /> Watch Now
                 </Link>
               )}
-              <Link href={canStream ? `/vault/${entry.id}` : '/login'} className="btn-edit">
+              <Link href={`/vault/${entry.id}`} className="btn-edit">
                 View Details
               </Link>
             </div>

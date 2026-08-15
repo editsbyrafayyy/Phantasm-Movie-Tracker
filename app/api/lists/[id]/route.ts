@@ -7,6 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const authClient = await createServerSupabaseClient();
+  const { data: { user } } = await authClient.auth.getUser();
+
   const supabase = createServiceClient();
 
   const { data: list, error } = await supabase
@@ -17,6 +20,11 @@ export async function GET(
 
   if (error || !list) {
     return NextResponse.json({ error: 'List not found' }, { status: 404 });
+  }
+
+  // Enforce privacy: only public lists or lists owned by the requesting user can be viewed
+  if (!list.is_public && list.user_id !== user?.id) {
+    return NextResponse.json({ error: 'List not found or private' }, { status: 404 });
   }
 
   return NextResponse.json({ list });

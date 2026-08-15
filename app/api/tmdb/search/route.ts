@@ -87,8 +87,12 @@ export async function GET(req: NextRequest) {
           const isTargetGenre = genres.some((id: number) => [9648, 10765, 27, 53].includes(id));
           return isTargetGenre;
         } else {
-          // Movie: must be Horror (27) or Thriller (53)
-          return genres.some((id: number) => id === 27 || id === 53);
+          // Movie: must not be Animation (16) or Family (10751)
+          const isExcluded = genres.some((id: number) => [16, 10751].includes(id));
+          if (isExcluded) return false;
+
+          // Movie: must be Horror (27), Thriller (53), Sci-Fi (878), or Mystery (9648)
+          return genres.some((id: number) => [27, 53, 878, 9648].includes(id));
         }
       });
     }

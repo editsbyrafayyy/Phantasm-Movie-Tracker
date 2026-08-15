@@ -1,19 +1,25 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { SUBGENRES } from '@/lib/config';
 import type { Entry } from '@/lib/types';
 
-type SortKey = 'az' | 'za' | 'top' | 'recent';
+type SortKey = 'az' | 'za' | 'top' | 'worst' | 'recent' | 'year_desc' | 'year_asc' | 'runtime_desc' | 'runtime_asc';
 type YearBucket = 'all' | 'pre1980' | '1980s' | '1990s' | '2000s' | '2010s' | '2020s';
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'recent', label: 'Recently Added' },
-  { value: 'top',    label: 'Highest Rated'  },
-  { value: 'az',     label: 'A → Z'          },
-  { value: 'za',     label: 'Z → A'          },
+  { value: 'recent',       label: 'Recently Added' },
+  { value: 'top',          label: 'Highest Rated'  },
+  { value: 'worst',        label: 'Lowest Rated'   },
+  { value: 'year_desc',    label: 'Year (Newest)'  },
+  { value: 'year_asc',     label: 'Year (Oldest)'  },
+  { value: 'runtime_desc', label: 'Runtime (Longest)' },
+  { value: 'runtime_asc',  label: 'Runtime (Shortest)' },
+  { value: 'az',           label: 'A → Z'          },
+  { value: 'za',           label: 'Z → A'          },
 ];
 
 const YEAR_OPTIONS: { value: YearBucket; label: string }[] = [
@@ -32,14 +38,23 @@ interface VaultFiltersProps {
 }
 
 export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps) {
+  const searchParams = useSearchParams();
+  const subgenreParam = searchParams.get('subgenre');
+
   const [search,          setSearch]          = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedGenre,   setGenre]           = useState('All');
+  const [selectedGenre,   setGenre]           = useState(subgenreParam || 'All');
   const [selectedRec,     setRec]             = useState('All');
   const [sort,            setSort]            = useState<SortKey>('recent');
   const [ratingFilter,    setRatingFilter]    = useState<'all' | 'rated' | 'unrated'>('all');
   const [yearBucket,      setYearBucket]      = useState<YearBucket>('all');
   const [runtimeFilter,   setRuntimeFilter]   = useState<'all' | 'under90' | '90to120' | 'over120'>('all');
+
+  useEffect(() => {
+    if (subgenreParam && subgenreParam !== selectedGenre) {
+      setGenre(subgenreParam);
+    }
+  }, [subgenreParam]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 250);
@@ -55,7 +70,7 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
       result = result.filter(e => {
         const titleMatch = e.movie?.title?.toLowerCase().includes(q);
         const directorMatch = e.movie?.director?.toLowerCase().includes(q);
-        const castMatch = e.movie?.cast_list?.some(c => c.name?.toLowerCase().includes(q));
+        const castMatch = e.movie?.cast_list?.some(c => (typeof c === 'string' ? c : c?.name)?.toLowerCase().includes(q));
         return titleMatch || directorMatch || castMatch;
       });
     }
@@ -122,6 +137,21 @@ export default function VaultFilters({ entries, onFiltered }: VaultFiltersProps)
         break;
       case 'top':
         result.sort((a, b) => (b.total ?? 0) - (a.total ?? 0));
+        break;
+      case 'worst':
+        result.sort((a, b) => (a.total ?? 0) - (b.total ?? 0));
+        break;
+      case 'year_desc':
+        result.sort((a, b) => (b.movie?.year ?? 0) - (a.movie?.year ?? 0));
+        break;
+      case 'year_asc':
+        result.sort((a, b) => (a.movie?.year ?? 0) - (b.movie?.year ?? 0));
+        break;
+      case 'runtime_desc':
+        result.sort((a, b) => (b.movie?.runtime_min ?? 0) - (a.movie?.runtime_min ?? 0));
+        break;
+      case 'runtime_asc':
+        result.sort((a, b) => (a.movie?.runtime_min ?? 0) - (b.movie?.runtime_min ?? 0));
         break;
       case 'recent':
         result.sort((a, b) => {

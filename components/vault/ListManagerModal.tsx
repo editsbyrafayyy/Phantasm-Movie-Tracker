@@ -67,7 +67,11 @@ export default function ListManagerModal({ movieId, movieTitle, isOpen, onClose 
       if (!res.ok) throw new Error(data.error || 'Failed to create list');
 
       setToast({ message: 'Stack created successfully!', type: 'success' });
-      setLists(prev => [data.list, ...prev]);
+      const newList = {
+        ...data.list,
+        items: movieId ? [{ id: 'temp-' + Date.now(), movie: { id: movieId } }] : [],
+      };
+      setLists(prev => [newList, ...prev]);
       setNewTitle('');
       setNewDesc('');
       setCreating(false);

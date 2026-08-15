@@ -274,6 +274,7 @@ export async function POST(req: NextRequest) {
     impact:        scores.impact     !== '' ? scores.impact     : null,
     bonus:         bonus ?? 0,
     total,
+    notes:         body.notes ? String(body.notes).trim().slice(0, 500) : null,
   };
 
   const { data: entry, error: entryError } = await supabase

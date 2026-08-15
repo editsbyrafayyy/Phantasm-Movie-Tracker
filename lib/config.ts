@@ -105,7 +105,7 @@ export function computeTotal(fields: {
     const v = fields[f.key as ScoreKey];
     return acc + (typeof v === 'number' ? v : 0);
   }, 0);
-  return sum + fields.bonus;
+  return Math.round((sum + fields.bonus) * 100) / 100;
 }
 
 // ── Built-in Horror Franchises ────────────────────────────────────────────────

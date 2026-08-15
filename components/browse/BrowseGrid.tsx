@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, Search, AlertCircle, RefreshCw } from 'lucide-react';
+import { Eye, Search, AlertCircle, RefreshCw, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import MoodPicker from '@/components/browse/MoodPicker';
 import WatchHistoryRow from '@/components/stream/WatchHistoryRow';
@@ -209,16 +209,13 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
     });
   };
 
-  const closeWheelOverlay = useCallback(() => {
-    if (closeGraceTimerRef.current) {
-      clearTimeout(closeGraceTimerRef.current);
-      closeGraceTimerRef.current = null;
-    }
-    setIsOverlayActive(false);
+  const closeWheelOverlay = () => {
+    setIsWheelClosing(true);
     setTimeout(() => {
       setIsWheelOpen(false);
-    }, 320);
-  }, []);
+      setIsWheelClosing(false);
+    }, 380);
+  };
 
   const handleOverlayMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     // If mouse moves past 52% of screen width into the empty area, start grace timer to close
@@ -421,16 +418,15 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
 
   const handleGenreChange = (_index: number, item: string) => {
     const nextGenre = item === 'All' ? null : item;
+    if (searchQuery) setSearchQuery('');
+    if (activeQuery) setActiveQuery('');
     if (nextGenre === genreFilter) return;
-    if (genreDebounceRef.current) clearTimeout(genreDebounceRef.current);
-    genreDebounceRef.current = setTimeout(() => {
-      setGenreFilter(nextGenre);
-      setPage(1);
-      setHasMore(true);
-      setSwappingGenre(true);
-      setFetchError(null);
-      errorCountRef.current = 0;
-    }, 200);
+    setGenreFilter(nextGenre);
+    setPage(1);
+    setHasMore(true);
+    setSwappingGenre(true);
+    setFetchError(null);
+    errorCountRef.current = 0;
   };
 
   const handleWheelChange = (_idx: number, item: string) => {
@@ -440,6 +436,8 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   const handleWheelSettle = (_idx: number, item: string) => {
     const nextGenre = item === 'All' ? null : item;
     setActiveWheelGenre(item);
+    if (searchQuery) setSearchQuery('');
+    if (activeQuery) setActiveQuery('');
     if (nextGenre === genreFilter) return;
     setGenreFilter(nextGenre);
     setPage(1);
@@ -606,16 +604,45 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
             </div>
 
             {/* Search Bar */}
-            <div className="search-input-wrap" style={{ maxWidth: '400px', width: '100%' }}>
+            <div className="search-input-wrap" style={{ maxWidth: '400px', width: '100%', position: 'relative' }}>
               <Search className="search-icon" size={16} style={{ color: 'rgba(255,255,255,0.4)', left: '14px' }} />
               <input
                 type="text"
                 className="form-input search-input-inner"
                 placeholder={mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search horror / thriller / sci-fi shows...'}
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{ paddingLeft: '40px', height: '42px', fontSize: '14px', borderRadius: '4px' }}
+                onChange={e => {
+                  setSearchQuery(e.target.value);
+                  if (genreFilter) setGenreFilter(null);
+                }}
+                style={{ paddingLeft: '40px', paddingRight: searchQuery ? '36px' : '14px', height: '42px', fontSize: '14px', borderRadius: '4px' }}
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setActiveQuery('');
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255,255,255,0.4)',
+                    cursor: 'pointer',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
         </div>

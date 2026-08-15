@@ -163,7 +163,7 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
                     </span>
                   )}
                   {item.total !== null && item.total !== undefined && item.total > 0 && (
-                    <span className="activity-score">{item.total}<small>/11</small></span>
+                    <span className="activity-score">{item.total}<small>/10</small></span>
                   )}
                   {item.recommend && recStyle && (
                     <span className="activity-recommend" style={{ color: recStyle.color }}>

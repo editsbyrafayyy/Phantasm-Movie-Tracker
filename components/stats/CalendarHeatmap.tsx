@@ -32,7 +32,10 @@ function buildHeatmapGrid(entries: DiaryEntry[], year: number) {
   for (let w = 0; w < 53; w++) {
     const week: { date: Date; count: number; iso: string }[] = [];
     for (let d = 0; d < 7; d++) {
-      const iso = cursor.toISOString().slice(0, 10);
+      const yyyy = cursor.getFullYear();
+      const mm = String(cursor.getMonth() + 1).padStart(2, '0');
+      const dd = String(cursor.getDate()).padStart(2, '0');
+      const iso = `${yyyy}-${mm}-${dd}`;
       week.push({
         date: new Date(cursor),
         count: cursor.getFullYear() === year ? (countByDate[iso] ?? 0) : -1, // -1 = out of year

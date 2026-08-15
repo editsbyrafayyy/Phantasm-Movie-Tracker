@@ -60,7 +60,10 @@ export async function GET(req: NextRequest) {
   
   // Enforce horror/thriller/sci-fi genres and exclude animation/anime/family/etc for TV
   if (type === 'tv') {
-    tmdbUrl.searchParams.set('with_genres', incomingGenres || '9648|10765|27|53');
+    const tvGenres = incomingGenres
+      ? incomingGenres.replace(/\b27\b/g, '9648|10765|53')
+      : '9648|10765|53';
+    tmdbUrl.searchParams.set('with_genres', tvGenres);
     tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres || '16,10762,10751,10764,10766,10767,10763,99');
   } else {
     // Default to Horror (27). If caller specified a genre combination (e.g. '27,35' for comedy or '27,878' for sci-fi), use it.

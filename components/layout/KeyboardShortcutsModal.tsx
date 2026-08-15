@@ -54,7 +54,7 @@ export default function KeyboardShortcutsModal() {
 
       // 'R' key for Roulette (dispatch custom event if listener exists)
       if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey) {
-        const rouletteBtn = document.querySelector<HTMLButtonElement>('[aria-label="Movie Roulette"], .roulette-btn, button:contains("Roulette")');
+        const rouletteBtn = document.querySelector<HTMLButtonElement>('[aria-label="Movie Roulette"], .roulette-btn, [data-action="roulette"]');
         if (rouletteBtn) {
           rouletteBtn.click();
         }

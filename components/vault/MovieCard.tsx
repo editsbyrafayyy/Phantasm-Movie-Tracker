@@ -41,7 +41,7 @@ export default function MovieCard({ entry, priority = false }: MovieCardProps) {
   const imgSrc = poster ?? backdrop ?? null;
   
   const pathname = usePathname();
-  const targetHref = user ? `/vault/${entry.id}?from=${encodeURIComponent(pathname)}` : '/login';
+  const targetHref = `/vault/${entry.id}?from=${encodeURIComponent(pathname)}`;
 
   return (
     <motion.div

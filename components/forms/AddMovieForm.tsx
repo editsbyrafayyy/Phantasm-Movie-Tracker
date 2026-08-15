@@ -37,11 +37,13 @@ export default function AddMovieForm() {
   useEffect(() => {
     const titleParam = searchParams.get('title') ?? '';
     const omdbIdParam = searchParams.get('omdbId') ?? '';
-    if (titleParam || omdbIdParam) {
+    const tmdbIdParam = searchParams.get('tmdbId') ?? '';
+    const resolvedId = omdbIdParam || (tmdbIdParam ? `tmdb:${tmdbIdParam}` : '');
+    if (titleParam || resolvedId) {
       setForm(prev => ({
         ...prev,
         title: titleParam,
-        omdbId: omdbIdParam,
+        omdbId: resolvedId,
       }));
     }
   }, [searchParams]);
@@ -57,17 +59,29 @@ export default function AddMovieForm() {
   const dupDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetch('/api/owner-vault')
-      .then(r => r.json())
-      .then((data: Entry[]) => {
-        if (Array.isArray(data)) {
-          vaultTitlesRef.current = data.map(e => ({
+    fetch('/api/stats')
+      .then(r => (r.ok ? r.json() : Promise.reject(r)))
+      .then(data => {
+        if (Array.isArray(data?.entries)) {
+          vaultTitlesRef.current = data.entries.map((e: any) => ({
             id: e.id,
             title: e.movie?.title?.toLowerCase() ?? '',
           }));
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        fetch('/api/owner-vault')
+          .then(r => r.json())
+          .then((ownerData: Entry[]) => {
+            if (Array.isArray(ownerData)) {
+              vaultTitlesRef.current = ownerData.map(e => ({
+                id: e.id,
+                title: e.movie?.title?.toLowerCase() ?? '',
+              }));
+            }
+          })
+          .catch(() => {});
+      });
   }, []);
 
   useEffect(() => {

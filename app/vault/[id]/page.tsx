@@ -26,7 +26,7 @@ export default async function VaultEntryPage({ params }: Props) {
   // Use service client to fetch data — allows guests to view any entry
   const supabase = createServiceClient();
 
-  // Parallelize session check and main entry fetch
+  // Parallelize session check and main entry fetch (support both entry.id and movie_id)
   const authClientPromise = createServerSupabaseClient();
   const entryPromise = supabase
     .from('entries')
@@ -34,20 +34,33 @@ export default async function VaultEntryPage({ params }: Props) {
     .eq('id', id)
     .maybeSingle();
 
-  const [authClient, { data: entry, error }] = await Promise.all([
+  const [authClient, entryRes] = await Promise.all([
     authClientPromise,
     entryPromise
   ]);
 
+  let entry = entryRes.data;
+  if (!entry) {
+    const fallbackRes = await supabase
+      .from('entries')
+      .select('*, movie:movies (*), user_id')
+      .eq('movie_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    entry = fallbackRes.data;
+  }
+
   const { data: { user } } = await authClient.auth.getUser();
 
-  if (error || !entry) notFound();
+  if (!entry) notFound();
 
   const sessionUserId = user?.id ?? null;
-  const isOwner = sessionUserId !== null && sessionUserId === ownerId;
+  const isSiteOwner = sessionUserId !== null && sessionUserId === ownerId;
+  const isEntryOwner = sessionUserId !== null && sessionUserId === entry.user_id;
 
   const isOwnerEntry = ownerId && entry.user_id === ownerId;
-  const isOwnEntry = sessionUserId !== null && entry.user_id === sessionUserId;
+  const isOwnEntry = isEntryOwner;
   if (!isOwnerEntry && !isOwnEntry) notFound();
 
   const similarScopeUserId = isOwnerEntry ? ownerId : sessionUserId;
@@ -76,7 +89,8 @@ export default async function VaultEntryPage({ params }: Props) {
       entry={entry as Entry}
       similar={similar as Entry[]}
       allEntries={allEntries as Entry[]}
-      isOwner={isOwner}
+      isOwner={isEntryOwner}
+      isSiteOwner={isSiteOwner}
       canStream={!!user}
     />
   );

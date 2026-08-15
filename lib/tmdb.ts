@@ -335,8 +335,9 @@ export async function getHiddenGemsHorror(): Promise<TmdbDiscoverMovie[]> {
 export async function getComingSoonHorror(): Promise<TmdbDiscoverMovie[]> {
   try {
     const key   = getKey();
-    const today = new Date().toISOString().split('T')[0];
-    const end   = '2026-12-31';
+    const now   = new Date();
+    const today = now.toISOString().split('T')[0];
+    const end   = `${now.getFullYear() + 1}-12-31`;
 
     const url = `${TMDB_BASE}/discover/movie?api_key=${key}`
       + `&with_genres=27,53`

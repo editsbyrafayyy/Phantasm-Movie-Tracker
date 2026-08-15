@@ -314,39 +314,64 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
   }
 
-  const total = computeTotal({
-    atmosphere: body.atmosphere ?? '',
-    story:      body.story      ?? '',
-    characters: body.characters ?? '',
-    pacing:     body.pacing     ?? '',
-    visuals:    body.visuals    ?? '',
-    thrill:     body.thrill     ?? '',
-    sound:      body.sound      ?? '',
-    impact:     body.impact     ?? '',
-    bonus:      body.bonus      ?? 0,
-  });
+  // Check if score fields were submitted in the body
+  const hasScoreUpdate = [
+    'atmosphere', 'story', 'characters', 'pacing',
+    'visuals', 'thrill', 'sound', 'impact', 'bonus'
+  ].some(k => k in body);
+
+  const updatePayload: Record<string, any> = {};
+
+  if (resolvedMovieId) {
+    updatePayload.movie_id = resolvedMovieId;
+  }
+  if (body.subgenre !== undefined) {
+    updatePayload.subgenre = body.subgenre;
+  }
+  if (body.secondaryTag !== undefined) {
+    updatePayload.secondary_tag = body.secondaryTag || null;
+  }
+  if (body.recommend !== undefined) {
+    updatePayload.recommend = body.recommend || null;
+  }
+  if (body.notes !== undefined) {
+    updatePayload.notes = body.notes ? String(body.notes).trim().slice(0, 500) : null;
+  }
+  if (body.custom_tags !== undefined) {
+    updatePayload.custom_tags = Array.isArray(body.custom_tags) ? body.custom_tags : [];
+  }
+  if (body.must_watch !== undefined && user.id === OWNER_ID) {
+    updatePayload.must_watch = !!body.must_watch;
+  }
+
+  if (hasScoreUpdate) {
+    const total = computeTotal({
+      atmosphere: body.atmosphere ?? existing.atmosphere ?? '',
+      story:      body.story      ?? existing.story      ?? '',
+      characters: body.characters ?? existing.characters ?? '',
+      pacing:     body.pacing     ?? existing.pacing     ?? '',
+      visuals:    body.visuals    ?? existing.visuals    ?? '',
+      thrill:     body.thrill     ?? existing.thrill     ?? '',
+      sound:      body.sound      ?? existing.sound      ?? '',
+      impact:     body.impact     ?? existing.impact     ?? '',
+      bonus:      body.bonus      ?? existing.bonus      ?? 0,
+    });
+
+    updatePayload.atmosphere = body.atmosphere !== undefined ? (body.atmosphere !== '' ? body.atmosphere : null) : existing.atmosphere;
+    updatePayload.story      = body.story      !== undefined ? (body.story      !== '' ? body.story      : null) : existing.story;
+    updatePayload.characters = body.characters !== undefined ? (body.characters !== '' ? body.characters : null) : existing.characters;
+    updatePayload.pacing     = body.pacing     !== undefined ? (body.pacing     !== '' ? body.pacing     : null) : existing.pacing;
+    updatePayload.visuals    = body.visuals    !== undefined ? (body.visuals    !== '' ? body.visuals    : null) : existing.visuals;
+    updatePayload.thrill     = body.thrill     !== undefined ? (body.thrill     !== '' ? body.thrill     : null) : existing.thrill;
+    updatePayload.sound      = body.sound      !== undefined ? (body.sound      !== '' ? body.sound      : null) : existing.sound;
+    updatePayload.impact     = body.impact     !== undefined ? (body.impact     !== '' ? body.impact     : null) : existing.impact;
+    updatePayload.bonus      = body.bonus      !== undefined ? (body.bonus ?? 0) : existing.bonus;
+    updatePayload.total      = total;
+  }
 
   const { data, error } = await supabase
     .from('entries')
-    .update({
-      movie_id:      resolvedMovieId,
-      subgenre:      body.subgenre      ?? undefined,
-      secondary_tag: body.secondaryTag  ?? null,
-      recommend:     body.recommend     || null,
-      atmosphere:    body.atmosphere !== '' ? body.atmosphere : null,
-      story:         body.story      !== '' ? body.story      : null,
-      characters:    body.characters !== '' ? body.characters : null,
-      pacing:        body.pacing     !== '' ? body.pacing     : null,
-      visuals:       body.visuals    !== '' ? body.visuals    : null,
-      thrill:        body.thrill     !== '' ? body.thrill     : null,
-      sound:         body.sound      !== '' ? body.sound      : null,
-      impact:        body.impact     !== '' ? body.impact     : null,
-      bonus:         body.bonus      ?? 0,
-      total,
-      notes:         body.notes !== undefined ? (body.notes?.trim() || null) : undefined,
-      custom_tags:   body.custom_tags !== undefined ? (body.custom_tags ?? []) : undefined,
-      must_watch:    (body.must_watch !== undefined && user.id === OWNER_ID) ? body.must_watch : undefined,
-    })
+    .update(updatePayload)
     .eq('id', id)
     .select('*, movie:movies (*)')
     .single();

@@ -53,10 +53,10 @@ export async function proxy(req: NextRequest) {
     return res;
   }
 
-  // Members only routes: /add, /update, /profile, /vault, /browse, /stream, /stats, /api/add-movie, /api/stats
-  const membersOnly = ['/add', '/update', '/profile', '/vault', '/browse', '/stream', '/stats', '/api/add-movie', '/api/stats'];
+  // Members only routes: /add, /update, /profile, /stream, /stats, /diary, /watchlist, /api/add-movie, /api/stats
+  const membersOnly = ['/add', '/update', '/profile', '/stream', '/stats', '/diary', '/watchlist', '/api/add-movie', '/api/stats'];
   if (membersOnly.some(p => pathname.startsWith(p)) && !user) {
-    const loginUrl = new URL('/login', req.url);
+    const loginUrl = new URL(`/login?next=${encodeURIComponent(pathname)}`, req.url);
     return NextResponse.redirect(loginUrl);
   }
 

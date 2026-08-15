@@ -39,17 +39,18 @@ function boostColor(rgb: string | null): string {
 }
 
 interface MovieDetailV3Props {
-  entry:      Entry;
-  similar:    Entry[];
-  allEntries?: Entry[];
-  isOwner:    boolean;
-  canStream:  boolean;
+  entry:        Entry;
+  similar:      Entry[];
+  allEntries?:  Entry[];
+  isOwner:      boolean;
+  isSiteOwner?: boolean;
+  canStream:    boolean;
 }
 
-export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner, canStream }: MovieDetailV3Props) {
+export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner, isSiteOwner = false, canStream }: MovieDetailV3Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const from = searchParams.get('from') || '/';
+  const from = searchParams.get('from') || '/vault';
 
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting]     = useState(false);
@@ -400,24 +401,27 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
             )}
 
             {/* ── Secondary actions ── */}
+            {isSiteOwner && (
+              <button
+                onClick={toggleMustWatch}
+                disabled={togglingMustWatch}
+                className="btn-edit"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: mustWatch ? 'var(--accent)' : 'transparent',
+                  color: mustWatch ? '#080808' : 'var(--text-dim)',
+                  borderColor: mustWatch ? 'var(--accent)' : 'var(--border-strong)',
+                }}
+              >
+                <Pin size={14} fill={mustWatch ? 'currentColor' : 'none'} />
+                {mustWatch ? 'Pinned' : 'Must Watch'}
+              </button>
+            )}
+
             {isOwner && (
               <>
-                <button
-                  onClick={toggleMustWatch}
-                  disabled={togglingMustWatch}
-                  className="btn-edit"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: mustWatch ? 'var(--accent)' : 'transparent',
-                    color: mustWatch ? '#080808' : 'var(--text-dim)',
-                    borderColor: mustWatch ? 'var(--accent)' : 'var(--border-strong)',
-                  }}
-                >
-                  <Pin size={14} fill={mustWatch ? 'currentColor' : 'none'} />
-                  {mustWatch ? 'Pinned' : 'Must Watch'}
-                </button>
                 <Link href={`/update?id=${entry.id}`} className="btn-edit">
                   <Pencil size={14} />
                   Edit

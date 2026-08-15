@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Play, Star } from 'lucide-react';
+import { ArrowLeft, Play, Star, Plus } from 'lucide-react';
 import type { TmdbMovieDetail } from '@/lib/tmdb';
 import WatchlistButton from '@/components/watchlist/WatchlistButton';
 
@@ -110,6 +110,14 @@ export default function StreamDetailV3({ movie, imdbId, mediaType = 'movie' }: S
                 Watch Now
               </Link>
             )}
+            <Link
+              href={imdbId ? `/add?omdbId=${imdbId}&title=${encodeURIComponent(title)}` : `/add?tmdbId=${movie.id}&title=${encodeURIComponent(title)}`}
+              className="btn-edit"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <Plus size={14} />
+              Add to Vault
+            </Link>
             <WatchlistButton
               tmdbId={movie.id}
               mediaType={mediaType}
