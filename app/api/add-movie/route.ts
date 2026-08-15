@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { omdbId, subgenre, secondaryTag, recommend, bonus, ...scores } = body;
+  const { omdbId, subgenre, secondaryTag, recommend, bonus, notes, custom_tags, ...scores } = body;
 
   const title = String(body.title ?? '').trim().slice(0, 200);
   if (!title) {
@@ -274,7 +274,8 @@ export async function POST(req: NextRequest) {
     impact:        scores.impact     !== '' ? scores.impact     : null,
     bonus:         bonus ?? 0,
     total,
-    notes:         body.notes ? String(body.notes).trim().slice(0, 500) : null,
+    notes:         notes ? String(notes).trim().slice(0, 500) : null,
+    custom_tags:   Array.isArray(custom_tags) ? custom_tags : [],
   };
 
   const { data: entry, error: entryError } = await supabase

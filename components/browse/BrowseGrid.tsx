@@ -210,10 +210,13 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
   };
 
   const closeWheelOverlay = () => {
-    setIsWheelClosing(true);
+    if (closeGraceTimerRef.current) {
+      clearTimeout(closeGraceTimerRef.current);
+      closeGraceTimerRef.current = null;
+    }
+    setIsOverlayActive(false);
     setTimeout(() => {
       setIsWheelOpen(false);
-      setIsWheelClosing(false);
     }, 380);
   };
 

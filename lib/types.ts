@@ -61,6 +61,8 @@ export interface MovieFormData {
   sound:        number | '';
   impact:       number | '';
   bonus:        0 | 1;
+  notes?:       string;
+  custom_tags?: string[];
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
