@@ -5,7 +5,7 @@ import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
 import { computeTotal } from '@/lib/config';
 import { guardOwnerEntry, OWNER_ID } from '@/lib/guards';
-import type { MovieFormData } from '@/lib/types';
+import type { MovieFormData, Entry } from '@/lib/types';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   // Verify the entry belongs to this user (extra check on top of RLS)
   const { data: existing, error: fetchError } = await supabase
     .from('entries')
-    .select('id, user_id, movie_id, movie:movies (title, omdb_id, media_type)')
+    .select('*, movie:movies (title, omdb_id, media_type)')
     .eq('id', id)
     .eq('user_id', user.id)
     .single();
@@ -84,7 +84,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
   }
 
-  const guard = guardOwnerEntry(user.id, existing.user_id);
+  const existingEntry = existing as unknown as Entry;
+  const guard = guardOwnerEntry(user.id, existingEntry.user_id);
   if (guard) return guard;
 
   // Quick toggle logic if only updating must_watch
@@ -346,26 +347,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   if (hasScoreUpdate) {
     const total = computeTotal({
-      atmosphere: body.atmosphere ?? existing.atmosphere ?? '',
-      story:      body.story      ?? existing.story      ?? '',
-      characters: body.characters ?? existing.characters ?? '',
-      pacing:     body.pacing     ?? existing.pacing     ?? '',
-      visuals:    body.visuals    ?? existing.visuals    ?? '',
-      thrill:     body.thrill     ?? existing.thrill     ?? '',
-      sound:      body.sound      ?? existing.sound      ?? '',
-      impact:     body.impact     ?? existing.impact     ?? '',
-      bonus:      body.bonus      ?? existing.bonus      ?? 0,
+      atmosphere: body.atmosphere ?? existingEntry.atmosphere ?? '',
+      story:      body.story      ?? existingEntry.story      ?? '',
+      characters: body.characters ?? existingEntry.characters ?? '',
+      pacing:     body.pacing     ?? existingEntry.pacing     ?? '',
+      visuals:    body.visuals    ?? existingEntry.visuals    ?? '',
+      thrill:     body.thrill     ?? existingEntry.thrill     ?? '',
+      sound:      body.sound      ?? existingEntry.sound      ?? '',
+      impact:     body.impact     ?? existingEntry.impact     ?? '',
+      bonus:      body.bonus      ?? existingEntry.bonus      ?? 0,
     });
 
-    updatePayload.atmosphere = body.atmosphere !== undefined ? (body.atmosphere !== '' ? body.atmosphere : null) : existing.atmosphere;
-    updatePayload.story      = body.story      !== undefined ? (body.story      !== '' ? body.story      : null) : existing.story;
-    updatePayload.characters = body.characters !== undefined ? (body.characters !== '' ? body.characters : null) : existing.characters;
-    updatePayload.pacing     = body.pacing     !== undefined ? (body.pacing     !== '' ? body.pacing     : null) : existing.pacing;
-    updatePayload.visuals    = body.visuals    !== undefined ? (body.visuals    !== '' ? body.visuals    : null) : existing.visuals;
-    updatePayload.thrill     = body.thrill     !== undefined ? (body.thrill     !== '' ? body.thrill     : null) : existing.thrill;
-    updatePayload.sound      = body.sound      !== undefined ? (body.sound      !== '' ? body.sound      : null) : existing.sound;
-    updatePayload.impact     = body.impact     !== undefined ? (body.impact     !== '' ? body.impact     : null) : existing.impact;
-    updatePayload.bonus      = body.bonus      !== undefined ? (body.bonus ?? 0) : existing.bonus;
+    updatePayload.atmosphere = body.atmosphere !== undefined ? (body.atmosphere !== '' ? body.atmosphere : null) : existingEntry.atmosphere;
+    updatePayload.story      = body.story      !== undefined ? (body.story      !== '' ? body.story      : null) : existingEntry.story;
+    updatePayload.characters = body.characters !== undefined ? (body.characters !== '' ? body.characters : null) : existingEntry.characters;
+    updatePayload.pacing     = body.pacing     !== undefined ? (body.pacing     !== '' ? body.pacing     : null) : existingEntry.pacing;
+    updatePayload.visuals    = body.visuals    !== undefined ? (body.visuals    !== '' ? body.visuals    : null) : existingEntry.visuals;
+    updatePayload.thrill     = body.thrill     !== undefined ? (body.thrill     !== '' ? body.thrill     : null) : existingEntry.thrill;
+    updatePayload.sound      = body.sound      !== undefined ? (body.sound      !== '' ? body.sound      : null) : existingEntry.sound;
+    updatePayload.impact     = body.impact     !== undefined ? (body.impact     !== '' ? body.impact     : null) : existingEntry.impact;
+    updatePayload.bonus      = body.bonus      !== undefined ? (body.bonus ?? 0) : existingEntry.bonus;
     updatePayload.total      = total;
   }
 
