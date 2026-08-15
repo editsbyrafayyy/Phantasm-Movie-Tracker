@@ -124,7 +124,7 @@ export default async function HomePage() {
         <p className="home-vault-sub">Curated films scored and stored by {ownerName}.</p>
       </div>
 
-      <VaultFilter entries={remainingEntries} subgenreOrder={SUBGENRE_ORDER} />
+      <VaultFilter entries={remainingEntries} subgenreOrder={SUBGENRE_ORDER} ownerName={ownerName} />
     </div>
   );
 }

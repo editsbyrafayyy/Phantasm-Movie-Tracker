@@ -4615,16 +4615,290 @@ select:focus-visible {
 
 .home-vault-filters {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   padding: 0 48px;
   margin-bottom: 32px;
   align-items: flex-end;
-  width: max-content;
+  width: 100%;
+  max-width: 1200px;
+  flex-wrap: wrap;
+}
+
+.home-vault-search-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 320px;
+  min-width: 240px;
+}
+
+.home-vault-search-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.home-vault-search-input {
+  width: 100%;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0 38px 0 38px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: #fff;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-vault-search-input:focus {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(230, 50, 50, 0.5);
+  box-shadow: 0 0 16px rgba(230, 50, 50, 0.15);
+}
+
+.home-vault-search-icon {
+  position: absolute;
+  left: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+.home-vault-search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.home-vault-search-clear:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .home-vault-filters .custom-select-container {
   width: auto;
   min-width: 160px;
+}
+
+/* ── Home Search Results View ────────────────────────────────────────── */
+.home-search-results-container {
+  padding: 0 48px 80px;
+}
+
+.home-search-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.home-search-summary-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.2px;
+}
+
+.home-search-summary-count {
+  color: #fff;
+  font-weight: 600;
+}
+
+.home-search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px 20px;
+}
+
+.home-search-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-search-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(230, 50, 50, 0.35);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(230, 50, 50, 0.1);
+}
+
+.home-search-poster-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: #111;
+  overflow: hidden;
+}
+
+.home-search-score-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(8, 8, 8, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 2;
+}
+
+.home-search-score-badge small {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+
+.home-search-rec-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2;
+}
+
+.home-search-rec-badge.rec-peak {
+  background: rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  color: #ffd700;
+}
+
+.home-search-rec-badge.rec-yes {
+  background: rgba(46, 204, 113, 0.2);
+  border: 1px solid rgba(46, 204, 113, 0.5);
+  color: #2ecc71;
+}
+
+.home-search-rec-badge.rec-no {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  color: #e74c3c;
+}
+
+.home-search-rec-badge.rec-garbage {
+  background: rgba(149, 165, 166, 0.2);
+  border: 1px solid rgba(149, 165, 166, 0.5);
+  color: #95a5a6;
+}
+
+.home-search-card-info {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.home-search-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-search-card-meta {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+.home-search-card-subgenre {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--red);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.home-search-card-note {
+  font-size: 11.5px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-search-empty {
+  padding: 80px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-search-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 6px;
+}
+
+.home-search-empty-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .home-search-results-container {
+    padding: 0 24px 60px;
+  }
+  .home-search-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 12px;
+  }
+  .home-vault-filters {
+    padding: 0 24px;
+    width: 100%;
+  }
+  .home-vault-search-container {
+    flex: 1 1 100%;
+  }
 }
 
 /* ── Moon icon color throughout the app ────────────────────────────────────────── */
