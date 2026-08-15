@@ -19,3 +19,21 @@ export function guardOwnerEntry(
   }
   return null;
 }
+
+const DEFAULT_UNRESTRICTED_EMAILS = ['arsum@gmail.com'];
+
+/**
+ * Checks if a user has unrestricted access to all genres and media.
+ */
+export function isUnrestrictedUser(user?: { email?: string | null; id?: string } | null): boolean {
+  if (!user) return false;
+  const email = user.email?.toLowerCase().trim();
+  const envEmails = (process.env.UNRESTRICTED_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+  const allAllowed = [...DEFAULT_UNRESTRICTED_EMAILS, ...envEmails];
+  if (email && allAllowed.includes(email)) return true;
+  if (user.id && process.env.UNRESTRICTED_USER_IDS?.split(',').map(s => s.trim()).includes(user.id)) return true;
+  return false;
+}

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/ratelimit';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { isUnrestrictedUser } from '@/lib/guards';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
@@ -42,6 +44,11 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // Check if requesting user has unrestricted genre access (e.g. arsum@gmail.com)
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isUnrestricted = isUnrestrictedUser(user);
+
   const { searchParams } = new URL(req.url);
   const rawPage  = parseInt(searchParams.get('page') || '1', 10);
   const page     = Math.min(Math.max(1, isNaN(rawPage) ? 1 : rawPage), 500);
@@ -58,21 +65,27 @@ export async function GET(req: NextRequest) {
   // Base discover URL
   const tmdbUrl = new URL(`https://api.themoviedb.org/3/discover/${type === 'tv' ? 'tv' : 'movie'}`);
   
-  // Enforce horror/thriller/sci-fi genres and exclude animation/anime/family/etc for TV
-  if (type === 'tv') {
-    const tvGenres = incomingGenres
-      ? incomingGenres.replace(/\b27\b/g, '9648|10765|53')
-      : '9648|10765|53';
-    tmdbUrl.searchParams.set('with_genres', tvGenres);
-    tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres || '16,10762,10751,10764,10766,10767,10763,99');
+  if (isUnrestricted) {
+    // Unrestricted users: respect any requested genres or keywords without forcing horror or blocking family/animation
+    if (incomingGenres) tmdbUrl.searchParams.set('with_genres', incomingGenres);
+    if (incomingWithoutGenres) tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres);
   } else {
-    // Default to Horror (27). If caller specified a genre combination (e.g. '27,35' for comedy or '27,878' for sci-fi), use it.
-    tmdbUrl.searchParams.set('with_genres', incomingGenres || '27');
-    if (incomingWithoutGenres) {
-      tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres);
+    // Enforce horror/thriller/sci-fi genres and exclude animation/anime/family/etc for TV
+    if (type === 'tv') {
+      const tvGenres = incomingGenres
+        ? incomingGenres.replace(/\b27\b/g, '9648|10765|53')
+        : '9648|10765|53';
+      tmdbUrl.searchParams.set('with_genres', tvGenres);
+      tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres || '16,10762,10751,10764,10766,10767,10763,99');
     } else {
-      // Exclude animation (16) and family (10751) to filter out kids/cartoons
-      tmdbUrl.searchParams.set('without_genres', '16,10751');
+      // Default to Horror (27). If caller specified a genre combination (e.g. '27,35' for comedy or '27,878' for sci-fi), use it.
+      tmdbUrl.searchParams.set('with_genres', incomingGenres || '27');
+      if (incomingWithoutGenres) {
+        tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres);
+      } else {
+        // Exclude animation (16) and family (10751) to filter out kids/cartoons
+        tmdbUrl.searchParams.set('without_genres', '16,10751');
+      }
     }
   }
   tmdbUrl.searchParams.set('page', String(page));

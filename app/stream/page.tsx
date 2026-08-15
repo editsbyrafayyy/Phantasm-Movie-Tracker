@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import BrowseGrid from '@/components/browse/BrowseGrid';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { isUnrestrictedUser } from '@/lib/guards';
 
 export default async function StreamPage() {
   // Auth check — streaming catalog is members only
@@ -8,9 +9,11 @@ export default async function StreamPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login?next=/stream');
 
+  const isUnrestricted = isUnrestrictedUser(user);
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <BrowseGrid canSave={!!user} />
+      <BrowseGrid canSave={!!user} isUnrestricted={isUnrestricted} />
     </div>
   );
 }

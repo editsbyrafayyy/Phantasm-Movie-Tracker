@@ -33,6 +33,38 @@ const GENRE_ITEMS = [
   'Cult Classic',
 ];
 
+const ALL_GENRES_ITEMS = [
+  'All',
+  'Action',
+  'Adventure',
+  'Animation & Anime',
+  'Comedy',
+  'Crime',
+  'Documentary',
+  'Drama',
+  'Fantasy',
+  'Sci-Fi',
+  'Romance',
+  'Thriller',
+  'Slasher',
+  'Psychological',
+  'Supernatural & Ghosts',
+  'Occult & Demonic',
+  'Folk Horror',
+  'Creature Feature',
+  'Zombie',
+  'Vampire',
+  'Found Footage',
+  'Body Horror',
+  'Gothic Horror',
+  'Survival Horror',
+  'Sci-Fi Horror',
+  'Horror Comedy',
+  'Gore & Extreme',
+  'Haunted House',
+  'Cult Classic',
+];
+
 interface GenreFilterConfig {
   genres?: string;
   keywords?: string;
@@ -109,6 +141,21 @@ const GENRE_FILTER_MAP: Record<string, GenreFilterConfig> = {
   },
 };
 
+const ALL_GENRES_FILTER_MAP: Record<string, GenreFilterConfig> = {
+  ...GENRE_FILTER_MAP,
+  'Action': { genres: '28' },
+  'Adventure': { genres: '12' },
+  'Animation & Anime': { genres: '16' },
+  'Comedy': { genres: '35' },
+  'Crime': { genres: '80' },
+  'Documentary': { genres: '99' },
+  'Drama': { genres: '18' },
+  'Fantasy': { genres: '14' },
+  'Sci-Fi': { genres: '878' },
+  'Romance': { genres: '10749' },
+  'Thriller': { genres: '53' },
+};
+
 const GENRE_DESCRIPTIONS: Record<string, string> = {
   'All': 'Explore the deepest corners of the horror catalog, from modern acclaimed blockbusters to underground cult gems.',
   'Slasher': 'Masked killers, sharp blades, rising body counts, and classic final girl confrontations.',
@@ -130,6 +177,22 @@ const GENRE_DESCRIPTIONS: Record<string, string> = {
   'Cult Classic': 'Midnight movie favorites, grindhouse gems, and enduring B-movie masterpieces.',
 };
 
+const ALL_GENRE_DESCRIPTIONS: Record<string, string> = {
+  ...GENRE_DESCRIPTIONS,
+  'All': 'Explore the complete world cinema and television catalog across every genre, studio, and decade.',
+  'Action': 'High-octane adrenaline, explosive stunts, martial arts spectacles, and heroic battles.',
+  'Adventure': 'Epic journeys, daring quests, uncharted wilderness, and breathtaking expeditions.',
+  'Animation & Anime': 'Stunning animated features, Japanese anime series, visual masterpieces, and imaginative worlds.',
+  'Comedy': 'Laugh-out-loud humor, witty satires, romantic comedies, and classic slapstick.',
+  'Crime': 'Gritty underworld sagas, heist masterminds, detectives, and suspenseful police procedurals.',
+  'Documentary': 'Real-world exposés, historical deep dives, human stories, and nature chronicles.',
+  'Drama': 'Emotionally powerful narratives, complex characters, acclaimed prestige cinema, and heartfelt stories.',
+  'Fantasy': 'Mythical realms, magic spells, legendary creatures, and enchanting epics.',
+  'Sci-Fi': 'Futuristic visions, deep space odyssey, AI dilemmas, time travel, and mind-bending concepts.',
+  'Romance': 'Passionate love stories, timeless romantic dramas, emotional connections, and heartwarming journeys.',
+  'Thriller': 'Edge-of-your-seat tension, gripping conspiracies, nail-biting suspense, and unexpected twists.',
+};
+
 // ── In-Memory Page Cache (Client-side anti-abuse & zero-latency navigation) ──
 interface CacheEntry {
   results: TmdbDiscoverMovie[];
@@ -145,10 +208,15 @@ function getCacheKey(type: string, query: string, genre: string | null, page: nu
 
 interface BrowseGridProps {
   canSave?: boolean;
+  isUnrestricted?: boolean;
 }
 
-export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
+export default function BrowseGrid({ canSave = false, isUnrestricted = false }: BrowseGridProps) {
   const pathname = usePathname();
+  const genreItems = isUnrestricted ? ALL_GENRES_ITEMS : GENRE_ITEMS;
+  const genreFilterMap = isUnrestricted ? ALL_GENRES_FILTER_MAP : GENRE_FILTER_MAP;
+  const genreDescriptions = isUnrestricted ? ALL_GENRE_DESCRIPTIONS : GENRE_DESCRIPTIONS;
+
   const [movies, setMovies]           = useState<TmdbDiscoverMovie[]>([]);
   const [page, setPage]               = useState(1);
   const [loading, setLoading]         = useState(true);
@@ -298,8 +366,8 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
         let endpoint: string;
         if (activeQuery) {
           endpoint = `/api/tmdb/search?query=${encodeURIComponent(activeQuery)}&page=${page}&type=${mediaType}`;
-        } else if (genreFilter && GENRE_FILTER_MAP[genreFilter]) {
-          const f = GENRE_FILTER_MAP[genreFilter];
+        } else if (genreFilter && genreFilterMap[genreFilter]) {
+          const f = genreFilterMap[genreFilter];
           const params = new URLSearchParams({
             page: String(page),
             type: mediaType,
@@ -475,8 +543,8 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
       >
         <OptionWheel
           key={`resting-${genreFilter ?? 'all'}`}
-          items={GENRE_ITEMS}
-          defaultSelected={genreFilter ? GENRE_ITEMS.indexOf(genreFilter) : 0}
+          items={genreItems}
+          defaultSelected={genreFilter ? genreItems.indexOf(genreFilter) : 0}
           side="left"
           fontSize={1.45}
           spacing={1.32}
@@ -508,7 +576,7 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           onMouseMove={handleOverlayMouseMove}
           role="dialog"
           aria-modal="true"
-          aria-label="Horror Subgenre Selector"
+          aria-label={isUnrestricted ? "Genre Selector" : "Horror Subgenre Selector"}
         >
           {/* Left Zone: Giant 3D OptionWheel with unconstrained horizontal width */}
           <div
@@ -517,8 +585,8 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           >
             <OptionWheel
               key={`fullscreen-${genreFilter ?? 'all'}`}
-              items={GENRE_ITEMS}
-              defaultSelected={genreFilter ? GENRE_ITEMS.indexOf(genreFilter) : 0}
+              items={genreItems}
+              defaultSelected={genreFilter ? genreItems.indexOf(genreFilter) : 0}
               side="left"
               fontSize={2.5}
               spacing={1.42}
@@ -543,11 +611,11 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
           <div className="browse-fullscreen-hud-zone">
             <div className="browse-fullscreen-hud-badge">
               <span className="browse-fullscreen-hud-dot" />
-              <span>HORROR SUBGENRE</span>
+              <span>{isUnrestricted ? 'GENRE SELECTOR' : 'HORROR SUBGENRE'}</span>
             </div>
             <h2 className="browse-fullscreen-hud-title">{activeWheelGenre}</h2>
             <p className="browse-fullscreen-hud-desc">
-              {GENRE_DESCRIPTIONS[activeWheelGenre] || GENRE_DESCRIPTIONS['All']}
+              {genreDescriptions[activeWheelGenre] || genreDescriptions['All']}
             </p>
             <div className="browse-fullscreen-hud-footer">
               <span>Scroll wheel to spin</span>
@@ -566,12 +634,12 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
         <div style={{ marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="browse-header-container">
             <h1 style={{ fontSize: 32, fontWeight: 'bold', margin: 0, color: '#fff' }}>
-              Discover Horror
+              {isUnrestricted ? 'Discover Movies & Series' : 'Discover Horror'}
             </h1>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.5)', marginTop: 8, marginBottom: 0 }}>
               {genreFilter
                 ? `Browsing ${genreFilter} — scroll the wheel to switch.`
-                : 'Explore the deepest corners of the horror catalog.'}
+                : (isUnrestricted ? 'Explore films and television across all genres, anime, and decades.' : 'Explore the deepest corners of the horror catalog.')}
             </p>
           </div>
 
@@ -612,7 +680,7 @@ export default function BrowseGrid({ canSave = false }: BrowseGridProps) {
               <input
                 type="text"
                 className="form-input search-input-inner"
-                placeholder={mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search horror / thriller / sci-fi shows...'}
+                placeholder={isUnrestricted ? (mediaType === 'movie' ? 'Search all movies, anime, titles...' : 'Search all TV series, anime, shows...') : (mediaType === 'movie' ? 'Search horror / thriller movies...' : 'Search horror / thriller / sci-fi shows...')}
                 value={searchQuery}
                 onChange={e => {
                   setSearchQuery(e.target.value);

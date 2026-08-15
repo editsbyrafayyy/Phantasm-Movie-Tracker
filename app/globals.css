@@ -6,7 +6,7 @@ html, body {
   background: #080808;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 :root {
@@ -62,11 +62,12 @@ html {
   scroll-padding-top: 80px;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ── Custom Scrollbar ────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar { width: 10px; height: 0px; }
+::-webkit-scrollbar:horizontal { display: none; height: 0; width: 0; }
 ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.25); border-radius: 6px; border: 2px solid #000; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.55); }
@@ -81,14 +82,12 @@ body {
   min-height:  100svh;
   width:       100%;
   max-width:   100%;
-  overflow-x:  hidden;
+  overflow-x:  clip;
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   /* Extend dark background into safe areas on iOS */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  /* Prevent overscroll bounce from revealing white behind the page */
-  overscroll-behavior: none;
   position:    relative;
 }
 
@@ -2254,8 +2253,7 @@ select:focus-visible {
 .stream-main {
   margin-left: 0 !important;
   flex: 1;
-  min-height: 100vh;
-  overflow-y: auto;
+  overflow: visible;
   padding-top: 0 !important; /* Space handled by outer main element */
 }
 
@@ -4948,7 +4946,7 @@ select:focus-visible {
     flex-direction: column;
     min-height: 100vh;
     display: flex;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     max-width: 100% !important;
   }
 
@@ -5153,13 +5151,13 @@ select:focus-visible {
   .stats-page {
     width: 100% !important;
     max-width: 100% !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
   }
   .stat-card,
   .chart-card {
     max-width: 100% !important;
     box-sizing: border-box !important;
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
   }
   .histogram-bars-container {
     gap: 2px !important;

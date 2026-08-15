@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/ratelimit';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { isUnrestrictedUser } from '@/lib/guards';
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
@@ -22,6 +24,11 @@ export async function GET(req: NextRequest) {
       }
     );
   }
+
+  // Check if requesting user has unrestricted genre access (e.g. arsum@gmail.com)
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isUnrestricted = isUnrestrictedUser(user);
 
   const { searchParams } = new URL(req.url);
   const query = searchParams.get('query');
@@ -75,6 +82,9 @@ export async function GET(req: NextRequest) {
     if (data.results) {
       data.results = data.results.filter((item: any) => {
         if (!item.poster_path) return false;
+
+        // Unrestricted users can search and access any genre without restrictions
+        if (isUnrestricted) return true;
         
         const genres = item.genre_ids || [];
         
