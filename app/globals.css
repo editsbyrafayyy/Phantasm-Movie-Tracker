@@ -1077,7 +1077,7 @@ select.form-input {
 .navbar-auth-chip { position:relative;margin-left:8px; }
 .navbar-avatar-btn { display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:999px;padding:4px 10px 4px 4px;cursor:pointer;transition:border-color .15s,background .15s;color:var(--text-dim);min-height:36px; }
 .navbar-avatar-btn:hover { border-color:var(--border-strong);background:rgba(255,255,255,.04);color:var(--text); }
-.navbar-avatar { width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-sans);font-size:12px;font-weight:600;color:var(--text);flex-shrink:0; }
+.navbar-avatar { position:relative;overflow:hidden;width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-sans);font-size:12px;font-weight:600;color:var(--text);flex-shrink:0; }
 .navbar-username { font-family:var(--font-sans);font-size:12px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .navbar-chevron { transition:transform .15s;opacity:.5; }
 .navbar-chevron.open { transform:rotate(180deg); }
@@ -1440,7 +1440,7 @@ select.form-input {
 
 /* ── Profile Page ─────────────────────────────────────────────────────────── */
 .profile-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px; }
-.profile-avatar { width:64px;height:64px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:28px;color:var(--text);margin-bottom:16px; }
+.profile-avatar { position:relative;overflow:hidden;width:64px;height:64px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:28px;color:var(--text);margin-bottom:16px;flex-shrink:0; }
 .profile-username { font-size:18px;font-weight:600;color:var(--text); }
 .profile-meta { font-size:13px;color:var(--text-muted);margin-top:4px;display:flex;align-items:center;gap:8px; }
 .profile-info { margin-bottom:24px; }
@@ -2162,6 +2162,8 @@ select:focus-visible {
 }
 
 .navbar-profile-avatar {
+  position: relative;
+  overflow: hidden;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -2173,6 +2175,7 @@ select:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .navbar-profile-username {
@@ -5884,6 +5887,8 @@ select:focus-visible {
 }
 
 .activity-avatar {
+  position: relative;
+  overflow: hidden;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -6931,8 +6936,66 @@ select:focus-visible {
 
 
 /* ── Curated Avatar Picker Modal ─────────────────────────────────────────── */
+.profile-avatar-trigger-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #141414;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.profile-avatar-trigger-btn:hover {
+  border-color: #22d3ee;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.35);
+  transform: scale(1.02);
+}
+
 .profile-avatar-trigger-btn:hover .profile-avatar-hover-overlay {
   opacity: 1 !important;
+}
+
+.profile-avatar-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.profile-avatar-badge-btn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #22d3ee;
+  color: #000;
+  border: 2px solid #18181b;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-avatar-badge-btn:hover {
+  transform: scale(1.15);
+  background: #67e8f9;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
 }
 
 @keyframes fadeIn {

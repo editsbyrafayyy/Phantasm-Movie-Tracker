@@ -150,7 +150,7 @@ export default function StreamDetailV3({ movie, imdbId, mediaType = 'movie' }: S
                           alt={c.name}
                           fill
                           style={{ objectFit: 'cover' }}
-                          sizes="48px"
+                          sizes="64px"
                         />
                       ) : (
                         c.name.charAt(0).toUpperCase()

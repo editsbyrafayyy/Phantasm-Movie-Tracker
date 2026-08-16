@@ -67,7 +67,7 @@ export default function OnThisDayWidget() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{ flexShrink: 0, position: 'relative', width: 44, height: 62, borderRadius: 6, overflow: 'hidden', background: '#111' }}>
           {poster ? (
-            <Image src={poster} alt={match.movie.title} fill style={{ objectFit: 'cover' }} />
+            <Image src={poster} alt={match.movie.title} fill sizes="44px" style={{ objectFit: 'cover' }} />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Film size={20} color="rgba(255,255,255,0.3)" />

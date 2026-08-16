@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AVATAR_OPTIONS } from '@/lib/config';
-import { X, Check, RotateCcw, Sparkles, Bot, Globe } from 'lucide-react';
+import { X, Check, RotateCcw, Palette, Bot, Globe } from 'lucide-react';
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -31,6 +31,16 @@ export default function AvatarPickerModal({
     setSelectedAvatar(currentAvatar);
   }
 
+  // Body scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   // Handle ESC key
   useEffect(() => {
     if (!isOpen) return;
@@ -42,7 +52,6 @@ export default function AvatarPickerModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
 
   if (!isOpen) return null;
 
@@ -120,7 +129,7 @@ export default function AvatarPickerModal({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <Sparkles size={18} color="#22d3ee" />
+              <Palette size={18} color="#22d3ee" />
               <h2
                 id="avatar-picker-title"
                 style={{
@@ -338,6 +347,8 @@ export default function AvatarPickerModal({
           {/* Avatar Grid (5 columns desktop, 3 on mobile) */}
           <div
             className="avatar-selection-grid"
+            role="radiogroup"
+            aria-label="Choose an avatar option"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))',
@@ -352,6 +363,8 @@ export default function AvatarPickerModal({
                 <button
                   key={avatar}
                   type="button"
+                  role="radio"
+                  aria-checked={isSelected}
                   onClick={() => setSelectedAvatar(avatar)}
                   className={`avatar-grid-item${isSelected ? ' selected' : ''}`}
                   style={{

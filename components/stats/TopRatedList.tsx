@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Image from 'next/image';
 import { Film } from 'lucide-react';
 import type { StatsData } from '@/lib/types';
@@ -43,7 +44,7 @@ export default function TopRatedList({ data }: TopRatedListProps) {
               )}
             </div>
 
-            <a href={`/vault/${item.id}`} className="top-rated-title">{item.title}</a>
+            <Link href={`/vault/${item.id}`} className="top-rated-title">{item.title}</Link>
 
             <span className="top-rated-score">{item.total}</span>
           </li>

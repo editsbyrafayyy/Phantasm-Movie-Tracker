@@ -38,6 +38,18 @@ export default function StreamRail() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [user, router]);
 
+  // Close dropdown on Escape key
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [dropdownOpen]);
+
   return (
     <header className="unified-top-navbar" aria-label="Main navigation">
       <div className="navbar-container unified-navbar-container">

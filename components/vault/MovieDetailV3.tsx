@@ -629,7 +629,7 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
                             alt={name}
                             fill
                             style={{ objectFit: 'cover' }}
-                            sizes="48px"
+                            sizes="64px"
                           />
                         ) : (
                           name.charAt(0).toUpperCase()

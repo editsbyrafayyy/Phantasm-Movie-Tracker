@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import OmdbSearchInput from '@/components/forms/OmdbSearchInput';
 import ScoreField      from '@/components/ScoreField';
@@ -186,9 +187,9 @@ export default function AddMovieForm() {
             <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
               <strong style={{ color: '#f39c12' }}>Already in your Vault</strong> — &ldquo;{duplicateWarning.title}&rdquo; is already logged.
             </span>
-            <a href={`/vault/${duplicateWarning.id}`} style={{ fontSize: 12, color: '#f39c12', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', borderBottom: '1px solid rgba(243,156,18,0.5)' }}>
+            <Link href={`/vault/${duplicateWarning.id}`} style={{ fontSize: 12, color: '#f39c12', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', borderBottom: '1px solid rgba(243,156,18,0.5)' }}>
               View entry →
-            </a>
+            </Link>
           </div>
         )}
       </div>

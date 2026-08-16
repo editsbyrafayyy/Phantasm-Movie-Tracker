@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Film, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { RECOMMEND_COLOR, SUBGENRE_HEX } from '@/lib/config';
@@ -17,6 +17,7 @@ interface MovieCardProps {
 }
 
 export default function MovieCard({ entry, priority = false }: MovieCardProps) {
+  const router = useRouter();
   const { user } = useAuth();
   const { movie, total, recommend, subgenre } = entry;
   const poster    = movie?.poster_url ?? null;
@@ -143,7 +144,7 @@ export default function MovieCard({ entry, priority = false }: MovieCardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                window.location.href = `/vault?subgenre=${encodeURIComponent(subgenre)}`;
+                router.push(`/vault?subgenre=${encodeURIComponent(subgenre)}`);
               }}
               title={`View all ${subgenre} films`}
             >

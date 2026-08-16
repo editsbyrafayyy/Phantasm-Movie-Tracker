@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Pencil } from 'lucide-react';
+import { Camera, Pencil } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 import AvatarPickerModal from '@/components/profile/AvatarPickerModal';
 import Toast, { type ToastType } from '@/components/ui/Toast';
@@ -52,30 +52,6 @@ export default function ProfileAvatar({ profile }: ProfileAvatarProps) {
           type="button"
           onClick={() => setModalOpen(true)}
           className="profile-avatar-trigger-btn"
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: '50%',
-            background: '#141414',
-            border: '2px solid rgba(255, 255, 255, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            cursor: 'pointer',
-            padding: 0,
-            overflow: 'hidden',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.borderColor = '#22d3ee';
-            e.currentTarget.style.boxShadow = '0 0 20px rgba(34, 211, 238, 0.35)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.4)';
-          }}
           aria-label="Change profile avatar"
           title="Click to choose a new avatar"
         >
@@ -101,54 +77,20 @@ export default function ProfileAvatar({ profile }: ProfileAvatarProps) {
           )}
 
           {/* Hover overlay hint */}
-          <div
-            className="profile-avatar-hover-overlay"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.55)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: 0,
-              transition: 'opacity 0.15s ease',
-            }}
-          >
+          <div className="profile-avatar-hover-overlay">
             <Pencil size={18} color="#fff" />
           </div>
         </button>
 
-        {/* Small badge button on bottom right */}
+        {/* Small camera badge button on bottom right */}
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          style={{
-            position: 'absolute',
-            bottom: -2,
-            right: -2,
-            background: '#22d3ee',
-            color: '#000',
-            border: '2px solid #18181b',
-            borderRadius: '50%',
-            width: 24,
-            height: 24,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
-            transition: 'transform 0.15s ease',
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'scale(1.15)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
+          className="profile-avatar-badge-btn"
           aria-label="Change avatar"
           title="Change avatar"
         >
-          <Sparkles size={12} strokeWidth={2.5} />
+          <Camera size={13} strokeWidth={2.2} />
         </button>
       </div>
 

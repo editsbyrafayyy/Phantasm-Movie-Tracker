@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { Film, LayoutGrid, Grid, CheckSquare, Square, Copy, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { staggerContainer } from '@/lib/motion';
@@ -136,7 +137,7 @@ export default function MovieGrid({ entries }: MovieGridProps) {
             <>
               <p className="vault-empty-title">Your vault is empty.</p>
               <p className="vault-empty-sub">Add your first film to start building your collection.</p>
-              <a href="/add" className="btn-primary vault-empty-cta">Add a Movie →</a>
+              <Link href="/add" className="btn-primary vault-empty-cta">Add a Movie →</Link>
             </>
           ) : (
             <>

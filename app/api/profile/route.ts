@@ -42,7 +42,14 @@ export async function PATCH(request: Request) {
     if ('display_name' in body) {
       const displayName = body.display_name;
       if (typeof displayName === 'string') {
-        updates.display_name = displayName.trim() || null;
+        const trimmed = displayName.trim();
+        if (trimmed.length > 50) {
+          return NextResponse.json(
+            { error: 'Display name cannot exceed 50 characters.' },
+            { status: 400 }
+          );
+        }
+        updates.display_name = trimmed || null;
       } else if (displayName === null) {
         updates.display_name = null;
       }

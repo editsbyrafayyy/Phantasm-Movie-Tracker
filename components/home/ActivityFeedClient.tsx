@@ -118,13 +118,13 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
           return (
             <Link key={item.id} href={`/vault/${item.id}`} className="activity-item">
               {/* Avatar */}
-              <div className="activity-avatar" aria-label={displayName}>
+              <div className="activity-avatar" aria-label={displayName} style={{ position: 'relative', overflow: 'hidden' }}>
                 {item.profile?.avatar_url ? (
                   <Image
                     src={item.profile.avatar_url}
                     alt={displayName}
                     fill
-                    sizes="36px"
+                    sizes="34px"
                     style={{ objectFit: 'cover', borderRadius: '50%' }}
                   />
                 ) : (

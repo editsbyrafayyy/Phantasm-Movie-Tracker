@@ -67,6 +67,7 @@ export default function MovieDetail({ entry }: MovieDetailProps) {
                 alt={`${movie.title} poster`}
                 fill
                 className="detail-poster-img"
+                sizes="(max-width: 768px) 100vw, 240px"
                 placeholder="blur"
                 blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg=="
               />
@@ -183,9 +184,9 @@ export default function MovieDetail({ entry }: MovieDetailProps) {
           <div className="detail-actions">
             {canMutate && (
               <>
-                <a href={`/update?id=${entry.id}`} className="btn-outline">
+                <Link href={`/update?id=${entry.id}`} className="btn-outline">
                   <Pencil size={14} aria-hidden="true" /> Edit Ratings
-                </a>
+                </Link>
                 <button
                   className="btn-outline-danger"
                   onClick={() => setShowConfirm(true)}
@@ -195,9 +196,9 @@ export default function MovieDetail({ entry }: MovieDetailProps) {
                 </button>
               </>
             )}
-            <a href={`/stream/${movie.omdb_id}`} className="btn-outline" style={{ background: '#e63232', color: 'white', borderColor: '#e63232' }}>
+            <Link href={`/stream/${movie.omdb_id}`} className="btn-outline" style={{ background: '#e63232', color: 'white', borderColor: '#e63232' }}>
               Watch Now
-            </a>
+            </Link>
           </div>
         </section>
       </div>
