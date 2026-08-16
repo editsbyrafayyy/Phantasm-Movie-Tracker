@@ -19,7 +19,11 @@ export async function GET(
       return NextResponse.json({ error: `TMDB error: ${res.status}` }, { status: res.status });
     }
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
+      },
+    });
   } catch (err) {
     console.error('[TMDB API] Error fetching season detail:', err);
     return NextResponse.json({ error: 'Failed to fetch season details' }, { status: 500 });

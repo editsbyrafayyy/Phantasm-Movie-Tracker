@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link  from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ChevronDown, RotateCcw, Film } from 'lucide-react';
+import { SlidersHorizontal, ChevronDown, RotateCcw, Film } from 'lucide-react';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
 interface Mood {
@@ -39,7 +39,7 @@ const MOODS: Mood[] = [
     id: 'psychological',
     label: 'Mess With My Head',
     description: 'Psychological horror and mind-benders that will keep you guessing and questioning reality.',
-    accent: '#9b59f5',
+    accent: '#a82020',
     params: {},
   },
   {
@@ -168,7 +168,7 @@ export default function MoodPicker() {
         onClick={handleToggle}
         aria-expanded={open}
       >
-        <Sparkles size={15} />
+        <SlidersHorizontal size={15} />
         <span>Pick by Mood</span>
         <ChevronDown size={14} className={`mood-chevron${open ? ' rotated' : ''}`} />
       </button>

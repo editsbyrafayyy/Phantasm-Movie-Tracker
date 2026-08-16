@@ -369,6 +369,7 @@ class App {
   boundOnTouchMove!: any;
   boundOnTouchUp!: any;
   boundOnKeyDown!: any;
+  boundUpdate!: () => void;
   onChangeCallback?: (index: number) => void;
   lastActiveIndex: number = 0;
 
@@ -389,6 +390,7 @@ class App {
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onCheckDebounce = debounce(this.onCheck.bind(this), 200);
+    this.boundUpdate = this.update.bind(this);
     this.createRenderer();
     this.createCamera();
     this.createScene();
@@ -422,8 +424,8 @@ class App {
   
   createGeometry() {
     this.planeGeometry = new Plane(this.gl, {
-      heightSegments: 50,
-      widthSegments: 100
+      heightSegments: 10,
+      widthSegments: 20
     });
   }
   
@@ -563,7 +565,7 @@ class App {
       }
     }
 
-    this.raf = window.requestAnimationFrame(this.update.bind(this));
+    this.raf = window.requestAnimationFrame(this.boundUpdate);
   }
   
   addEventListeners() {
@@ -598,7 +600,24 @@ class App {
     this.container?.removeEventListener('touchstart', this.boundOnTouchDown);
     window.removeEventListener('touchmove', this.boundOnTouchMove);
     window.removeEventListener('touchend', this.boundOnTouchUp);
-    if (this.renderer && this.renderer.gl && this.renderer.gl.canvas.parentNode) {
+
+    if (this.medias) {
+      this.medias.forEach((media: any) => {
+        try {
+          if (media.program && media.program.uniforms?.tMap?.value?.texture) {
+            this.gl.deleteTexture(media.program.uniforms.tMap.value.texture);
+          }
+          if (media.program?.program) {
+            this.gl.deleteProgram(media.program.program);
+          }
+        } catch {
+          // Ignore WebGL teardown edge cases
+        }
+      });
+      this.medias = [];
+    }
+
+    if (this.renderer && this.renderer.gl && this.renderer.gl.canvas?.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
     }
 

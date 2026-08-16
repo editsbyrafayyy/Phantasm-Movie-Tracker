@@ -38,7 +38,7 @@ export default function StarField() {
 
     function resize() {
       if (!canvas || !ctx) return;
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       width = window.innerWidth;
       height = window.innerHeight;
 
@@ -55,6 +55,8 @@ export default function StarField() {
     starsRef.current = generateStars(80);
     window.addEventListener('resize', resize);
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     let start: number | null = null;
     let animationFrameId: number;
 
@@ -62,7 +64,7 @@ export default function StarField() {
       if (document.hidden) return;
       if (!canvas || !ctx) return;
       if (!start) start = ts;
-      const t = (ts - start) / 1000;
+      const t = prefersReducedMotion ? 0 : (ts - start) / 1000;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -92,14 +94,21 @@ export default function StarField() {
         ctx.fill();
       }
 
+      if (!prefersReducedMotion) {
+        animationFrameId = requestAnimationFrame(draw);
+        frameRef.current = animationFrameId;
+      }
+    }
+
+    if (prefersReducedMotion) {
+      draw(0);
+    } else {
       animationFrameId = requestAnimationFrame(draw);
       frameRef.current = animationFrameId;
     }
 
-    animationFrameId = requestAnimationFrame(draw);
-    frameRef.current = animationFrameId;
-
     const handleVisibilityChange = () => {
+      if (prefersReducedMotion) return;
       if (!document.hidden) {
         start = null;
         cancelAnimationFrame(animationFrameId);

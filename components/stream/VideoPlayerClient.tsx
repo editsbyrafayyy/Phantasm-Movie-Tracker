@@ -64,14 +64,14 @@ interface Props {
   }[];
 }
 
-// Maps server identifiers or indices to flags, display labels, and sparkles
-const SERVER_META: Record<string, { flag: string; sparkles?: boolean }> = {
-  'vidlink-pro': { flag: '🇺🇸', sparkles: true },
+// Maps server identifiers or indices to flags
+const SERVER_META: Record<string, { flag: string }> = {
+  'vidlink-pro': { flag: '🇺🇸' },
   'vidsrc-to':   { flag: '🇺🇸' },
-  'vidsrc-me':   { flag: '🇺🇸', sparkles: true },
+  'vidsrc-me':   { flag: '🇺🇸' },
   'vidsrc-pm':   { flag: '🇺🇸' },
   '2embed':      { flag: '🇺🇸' },
-  'multiembed':  { flag: '🇺🇸', sparkles: true },
+  'multiembed':  { flag: '🇺🇸' },
   'vidsrc-cc':   { flag: '🇬🇧' },
 };
 

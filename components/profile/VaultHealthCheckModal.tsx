@@ -14,12 +14,19 @@ export default function VaultHealthCheckModal() {
   useEffect(() => {
     if (isOpen && !entries.length) {
       setLoading(true);
-      fetch('/api/owner-vault')
-        .then(r => r.json())
+      fetch('/api/movies')
+        .then(r => (r.ok ? r.json() : Promise.reject(r)))
         .then(data => {
           if (Array.isArray(data)) setEntries(data);
         })
-        .catch(() => {})
+        .catch(() => {
+          fetch('/api/owner-vault')
+            .then(r => r.json())
+            .then(data => {
+              if (Array.isArray(data)) setEntries(data);
+            })
+            .catch(() => {});
+        })
         .finally(() => setLoading(false));
     }
   }, [isOpen, entries.length]);

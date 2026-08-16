@@ -44,7 +44,10 @@ export async function GET(
   // If not found in DB and ID is numeric (TMDB ID), fetch from TMDB
   if (!movie && /^\d+$/.test(imdbId) && process.env.TMDB_API_KEY) {
     try {
-      const tmdbRes = await fetch(`https://api.themoviedb.org/3/movie/${imdbId}?api_key=${process.env.TMDB_API_KEY}`);
+      const tmdbRes = await fetch(
+        `https://api.themoviedb.org/3/movie/${imdbId}?api_key=${process.env.TMDB_API_KEY}`,
+        { next: { revalidate: 86400 } }
+      );
       if (tmdbRes.ok) {
         const tmdbData = await tmdbRes.json();
         title = tmdbData.title;
@@ -75,5 +78,9 @@ export async function GET(
     imdb_rating,
   };
 
-  return NextResponse.json(payload);
+  return NextResponse.json(payload, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+    },
+  });
 }

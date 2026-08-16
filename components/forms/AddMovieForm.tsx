@@ -60,11 +60,11 @@ export default function AddMovieForm() {
   const dupDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetch('/api/stats')
+    fetch('/api/movies')
       .then(r => (r.ok ? r.json() : Promise.reject(r)))
-      .then(data => {
-        if (Array.isArray(data?.entries)) {
-          vaultTitlesRef.current = data.entries.map((e: any) => ({
+      .then((data: Entry[]) => {
+        if (Array.isArray(data)) {
+          vaultTitlesRef.current = data.map((e: any) => ({
             id: e.id,
             title: e.movie?.title?.toLowerCase() ?? '',
           }));

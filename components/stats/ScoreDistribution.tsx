@@ -63,7 +63,7 @@ export default function ScoreDistribution({ entries }: ScoreDistributionProps) {
 
   // ── Recommend Split ───────────────────────────────────────────────────
   const RECOMMEND_COLORS: Record<string, string> = {
-    Peak:    '#9b59f5',
+    Peak:    '#ffffff',
     Yes:     '#52b044',
     No:      '#e63232',
     Garbage: '#6b6b6b',
@@ -89,7 +89,7 @@ export default function ScoreDistribution({ entries }: ScoreDistributionProps) {
                   style={{
                     width: '100%',
                     height: `${pct}%`,
-                    background: 'linear-gradient(180deg, var(--red) 0%, rgba(230,50,50,0.3) 100%)',
+                    background: 'var(--red)',
                     borderRadius: 2,
                     transition: 'height 0.6s cubic-bezier(0.22,1,0.36,1)',
                   }}

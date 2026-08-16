@@ -79,7 +79,7 @@ export const SUBGENRE_HEX: Record<string, string> = {
 export const RECOMMEND_COLOR: Record<string, string> = {
   Yes:     '#4a7c3f',
   No:      '#CC0000',
-  Peak:    '#6a2fa0',
+  Peak:    '#ffffff',
   Garbage: '#595959',
 };
 

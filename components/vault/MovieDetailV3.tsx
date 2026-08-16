@@ -22,7 +22,7 @@ import {
 
 
 const RECOMMEND_STYLE: Record<string, { color: string; border: string; bg: string }> = {
-  Peak:    { color: '#9b59f5', border: '#9b59f5', bg: 'rgba(155,89,245,0.12)' },
+  Peak:    { color: '#ffffff', border: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.1)' },
   Yes:     { color: '#52b044', border: '#52b044', bg: 'rgba(82,176,68,0.12)'  },
   No:      { color: '#e63232', border: '#e63232', bg: 'rgba(230,50,50,0.12)'  },
   Garbage: { color: '#6b6b6b', border: '#6b6b6b', bg: 'rgba(107,107,107,0.12)' },

@@ -1,37 +1,13 @@
 import { redirect } from 'next/navigation';
-import Image from 'next/image';
-import Link  from 'next/link';
 import type { Metadata } from 'next';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { Bookmark, Film } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
+import WatchlistClient from '@/components/watchlist/WatchlistClient';
 
 export const metadata: Metadata = {
   title: 'Watch Later — Phantasm',
   description: 'Your personal horror watchlist.',
 };
-
-interface WatchlistRow {
-  id:         string;
-  tmdb_id:    number;
-  media_type: string;
-  title:      string;
-  poster_url: string | null;
-  year:       number | null;
-  added_at:   string;
-}
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const days  = Math.floor(diff / 86400000);
-  const weeks = Math.floor(days / 7);
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7)  return `${days}d ago`;
-  if (weeks < 5) return `${weeks}w ago`;
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-import WatchlistClient from '@/components/watchlist/WatchlistClient';
 
 export default async function WatchlistPage() {
   const supabase = await createServerSupabaseClient();
@@ -70,6 +46,3 @@ export default async function WatchlistPage() {
     </div>
   );
 }
-
-// Inline client component for remove so the page itself stays a server component
-import WatchlistRemoveButton from '@/components/watchlist/WatchlistRemoveButton';

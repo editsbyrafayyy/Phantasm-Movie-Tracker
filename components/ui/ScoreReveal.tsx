@@ -41,7 +41,7 @@ export default function ScoreReveal({ total, title, recommend, isUpdate, onDone 
 
   const getBadgeStyle = (rec: string) => {
     switch (rec) {
-      case 'Peak': return { color: '#9b59f5', borderColor: '#9b59f5', backgroundColor: 'rgba(155,89,245,0.1)' };
+      case 'Peak': return { color: '#ffffff', borderColor: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.1)' };
       case 'Yes': return { color: '#52b044', borderColor: '#52b044', backgroundColor: 'rgba(82,176,68,0.1)' };
       case 'No': return { color: '#e63232', borderColor: '#e63232', backgroundColor: 'rgba(230,50,50,0.1)' };
       case 'Garbage': return { color: '#6b6b6b', borderColor: '#6b6b6b', backgroundColor: 'rgba(107,107,107,0.1)' };

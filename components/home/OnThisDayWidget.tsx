@@ -52,16 +52,15 @@ export default function OnThisDayWidget() {
     <div
       className="on-this-day-widget"
       style={{
-        background: 'linear-gradient(135deg, rgba(204, 0, 0, 0.12) 0%, rgba(20, 20, 20, 0.95) 100%)',
-        border: '1px solid rgba(204, 0, 0, 0.3)',
-        borderRadius: 14,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
         padding: '14px 18px',
         marginBottom: 24,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 16,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Bebas_Neue } from 'next/font/google';
+import { Inter, Bebas_Neue, DM_Sans, Playfair_Display } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { AuthProvider } from '@/components/layout/AuthProvider';
@@ -20,6 +20,22 @@ const bebasNeue = Bebas_Neue({
   subsets:  ['latin'],
   weight:   ['400'],
   variable: '--font-display-neue',
+  display:  'swap',
+});
+
+const dmSans = DM_Sans({
+  subsets:  ['latin'],
+  weight:   ['300', '400', '500', '600'],
+  style:    ['normal', 'italic'],
+  variable: '--font-dm-sans',
+  display:  'swap',
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets:  ['latin'],
+  weight:   ['400'],
+  style:    ['italic'],
+  variable: '--font-serif-playfair',
   display:  'swap',
 });
 
@@ -46,7 +62,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${bebasNeue.variable}`} suppressHydrationWarning style={{ background: '#080808' }}>
+    <html lang="en" className={`${inter.variable} ${bebasNeue.variable} ${dmSans.variable} ${playfairDisplay.variable}`} suppressHydrationWarning style={{ background: '#080808' }}>
       <head>
         {/* PWA / mobile theme — prevents white flash and colours OS chrome */}
         <meta name="theme-color" content="#080808" />
@@ -55,13 +71,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="background-color" content="#080808" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Playfair+Display:ital@1&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body suppressHydrationWarning style={{ background: '#080808' }}>
         <NextTopLoader showSpinner={false} color="#e63232" height={3} />

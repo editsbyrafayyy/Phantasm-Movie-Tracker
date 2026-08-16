@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AVATAR_OPTIONS } from '@/lib/config';
-import { X, Check, RotateCcw, Palette, Bot, Globe } from 'lucide-react';
+import { X, Check, RotateCcw, User, Bot, Globe } from 'lucide-react';
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -89,9 +89,9 @@ export default function AvatarPickerModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.82)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
@@ -104,15 +104,15 @@ export default function AvatarPickerModal({
         className="avatar-modal-card"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'linear-gradient(180deg, #18181b 0%, #111113 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: 20,
+          background: '#121214',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 16,
           width: '100%',
-          maxWidth: 580,
+          maxWidth: 560,
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.8)',
           overflow: 'hidden',
           animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
@@ -120,7 +120,7 @@ export default function AvatarPickerModal({
         {/* Header */}
         <div
           style={{
-            padding: '24px 28px 16px',
+            padding: '22px 26px 16px',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
@@ -129,11 +129,11 @@ export default function AvatarPickerModal({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <Palette size={18} color="#22d3ee" />
+              <User size={18} color="var(--red)" />
               <h2
                 id="avatar-picker-title"
                 style={{
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: 700,
                   color: '#fff',
                   margin: 0,
@@ -143,65 +143,64 @@ export default function AvatarPickerModal({
                 Choose Your Avatar
               </h2>
             </div>
-            <p style={{ fontSize: 13, color: 'rgba(255, 255, 255, 0.55)', margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255, 255, 255, 0.5)', margin: 0 }}>
               Curated CC0 collection from DiceBear Pixelbot &amp; Planets.
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: 'rgba(255, 255, 255, 0.06)',
+              background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '50%',
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'rgba(255, 255, 255, 0.7)',
+              color: 'rgba(255, 255, 255, 0.65)',
               cursor: 'pointer',
-              transition: 'all 0.15s ease',
+              transition: 'background 0.15s ease, color 0.15s ease',
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.color = '#fff';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
             }}
             aria-label="Close dialog"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
         {/* Content body */}
-        <div style={{ padding: '20px 28px', overflowY: 'auto', flex: 1 }}>
+        <div style={{ padding: '20px 26px', overflowY: 'auto', flex: 1 }}>
           {/* Active Preview Strip */}
           <div
             style={{
-              background: 'rgba(0, 0, 0, 0.4)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: 14,
-              padding: '14px 18px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              borderRadius: 12,
+              padding: '12px 16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: 20,
-              gap: 16,
+              gap: 14,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div
                 style={{
-                  width: 56,
-                  height: 56,
+                  width: 52,
+                  height: 52,
                   borderRadius: '50%',
                   overflow: 'hidden',
                   background: '#141414',
-                  border: '2px solid #22d3ee',
-                  boxShadow: '0 0 16px rgba(34, 211, 238, 0.25)',
+                  border: '2px solid var(--red)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -212,8 +211,8 @@ export default function AvatarPickerModal({
                   <img
                     src={selectedAvatar}
                     alt="Preview avatar"
-                    width={56}
-                    height={56}
+                    width={52}
+                    height={52}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
@@ -221,8 +220,8 @@ export default function AvatarPickerModal({
                     style={{
                       fontFamily: 'var(--font-display)',
                       fontSize: 22,
+                      color: 'var(--text)',
                       fontWeight: 700,
-                      color: '#fff',
                     }}
                   >
                     {initial}
@@ -231,12 +230,20 @@ export default function AvatarPickerModal({
               </div>
 
               <div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>
-                  {displayName ?? username ?? 'Profile Preview'}
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.5)', marginTop: 2 }}>
-                  {selectedAvatar ? 'Custom Avatar Selected' : 'Initial Letter Default'}
-                </div>
+                <p
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#fff',
+                    margin: 0,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {displayName || username || 'Member'}
+                </p>
+                <p style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.45)', margin: '2px 0 0' }}>
+                  {selectedAvatar ? 'Custom avatar selected' : 'Default initial badge'}
+                </p>
               </div>
             </div>
 
@@ -246,31 +253,29 @@ export default function AvatarPickerModal({
                 onClick={() => setSelectedAvatar(null)}
                 style={{
                   background: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: 8,
-                  padding: '6px 12px',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: 'rgba(255, 255, 255, 0.75)',
-                  cursor: 'pointer',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: 6,
+                  color: 'rgba(255, 255, 255, 0.65)',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: '5px 10px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
+                  gap: 5,
+                  cursor: 'pointer',
                   transition: 'all 0.15s ease',
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.color = '#fff';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
                 }}
               >
-                <RotateCcw size={13} />
-                <span>Reset to Initial</span>
+                <RotateCcw size={12} />
+                <span>Reset</span>
               </button>
             )}
           </div>
@@ -279,7 +284,7 @@ export default function AvatarPickerModal({
           <div
             style={{
               display: 'flex',
-              gap: 8,
+              gap: 6,
               marginBottom: 16,
             }}
           >
@@ -287,13 +292,13 @@ export default function AvatarPickerModal({
               type="button"
               onClick={() => setActiveTab('all')}
               style={{
-                background: activeTab === 'all' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-                border: activeTab === 'all' ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid transparent',
-                borderRadius: 8,
-                padding: '6px 14px',
+                background: activeTab === 'all' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                border: activeTab === 'all' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent',
+                borderRadius: 6,
+                padding: '5px 12px',
                 fontSize: 12,
                 fontWeight: 600,
-                color: activeTab === 'all' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
+                color: activeTab === 'all' ? '#fff' : 'rgba(255, 255, 255, 0.55)',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
               }}
@@ -304,42 +309,42 @@ export default function AvatarPickerModal({
               type="button"
               onClick={() => setActiveTab('pixelbot')}
               style={{
-                background: activeTab === 'pixelbot' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-                border: activeTab === 'pixelbot' ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid transparent',
-                borderRadius: 8,
-                padding: '6px 14px',
+                background: activeTab === 'pixelbot' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                border: activeTab === 'pixelbot' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent',
+                borderRadius: 6,
+                padding: '5px 12px',
                 fontSize: 12,
                 fontWeight: 600,
-                color: activeTab === 'pixelbot' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
+                color: activeTab === 'pixelbot' ? '#fff' : 'rgba(255, 255, 255, 0.55)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 5,
                 transition: 'all 0.15s',
               }}
             >
-              <Bot size={14} />
+              <Bot size={13} />
               Pixelbots (8)
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('planets')}
               style={{
-                background: activeTab === 'planets' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
-                border: activeTab === 'planets' ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid transparent',
-                borderRadius: 8,
-                padding: '6px 14px',
+                background: activeTab === 'planets' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                border: activeTab === 'planets' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent',
+                borderRadius: 6,
+                padding: '5px 12px',
                 fontSize: 12,
                 fontWeight: 600,
-                color: activeTab === 'planets' ? '#fff' : 'rgba(255, 255, 255, 0.6)',
+                color: activeTab === 'planets' ? '#fff' : 'rgba(255, 255, 255, 0.55)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 5,
                 transition: 'all 0.15s',
               }}
             >
-              <Globe size={14} />
+              <Globe size={13} />
               Planets (7)
             </button>
           </div>
@@ -351,8 +356,8 @@ export default function AvatarPickerModal({
             aria-label="Choose an avatar option"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))',
-              gap: 12,
+              gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+              gap: 10,
             }}
           >
             {displayedAvatars.map((avatar, idx) => {
@@ -371,30 +376,24 @@ export default function AvatarPickerModal({
                     position: 'relative',
                     aspectRatio: '1 / 1',
                     background: '#141414',
-                    border: isSelected ? '2px solid #22d3ee' : '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 14,
+                    border: isSelected ? '2px solid var(--red)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: 12,
                     padding: 6,
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: isSelected
-                      ? '0 0 20px rgba(34, 211, 238, 0.35), inset 0 0 10px rgba(34, 211, 238, 0.15)'
-                      : 'none',
-                    transform: isSelected ? 'scale(1.04)' : 'scale(1)',
-                    transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                    transition: 'border-color 0.15s ease, transform 0.15s ease',
                   }}
                   onMouseOver={(e) => {
                     if (!isSelected) {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                      e.currentTarget.style.transform = 'scale(1.03)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (!isSelected) {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
                     }
                   }}
                   aria-label={`Select avatar ${avatarNumber}`}
@@ -402,13 +401,13 @@ export default function AvatarPickerModal({
                   <img
                     src={avatar}
                     alt={`Avatar ${avatarNumber}`}
-                    width={72}
-                    height={72}
+                    width={68}
+                    height={68}
                     style={{
                       width: '100%',
                       height: '100%',
                       objectFit: 'contain',
-                      borderRadius: 8,
+                      borderRadius: 6,
                     }}
                     loading="lazy"
                   />
@@ -418,20 +417,20 @@ export default function AvatarPickerModal({
                     <div
                       style={{
                         position: 'absolute',
-                        top: -6,
-                        right: -6,
-                        background: '#22d3ee',
-                        color: '#000',
-                        width: 20,
-                        height: 20,
+                        top: -5,
+                        right: -5,
+                        background: 'var(--red)',
+                        color: '#fff',
+                        width: 18,
+                        height: 18,
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.5)',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
                       }}
                     >
-                      <Check size={12} strokeWidth={3.5} />
+                      <Check size={11} strokeWidth={3} />
                     </div>
                   )}
                 </button>
@@ -443,13 +442,13 @@ export default function AvatarPickerModal({
         {/* Footer actions */}
         <div
           style={{
-            padding: '16px 28px 24px',
+            padding: '14px 26px 18px',
             borderTop: '1px solid rgba(255, 255, 255, 0.06)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            gap: 12,
-            background: 'rgba(0, 0, 0, 0.2)',
+            gap: 10,
+            background: 'rgba(0, 0, 0, 0.15)',
           }}
         >
           <button
@@ -458,10 +457,10 @@ export default function AvatarPickerModal({
             onClick={onClose}
             disabled={saving}
             style={{
-              padding: '8px 18px',
+              padding: '7px 16px',
               fontSize: 13,
-              borderRadius: 8,
-              minHeight: 38,
+              borderRadius: 6,
+              minHeight: 36,
               marginTop: 0,
             }}
           >
@@ -473,17 +472,17 @@ export default function AvatarPickerModal({
             onClick={handleSave}
             disabled={saving || selectedAvatar === currentAvatar}
             style={{
-              padding: '8px 24px',
+              padding: '7px 20px',
               fontSize: 13,
-              borderRadius: 8,
-              minHeight: 38,
-              background: '#22d3ee',
-              color: '#09090b',
-              fontWeight: 700,
+              borderRadius: 6,
+              minHeight: 36,
+              background: 'var(--red)',
+              color: '#fff',
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              boxShadow: '0 0 16px rgba(34, 211, 238, 0.3)',
+              border: 'none',
             }}
           >
             {saving ? 'Saving…' : 'Save Avatar'}

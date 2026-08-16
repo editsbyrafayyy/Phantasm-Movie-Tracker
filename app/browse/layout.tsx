@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import StreamRail from '@/components/layout/StreamRail';
 
 export const metadata = {
   title: 'Browse — Phantasm',
