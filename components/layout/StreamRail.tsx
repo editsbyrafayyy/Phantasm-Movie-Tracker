@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Moon, User, LogOut, ChevronDown, Bookmark } from 'lucide-react';
+import { User, LogOut, ChevronDown } from 'lucide-react';
 import ToastHistoryModal from '@/components/ui/ToastHistoryModal';
 import { useAuth } from '@/components/layout/AuthProvider';
 
@@ -97,8 +97,18 @@ export default function StreamRail() {
                 aria-haspopup="true"
                 aria-label="User menu"
               >
-                <span className="navbar-profile-avatar" aria-hidden="true">
-                  {initial.toUpperCase()}
+                <span className="navbar-profile-avatar" aria-hidden="true" style={{ overflow: 'hidden', padding: 0 }}>
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      width={28}
+                      height={28}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    initial.toUpperCase()
+                  )}
                 </span>
                 <span className="navbar-profile-username">{displayName}</span>
                 <ChevronDown size={14} className={`navbar-profile-chevron${dropdownOpen ? ' open' : ''}`} aria-hidden="true" />

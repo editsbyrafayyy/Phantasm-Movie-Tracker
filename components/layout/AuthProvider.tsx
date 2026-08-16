@@ -12,19 +12,21 @@ import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/lib/types';
 
 interface AuthContextValue {
-  session:  Session | null;
-  user:     User    | null;
-  profile:  Profile | null;
-  loading:  boolean;
-  signOut:  () => Promise<void>;
+  session:        Session | null;
+  user:           User    | null;
+  profile:        Profile | null;
+  loading:        boolean;
+  signOut:        () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
-  session: null,
-  user:    null,
-  profile: null,
-  loading: true,
-  signOut: async () => {},
+  session:        null,
+  user:           null,
+  profile:        null,
+  loading:        true,
+  signOut:        async () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -41,6 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
     setProfile(data ?? null);
     setLoading(false);
+  }
+
+  async function refreshProfile() {
+    if (session?.user?.id) {
+      await fetchProfile(session.user.id);
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) await fetchProfile(user.id);
+    }
   }
 
   useEffect(() => {
@@ -69,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -78,3 +89,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+

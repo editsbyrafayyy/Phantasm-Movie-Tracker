@@ -6930,6 +6930,28 @@ select:focus-visible {
 
 
 
+/* ── Curated Avatar Picker Modal ─────────────────────────────────────────── */
+.profile-avatar-trigger-btn:hover .profile-avatar-hover-overlay {
+  opacity: 1 !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+  .avatar-selection-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
 /* ── Reduced Motion Support (Feature 15) ─────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
@@ -6939,4 +6961,5 @@ select:focus-visible {
     scroll-behavior: auto !important;
   }
 }
+
 

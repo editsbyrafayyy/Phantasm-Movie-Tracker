@@ -12,6 +12,7 @@ import PhantasmWrapped from '@/components/stats/PhantasmWrapped';
 import RatingDriftChart from '@/components/stats/RatingDriftChart';
 import TasteFingerprint from '@/components/stats/TasteFingerprint';
 import CalendarHeatmap  from '@/components/stats/CalendarHeatmap';
+import ProfileAvatar   from '@/components/profile/ProfileAvatar';
 import ProfileEdit     from '@/components/profile/ProfileEdit';
 import ExportButton    from '@/components/profile/ExportButton';
 import VaultHealthCheckModal from '@/components/profile/VaultHealthCheckModal';
@@ -77,14 +78,13 @@ export default async function ProfilePage() {
 
         <div className="profile-card">
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
-            {/* Avatar */}
-            <div className="profile-avatar" aria-hidden="true" style={{ marginBottom: 0, flexShrink: 0 }}>
-              {(typedProfile.display_name?.[0] ?? typedProfile.username[0]).toUpperCase()}
-            </div>
+            {/* Interactive Avatar Picker */}
+            <ProfileAvatar profile={typedProfile} />
 
             <div className="profile-info" style={{ marginBottom: 0 }}>
               {/* Edit display name client side form - now acts as the main H2 header */}
               <ProfileEdit profile={typedProfile} />
+
               
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <p className="profile-username" style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 500, margin: 0 }}>

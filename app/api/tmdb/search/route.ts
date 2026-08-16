@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     
     // Filter out items without posters and filter by target genres to enforce strict catalog
     if (data.results) {
-      data.results = data.results.filter((item: any) => {
+      data.results = data.results.filter((item: { poster_path?: string | null; genre_ids?: number[] }) => {
         if (!item.poster_path) return false;
 
         // Unrestricted users can search and access any genre without restrictions
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('TMDB Search Error:', err);
     return NextResponse.json({ error: 'Failed to fetch from TMDB' }, { status: 500 });
   }

@@ -499,4 +499,26 @@ export function getMovieFranchises(title: string): string[] {
   return matched;
 }
 
+// ── Curated Avatars (15) ──────────────────────────────────────────────────────
+export const AVATAR_OPTIONS = [
+  '/avatars/avatar-01.svg',
+  '/avatars/avatar-02.svg',
+  '/avatars/avatar-03.svg',
+  '/avatars/avatar-04.svg',
+  '/avatars/avatar-05.svg',
+  '/avatars/avatar-06.svg',
+  '/avatars/avatar-07.svg',
+  '/avatars/avatar-08.svg',
+  '/avatars/avatar-09.svg',
+  '/avatars/avatar-10.svg',
+  '/avatars/avatar-11.svg',
+  '/avatars/avatar-12.svg',
+  '/avatars/avatar-13.svg',
+  '/avatars/avatar-14.svg',
+  '/avatars/avatar-15.svg',
+] as const;
+
+export type AvatarOption = typeof AVATAR_OPTIONS[number];
+
+
 
