@@ -17,9 +17,9 @@ export default function ScoreHistograms({ data }: ScoreHistogramsProps) {
   }
 
   return (
-    <div className="stat-card" style={{ gridColumn: 'span 2' }}>
+    <div className="stat-card stats-histograms-full">
       <p className="stat-card-label" style={{ marginBottom: 20 }}>Score Distributions</p>
-      <div className="histograms-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
+      <div className="histograms-grid">
         {data.map(({ field, values }) => {
           const fieldDef = SCORE_FIELDS.find(f => f.label === field);
           const maxVal = fieldDef?.max ?? 2;

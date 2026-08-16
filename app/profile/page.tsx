@@ -77,7 +77,7 @@ export default async function ProfilePage() {
         </header>
 
         <div className="profile-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+          <div className="profile-user-header">
             {/* Interactive Avatar Picker */}
             <ProfileAvatar profile={typedProfile} />
 

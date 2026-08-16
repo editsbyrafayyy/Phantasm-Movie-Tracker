@@ -99,7 +99,7 @@ export default function CalendarHeatmap() {
   const GAP = 3;
 
   return (
-    <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
+    <div className="stat-card" style={{ gridColumn: '1 / -1', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <div>
           <p className="stat-card-label" style={{ marginBottom: 4 }}>Watch Activity — {year}</p>
@@ -133,7 +133,7 @@ export default function CalendarHeatmap() {
           <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>Loading…</span>
         </div>
       ) : (
-        <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
+        <div style={{ overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch', paddingBottom: 4 }}>
           <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 0 }}>
             {/* Month labels row */}
             <div style={{ display: 'flex', marginLeft: 28, marginBottom: 4 }}>

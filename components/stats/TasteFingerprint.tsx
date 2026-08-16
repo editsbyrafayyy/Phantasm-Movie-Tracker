@@ -64,7 +64,7 @@ export default function TasteFingerprint({ entries }: Props) {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))',
         gap: 12,
       }}>
         {insights.map(ins => {
@@ -85,6 +85,7 @@ export default function TasteFingerprint({ entries }: Props) {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 6,
+                minWidth: 0,
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
