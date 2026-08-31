@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers, BookOpen, RotateCcw, Copy, Link2 } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, Trash2, Star, Pin, PenLine, Film, Layers, BookOpen, RotateCcw, Copy, Link2, Plus } from 'lucide-react';
 import { SCORE_FIELDS } from '@/lib/config';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast, { type ToastType } from '@/components/ui/Toast';
@@ -79,8 +79,7 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
     let isMounted = true;
     const poster = movie?.poster_url ?? movie?.backdrop_url;
     if (!poster) return;
-    const proxiedUrl = `/_next/image?url=${encodeURIComponent(poster)}&w=256&q=50`;
-    extractDominantColor(proxiedUrl).then(color => {
+    extractDominantColor(poster).then(color => {
       if (isMounted && color) setAmbientColor(color);
     });
     return () => { isMounted = false; };
@@ -362,6 +361,17 @@ export default function MovieDetailV3({ entry, similar, allEntries = [], isOwner
             )}
             {canStream && (
               <>
+                {!isOwner && (
+                  <Link
+                    href={movie.omdb_id ? `/add?omdbId=${movie.omdb_id}&title=${encodeURIComponent(title)}` : (movie.tmdb_id ? `/add?tmdbId=${movie.tmdb_id}&title=${encodeURIComponent(title)}` : `/add?title=${encodeURIComponent(title)}`)}
+                    className="btn-edit"
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(230, 50, 50, 0.15)', color: '#fff', borderColor: 'var(--red)' }}
+                    title="Rate and add this film to your own vault"
+                  >
+                    <Plus size={14} />
+                    Add to My Vault
+                  </Link>
+                )}
                 <button
                   onClick={() => setDiaryModalOpen(true)}
                   className="btn-edit"

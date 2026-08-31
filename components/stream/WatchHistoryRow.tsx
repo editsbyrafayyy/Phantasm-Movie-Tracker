@@ -40,22 +40,22 @@ export default function WatchHistoryRow() {
       const all: HistoryEntry[] = JSON.parse(raw);
       const now = Date.now();
 
-      // Check if a film/show has been completed (>= 90% watched)
+      // Check if a film/show has been completed (>= 85% watched)
       const isMovieCompleted = (e: HistoryEntry) => {
         if (e.completed) return true;
 
-        // Progress percentage check (90%+)
+        // Progress percentage check (85%+)
         if (typeof e.progress === 'number') {
-          if (e.progress >= 90) return true;
-          if (e.progress <= 1 && e.progress >= 0.9) return true;
+          if (e.progress >= 85) return true;
+          if (e.progress <= 1 && e.progress >= 0.85) return true;
         }
 
-        // Time ratio check (90%+)
+        // Time ratio check (85%+)
         if (e.currentTime && e.duration && e.duration > 0) {
-          if ((e.currentTime / e.duration) >= 0.9) return true;
+          if ((e.currentTime / e.duration) >= 0.85) return true;
         }
 
-        // TV show episode tracking check (90%+ of episodes checked)
+        // TV show episode tracking check (85%+ of episodes checked)
         if (e.type === 'tv') {
           try {
             const stored = localStorage.getItem(`watched:${e.id}`);
@@ -63,7 +63,7 @@ export default function WatchHistoryRow() {
               const epObj: Record<string, boolean> = JSON.parse(stored);
               const epKeys = Object.keys(epObj);
               const watchedCount = epKeys.filter(k => epObj[k]).length;
-              if (epKeys.length > 0 && (watchedCount / epKeys.length) >= 0.9) {
+              if (epKeys.length > 0 && (watchedCount / epKeys.length) >= 0.85) {
                 return true;
               }
             }
@@ -73,8 +73,15 @@ export default function WatchHistoryRow() {
         return false;
       };
 
-      // Filter stale (>30d) AND exclude movies >= 90% watched
+      // Filter stale (>30d) AND exclude movies >= 85% watched
       const uncompleted = all.filter(e => (now - e.watchedAt) < TTL_MS && !isMovieCompleted(e));
+
+      // Write back cleaned list (strip completed entries from localStorage so they don't reappear)
+      const stillValid = all.filter(e => (now - e.watchedAt) < TTL_MS);
+      if (stillValid.length !== all.length) {
+        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(stillValid)); } catch { /* ignore */ }
+      }
+
       setItems(uncompleted);
     } catch { /* ignore */ }
   }, []);
@@ -150,11 +157,11 @@ export default function WatchHistoryRow() {
         {items.map(item => {
           // Normalize progress percentage (0-100) if available
           let progressPct: number | null = null;
-          if (typeof item.progress === 'number' && item.progress > 0 && item.progress < 90) {
+          if (typeof item.progress === 'number' && item.progress > 0 && item.progress < 85) {
             progressPct = item.progress <= 1 ? Math.round(item.progress * 100) : Math.round(item.progress);
           } else if (item.currentTime && item.duration && item.duration > 0) {
             const ratio = item.currentTime / item.duration;
-            if (ratio > 0 && ratio < 0.9) {
+            if (ratio > 0 && ratio < 0.85) {
               progressPct = Math.round(ratio * 100);
             }
           }

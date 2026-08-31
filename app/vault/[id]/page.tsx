@@ -39,19 +39,34 @@ export default async function VaultEntryPage({ params }: Props) {
     entryPromise
   ]);
 
+  const { data: { user } } = await authClient.auth.getUser();
+
   let entry = entryRes.data;
   if (!entry) {
-    const fallbackRes = await supabase
-      .from('entries')
-      .select('*, movie:movies (*), user_id')
-      .eq('movie_id', id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    entry = fallbackRes.data;
-  }
+    // If accessed by movie_id, first check for the user's own entry
+    if (user?.id) {
+      const userEntryRes = await supabase
+        .from('entries')
+        .select('*, movie:movies (*), user_id')
+        .eq('movie_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (userEntryRes.data) {
+        entry = userEntryRes.data;
+      }
+    }
 
-  const { data: { user } } = await authClient.auth.getUser();
+    // Fallback to the owner's entry for this movie_id
+    if (!entry && ownerId) {
+      const ownerEntryRes = await supabase
+        .from('entries')
+        .select('*, movie:movies (*), user_id')
+        .eq('movie_id', id)
+        .eq('user_id', ownerId)
+        .maybeSingle();
+      entry = ownerEntryRes.data;
+    }
+  }
 
   if (!entry) notFound();
 

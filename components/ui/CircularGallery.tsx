@@ -263,12 +263,8 @@ class Media {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
-    // Leverage Next.js built-in image optimization to automatically convert
-    // TMDB raw images to WebP and cache them aggressively on the edge/server.
-    const isExternal = this.image.startsWith('http');
-    img.src = isExternal
-      ? `/_next/image?url=${encodeURIComponent(this.image)}&w=640&q=75`
-      : this.image;
+    // Load texture image directly from CDN/local assets without server-side proxy transformations
+    img.src = this.image;
     img.onload = () => {
       texture.image = img;
       this.program.uniforms.uImageSizes.value = [img.naturalWidth, img.naturalHeight];

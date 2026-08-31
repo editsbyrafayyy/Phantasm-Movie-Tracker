@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, X, Star, Film } from 'lucide-react';
+import { Search, X, Star, Film, Plus } from 'lucide-react';
 import CategoryRow from '@/components/browse/CategoryRow';
 import CustomSelect from '@/components/ui/CustomSelect';
 import type { Entry } from '@/lib/types';
@@ -19,6 +19,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [recFilter, setRecFilter] = useState<string>('All');
   const [genreFilter, setGenreFilter] = useState<string>('All');
+  const [isPending, startTransition] = useTransition();
 
   // Debounce search query to keep typing fluid
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
   return (
     <div style={{ marginTop: 0, paddingTop: 16, paddingBottom: 80 }}>
       {/* Search & Filter Controls Bar */}
-      <div className="home-vault-filters">
+      <div className="home-vault-filters" style={{ opacity: isPending ? 0.7 : 1, transition: 'opacity 0.15s' }}>
         {/* Search Input */}
         <div className="home-vault-search-container">
           <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -136,7 +137,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
           </label>
           <CustomSelect
             value={recFilter}
-            onChange={setRecFilter}
+            onChange={(v) => startTransition(() => setRecFilter(v))}
             options={[
               { value: 'All', label: 'All Statuses' },
               { value: 'Peak', label: 'Peak' },
@@ -155,7 +156,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
           </label>
           <CustomSelect
             value={genreFilter}
-            onChange={setGenreFilter}
+            onChange={(v) => startTransition(() => setGenreFilter(v))}
             options={[
               { value: 'All', label: 'All Genres' },
               ...availableGenres.map(g => ({ value: g, label: g })),
@@ -265,17 +266,26 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
               <p className="home-search-empty-sub">
                 {ownerName} has not logged or rated this film in the vault yet.
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setDebouncedSearch('');
-                }}
-                className="btn-edit"
-                style={{ marginTop: 18 }}
-              >
-                Clear search
-              </button>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 18, flexWrap: 'wrap' }}>
+                <Link
+                  href={`/add?title=${encodeURIComponent(debouncedSearch)}`}
+                  className="btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'auto' }}
+                >
+                  <Plus size={14} />
+                  Add &ldquo;{debouncedSearch}&rdquo; to Vault
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setDebouncedSearch('');
+                  }}
+                  className="btn-edit"
+                >
+                  Clear search
+                </button>
+              </div>
             </div>
           )}
         </div>

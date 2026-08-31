@@ -264,7 +264,12 @@ export default function WatchlistClient({ items }: { items: WatchlistRow[] }) {
                       </button>
                     </div>
                   )}
-                  <WatchlistRemoveButton tmdbId={item.tmdb_id} mediaType={item.media_type} />
+                  <WatchlistRemoveButton
+                    tmdbId={item.tmdb_id}
+                    mediaType={item.media_type}
+                    title={item.title}
+                    onRemove={() => setListItems(prev => prev.filter(i => i.id !== item.id))}
+                  />
                 </div>
               </div>
             );

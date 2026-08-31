@@ -5,6 +5,7 @@ import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
 import { computeTotal } from '@/lib/config';
 import { guardOwnerEntry, OWNER_ID } from '@/lib/guards';
+import { rateLimit } from '@/lib/ratelimit';
 import type { MovieFormData, Entry } from '@/lib/types';
 
 type Params = { params: Promise<{ id: string }> };
@@ -21,7 +22,12 @@ interface MoviePayload {
 }
 
 // ── GET /api/movies/[id] ──────────────────────────────────────────────────────
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  if (!rateLimit(ip, 60, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const { id }   = await params;
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -44,6 +50,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 // ── PATCH /api/movies/[id] ────────────────────────────────────────────────────
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  if (!rateLimit(ip, 30, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const { id }   = await params;
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -125,16 +136,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const titleChanged = newTitle !== undefined && newTitle !== oldTitle;
   const omdbChanged = body.omdbId !== undefined && newOmdbId !== oldOmdbId;
-
-  console.log('PATCH Movie Debug Info:', {
-    body,
-    oldTitle,
-    oldOmdbId,
-    newTitle,
-    newOmdbId,
-    titleChanged,
-    omdbChanged
-  });
 
   let resolvedMovieId = existing.movie_id;
 
@@ -392,7 +393,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 // ── DELETE /api/movies/[id] ───────────────────────────────────────────────────
-export async function DELETE(_req: NextRequest, { params }: Params) {
+export async function DELETE(req: NextRequest, { params }: Params) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  if (!rateLimit(ip, 30, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const { id }   = await params;
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();

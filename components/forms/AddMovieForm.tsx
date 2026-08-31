@@ -71,17 +71,8 @@ export default function AddMovieForm() {
         }
       })
       .catch(() => {
-        fetch('/api/owner-vault')
-          .then(r => r.json())
-          .then((ownerData: Entry[]) => {
-            if (Array.isArray(ownerData)) {
-              vaultTitlesRef.current = ownerData.map(e => ({
-                id: e.id,
-                title: e.movie?.title?.toLowerCase() ?? '',
-              }));
-            }
-          })
-          .catch(() => {});
+        // Silently handle — empty list if no entries yet or error
+        vaultTitlesRef.current = [];
       });
   }, []);
 
@@ -116,6 +107,7 @@ export default function AddMovieForm() {
     const newErrors: Partial<Record<keyof MovieFormData, string>> = {};
     if (!form.title.trim()) newErrors.title = 'Title is required';
     if (!form.subgenre)     newErrors.subgenre = 'Please select a subgenre';
+    if (!form.recommend)    newErrors.recommend = 'Please select a recommendation';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -123,7 +115,7 @@ export default function AddMovieForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) {
-      setToast({ message: 'Please fix the errors below.', type: 'error' });
+      setToast({ message: 'Please fix the errors below before submitting.', type: 'error' });
       return;
     }
 
@@ -135,8 +127,20 @@ export default function AddMovieForm() {
         body: JSON.stringify(form),
       });
       if (!res.ok) {
-        const err = await res.json();
-        setToast({ message: err.error ?? 'Failed to add movie.', type: 'error' });
+        let errMessage = 'Failed to add movie.';
+        try {
+          const err = await res.json();
+          if (err.error) errMessage = err.error;
+        } catch { /* use status defaults */ }
+
+        if (res.status === 409) {
+          errMessage = 'You have already added this movie to your vault.';
+        } else if (res.status === 429) {
+          errMessage = 'Too many requests. Please slow down and try again.';
+        } else if (res.status === 401) {
+          errMessage = 'Your session has expired. Please sign in again.';
+        }
+        setToast({ message: errMessage, type: 'error' });
         return;
       }
       if (total > 0) {
@@ -146,7 +150,7 @@ export default function AddMovieForm() {
         setTimeout(() => router.push('/vault'), 1400);
       }
     } catch {
-      setToast({ message: 'Network error. Please try again.', type: 'error' });
+      setToast({ message: 'Network error. Please check your connection and try again.', type: 'error' });
     } finally {
       setLoading(false);
     }

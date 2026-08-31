@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/ratelimit';
 
 /**
  * GET /api/movies
@@ -7,7 +8,12 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
  * Private cache: fresh for 15s, SWR up to 60s. Mutations (add/delete entry)
  * should trigger a client-side refetch to handle the stale window.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  if (!rateLimit(ip, 60, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 

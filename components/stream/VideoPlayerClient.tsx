@@ -267,7 +267,7 @@ export default function VideoPlayerClient({
               list[idx].progress = prog;
               if (curTime) list[idx].currentTime = curTime;
               if (dur) list[idx].duration = dur;
-              if (prog >= 90) {
+              if (prog >= 85) {
                 list[idx].completed = true;
               }
               localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
@@ -307,7 +307,7 @@ export default function VideoPlayerClient({
 
     const totalEps = episodes.length;
     const watchedEpsCount = episodes.filter(ep => newWatched[`${activeSeason}:${ep.episode_number}`]).length;
-    const isShowComplete = totalEps > 0 && (watchedEpsCount / totalEps) >= 0.9;
+    const isShowComplete = totalEps > 0 && (watchedEpsCount / totalEps) >= 0.85;
     syncWatchHistoryCompletion(isShowComplete);
   };
 

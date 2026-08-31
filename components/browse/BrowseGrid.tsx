@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, Search, AlertCircle, RefreshCw, X } from 'lucide-react';
+import { Eye, Search, AlertCircle, RefreshCw, X, Plus } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import MoodPicker from '@/components/browse/MoodPicker';
 import WatchHistoryRow from '@/components/stream/WatchHistoryRow';
@@ -282,27 +282,47 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false }: 
       clearTimeout(closeGraceTimerRef.current);
       closeGraceTimerRef.current = null;
     }
+    // Commit whatever genre the wheel was showing when overlay closes
+    const pendingGenre = activeWheelGenre;
+    const nextGenre = pendingGenre === 'All' ? null : pendingGenre;
+    if (nextGenre !== genreFilter) {
+      setGenreFilter(nextGenre);
+      setPage(1);
+      setHasMore(true);
+      setSwappingGenre(true);
+      setFetchError(null);
+      errorCountRef.current = 0;
+      if (searchQuery) setSearchQuery('');
+      if (activeQuery) setActiveQuery('');
+    }
     setIsOverlayActive(false);
     setTimeout(() => {
       setIsWheelOpen(false);
     }, 380);
   };
 
+  const mouseMoveRafRef = useRef<number | null>(null);
   const handleOverlayMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // If mouse moves past 52% of screen width into the empty area, start grace timer to close
-    const threshold = window.innerWidth * 0.52;
-    if (e.clientX > threshold) {
-      if (!closeGraceTimerRef.current) {
-        closeGraceTimerRef.current = setTimeout(() => {
-          closeWheelOverlay();
-        }, 220);
+    const clientX = e.clientX;
+    // Throttle via rAF — skip if a frame is already scheduled
+    if (mouseMoveRafRef.current !== null) return;
+    mouseMoveRafRef.current = requestAnimationFrame(() => {
+      mouseMoveRafRef.current = null;
+      // If mouse moves past 52% of screen width into the empty area, start grace timer to close
+      const threshold = window.innerWidth * 0.52;
+      if (clientX > threshold) {
+        if (!closeGraceTimerRef.current) {
+          closeGraceTimerRef.current = setTimeout(() => {
+            closeWheelOverlay();
+          }, 220);
+        }
+      } else {
+        if (closeGraceTimerRef.current) {
+          clearTimeout(closeGraceTimerRef.current);
+          closeGraceTimerRef.current = null;
+        }
       }
-    } else {
-      if (closeGraceTimerRef.current) {
-        clearTimeout(closeGraceTimerRef.current);
-        closeGraceTimerRef.current = null;
-      }
-    }
+    });
   };
 
   // Close overlay on Escape key
@@ -447,6 +467,7 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false }: 
   }, [page, mediaType, activeQuery, genreFilter, retryToken]);
 
   // Robust IntersectionObserver for Infinite Scroll
+  const MAX_AUTO_PAGES = 15; // ~300 movies max auto-loaded to protect API credits
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
@@ -460,6 +481,7 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false }: 
         if (isFetchingRef.current) return;
         if (!hasMore || loading || loadingMore) return;
         if (errorCountRef.current >= 3) return; // Circuit breaker active
+        if (page >= MAX_AUTO_PAGES) return; // Page cap — show manual load button instead
 
         // Throttle rapid trigger events (minimum 350ms between page requests)
         const now = Date.now();
@@ -475,7 +497,7 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false }: 
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasMore, loading, loadingMore]);
+  }, [hasMore, loading, loadingMore, page]);
 
   const handleTabChange = (type: 'movie' | 'tv') => {
     if (type !== mediaType) {
@@ -773,15 +795,27 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false }: 
                       <div className="stream-card-overlay" />
 
                       {canSave && (
-                        <WatchlistButton
-                          tmdbId={movie.id}
-                          mediaType={mediaType}
-                          title={movie.title ?? movie.name ?? ''}
-                          posterUrl={movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : null}
-                          year={Number((movie.release_date ?? movie.first_air_date ?? '').slice(0, 4)) || null}
-                          showLabel={false}
-                          className="watchlist-card-overlay-btn"
-                        />
+                        <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 6, zIndex: 10 }}>
+                          <Link
+                            href={`/add?tmdbId=${movie.id}&title=${encodeURIComponent(movie.title ?? movie.name ?? '')}`}
+                            onClick={e => e.stopPropagation()}
+                            className="watchlist-card-overlay-btn"
+                            title="Rate & Add to Vault"
+                            aria-label="Add to Vault"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                          >
+                            <Plus size={14} />
+                          </Link>
+                          <WatchlistButton
+                            tmdbId={movie.id}
+                            mediaType={mediaType}
+                            title={movie.title ?? movie.name ?? ''}
+                            posterUrl={movie.poster_path ? `https://image.tmdb.org/t/p/w342${movie.poster_path}` : null}
+                            year={Number((movie.release_date ?? movie.first_air_date ?? '').slice(0, 4)) || null}
+                            showLabel={false}
+                            className="watchlist-card-overlay-btn"
+                          />
+                        </div>
                       )}
 
                       <div className="stream-card-play-btn">
@@ -839,7 +873,22 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false }: 
             {/* Infinite Scroll Dynamic Status & Sentinel */}
             {hasMore && movies.length > 0 && !fetchError && (
               <div className="browse-infinite-status">
-                {loadingMore ? (
+                {page >= MAX_AUTO_PAGES ? (
+                  /* Page cap reached — show manual load button */
+                  <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: 0, letterSpacing: 0.5 }}>
+                      Showing first ~{page * 20} results — narrow your search or genre to find specific titles.
+                    </p>
+                    <button
+                      className="btn-edit"
+                      onClick={() => setPage(p => p + 1)}
+                      disabled={loadingMore}
+                      style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
+                      {loadingMore ? 'Loading…' : 'Load more results'}
+                    </button>
+                  </div>
+                ) : loadingMore ? (
                   <>
                     <div className="browse-infinite-spinner" aria-hidden="true" />
                     <span style={{ color: 'var(--text-muted)', fontSize: 12, letterSpacing: 1 }}>Loading more films...</span>

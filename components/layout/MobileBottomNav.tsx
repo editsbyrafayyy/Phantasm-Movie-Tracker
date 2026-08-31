@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Clapperboard, Film, Play, Plus, User, LogIn, Bookmark, BookOpen } from 'lucide-react';
+import { Clapperboard, Film, Play, Plus, LogIn, Bookmark } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 export default function MobileBottomNav() {
@@ -63,9 +63,9 @@ export default function MobileBottomNav() {
             </div>
             <span>Log Film</span>
           </Link>
-          <Link href="/diary" className={`mobile-bottom-nav-link${isActive('/diary')}`} prefetch={true}>
-            <BookOpen size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            <span>Diary</span>
+          <Link href="/watchlist" className={`mobile-bottom-nav-link${isActive('/watchlist')}`} prefetch={true}>
+            <Bookmark size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
+            <span>Watch Later</span>
           </Link>
           <Link href="/stream" className={`mobile-bottom-nav-link${isActive('/stream')}`} prefetch={true}>
             <Play size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
