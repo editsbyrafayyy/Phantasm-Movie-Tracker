@@ -1,39 +1,104 @@
-# Movie Tracker
+# Phantasm (Vault)
 
-A private movie and TV tracking app built for me and my friends, combining a shared watch history, ratings log, and recommendation tool in one place.
+A full-stack movie and television tracking platform built with Next.js (App Router), TypeScript, and Supabase. Combines shared watch history, multi-axis weighted scoring, personalized analytics, discovery feeds, and group watchlists in a unified interface.
 
-This project started as a way to move our group's movie tracking off spreadsheets and group chats and into something with real metadata, posters, and stats pulled from TMDB and OMDB. It also served as a hands-on learning project for building a full-stack app with Next.js and Supabase.
+---
 
-## Features
+## Overview
 
-- **Vault** — our collective log of watched movies and shows, with personal ratings, notes, and scores
-- **Watchlist** — save what's next, remove it once it's watched
-- **Browse** — discover new titles via TMDB, with mood-based recommendations and a hero carousel of trending content
-- **Add / Update flow** — search OMDB/TMDB and pull in accurate metadata instead of entering it manually
-- **Stats and Vault Wrapped** — a year-in-review style breakdown of viewing habits: genre spread, score distributions, top rated titles, and more
-- **Roulette** — a random picker for when the group can't decide what to watch
-- **Profile and Admin tools** — account management, password resets, and an admin panel for managing users
-- **Legacy migration tooling** — scripts to import historical data from an old Google Sheet, using Google Apps Script and a Node migration script
+This project was developed to replace ad-hoc spreadsheets and group chat logs with a centralized media tracker featuring rich metadata, automated poster/backdrop ingestion, statistical breakdowns, and interactive browsing.
+
+Key application highlights:
+- Multi-dimensional rating criteria across eight distinct film qualities.
+- Dynamic analytics dashboard and annual viewing summaries.
+- Algorithmic mood-based recommendation engine.
+- Real-time catalog search and metadata enrichment via TMDB and OMDB APIs.
+- Role-based access control and Row Level Security (RLS).
+
+---
+
+## Key Features
+
+### The Vault
+- Centralized database of watched movies and TV series with search, subgenre tags, and custom filters.
+- Detailed single-title views displaying director, runtime, cast, release year, plot summary, and user ratings.
+- Role-protected entries allowing personal reviews, rewatch logs, and private notes.
+
+### Multi-Axis Scoring System
+- Custom weighted evaluation rubric spanning 8 distinct criteria:
+  - Atmosphere (0 to 2)
+  - Story & Writing (0 to 2)
+  - Characters & Acting (0 to 1)
+  - Pacing & Flow (0 to 1)
+  - Visuals & Cinematography (0 to 1)
+  - Thrill & Engagement (0 to 1)
+  - Sound Design & Score (0 to 1)
+  - Emotional Impact (0 to 1)
+- Optional bonus points and categorical verdicts (Peak, Yes, No, Garbage).
+
+### Browse and Mood Engine
+- Browse trending and popular titles using live TMDB integration.
+- Mood-based filtering engine matching emotional tones and themes to catalog entries.
+- Media roulette for randomized selection from watchlists or unwatched recommendations.
+
+### Analytics and Wrapped
+- Interactive charts detailing subgenre distribution, rating drift over time, and score histograms.
+- Personalized taste fingerprints and summary metrics across total hours watched.
+- Year-in-review summary generated from logged timestamps.
+
+### Administration and Data Ingestion
+- Automated OMDB and TMDB lookup pipelines for metadata and high-resolution posters.
+- Profile and user management with granular access control.
+- Historical data migration utilities for legacy spreadsheet imports.
+
+---
 
 ## Tech Stack
 
-- **Framework:** Next.js (App Router) with TypeScript
-- **Database / Auth:** Supabase
-- **Movie/TV Data:** TMDB API, OMDB API
-- **Styling:** Tailwind CSS
-- **Stats/Charts:** Custom components (genre donut, score histograms, distributions)
-- **Legacy tooling:** Google Apps Script (one-time Sheets migration)
+- **Framework:** Next.js (App Router, Server and Client Components)
+- **Language:** TypeScript
+- **Database & Auth:** Supabase (PostgreSQL with Row Level Security)
+- **APIs:** The Movie Database (TMDB), Open Movie Database (OMDB)
+- **Styling:** Tailwind CSS, custom CSS animations, Framer Motion
+- **Data Visualization:** Custom SVG and canvas chart components
 
-## Note on Setup and Reuse
+---
 
-This repo is shared for portfolio only.
+## Project Structure
 
-It relies on private services (a Supabase project, API keys, admin accounts, and friend-group data) that are not included here, and a few features are intentionally built around my friend group rather than general users. Because of that:
+```text
+├── app/                  # Next.js App Router (pages, layouts, API routes)
+│   ├── api/              # Backend endpoints (search, movies, lists, stats)
+│   ├── browse/           # TMDB discovery and mood exploration views
+│   ├── diary/            # Chronological viewing logs
+│   ├── stats/            # Analytics and visual charts
+│   ├── stream/           # Media player and detail views
+│   └── vault/            # Core catalog and title details
+├── components/           # Modular React UI components
+│   ├── browse/           # Carousels, mood pickers, and category rows
+│   ├── home/             # Feeds, widgets, and roulette picker
+│   ├── layout/           # Navigation, auth wrappers, and shortcuts
+│   ├── stats/            # Distribution bars, heatmaps, and charts
+│   ├── stream/           # Video player clients and detail drawers
+│   └── vault/            # Filter bars, movie cards, and rating dialogs
+├── lib/                  # Shared utilities, API clients, and calculations
+│   ├── moodEngine.ts     # Recommendation heuristics
+│   ├── omdb.ts           # OMDB API client
+│   ├── supabase/         # Supabase client and server session utilities
+│   └── tmdb.ts           # TMDB API client
+└── scripts/              # Database migrations and schema definitions
+```
 
-- No `.env` file, setup steps, or deployment instructions are included
-- The code is not licensed for reuse, redistribution, or self-hosting
-- Feel free to browse the code and structure for reference, but this is not intended to be run as a template
+---
+
+## Portfolio Notice
+
+This repository is shared for portfolio and code review purposes only.
+
+It relies on private infrastructure, environment configurations, and protected database instances. No sensitive keys, database credentials, or private configuration files are included.
+
+---
 
 ## License
 
-All rights reserved. This code is shared for portfolio purposes only and is not licensed for reuse, modification, or redistribution.
+All rights reserved. This source code is shared for portfolio demonstration and is not licensed for public redistribution, modification, or commercial hosting.

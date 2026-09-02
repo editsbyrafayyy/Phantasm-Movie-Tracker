@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const OWNER_ID = process.env.OWNER_USER_ID || '69a94e3f-bcb8-4eb2-884f-98fe2b5fdcd0';
+export const OWNER_ID = process.env.OWNER_USER_ID || '';
 
 /**
  * Returns a 403 response if the authenticated user is attempting
@@ -11,7 +11,7 @@ export function guardOwnerEntry(
   requestingUserId: string,
   entryOwnerId: string
 ): NextResponse | null {
-  if (entryOwnerId === OWNER_ID && requestingUserId !== OWNER_ID) {
+  if (OWNER_ID && entryOwnerId === OWNER_ID && requestingUserId !== OWNER_ID) {
     return NextResponse.json(
       { error: 'You do not have permission to modify this entry.' },
       { status: 403 }
@@ -20,7 +20,7 @@ export function guardOwnerEntry(
   return null;
 }
 
-const DEFAULT_UNRESTRICTED_EMAILS = ['arsum@gmail.com'];
+const DEFAULT_UNRESTRICTED_EMAILS: string[] = [];
 
 /**
  * Checks if a user has unrestricted access to all genres and media.

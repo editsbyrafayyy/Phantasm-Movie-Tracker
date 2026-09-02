@@ -283,7 +283,7 @@ export async function refreshMoodCache(): Promise<{ success: boolean; stats: any
 
   // 2. Fetch Vault Entries
   console.log('[Mood Engine] Fetching vault entries...');
-  const OWNER_ID = process.env.OWNER_USER_ID || '69a94e3f-bcb8-4eb2-884f-98fe2b5fdcd0';
+  const OWNER_ID = process.env.OWNER_USER_ID || '';
   const { data: vaultEntries, error: vaultError } = await serviceClient
     .from('entries')
     .select('*, movie:movies(*)')

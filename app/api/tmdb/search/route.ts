@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Check if requesting user has unrestricted genre access (e.g. arsum@gmail.com)
+  // Check if requesting user has unrestricted genre access
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   const isUnrestricted = isUnrestrictedUser(user);

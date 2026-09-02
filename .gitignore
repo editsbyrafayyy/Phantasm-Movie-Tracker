@@ -17,7 +17,14 @@ dist/
 .env.test.local
 .env.production.local
 *.json.key
-movie-tracker-*.json`
+*.key
+movie-tracker-*.json
+*serviceaccount*.json
+*service-account*.json
+*.backup.sql
+old_project_full_backup.sql
+vault_backup.sql
+auth_migration.sql
 
 # ── Documentation and Planning ────────────────────────────────────────────────
 *.md
