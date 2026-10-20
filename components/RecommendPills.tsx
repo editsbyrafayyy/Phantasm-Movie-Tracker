@@ -6,31 +6,39 @@ interface RecommendPillsProps {
   value:    Recommend;
   onChange: (value: Recommend) => void;
   disabled?: boolean;
+  labelledBy?: string;
 }
 
-const PILLS: { value: Exclude<Recommend, ''>; label: string; className: string }[] = [
-  { value: 'Yes',     label: 'Yes',     className: 'pill-yes'     },
-  { value: 'No',      label: 'No',      className: 'pill-no'      },
-  { value: 'Peak',    label: 'Peak',    className: 'pill-peak'    },
-  { value: 'Garbage', label: 'Garbage', className: 'pill-garbage' },
+const PILLS: { value: Exclude<Recommend, ''>; className: string }[] = [
+  { value: 'Peak',    className: 'pill-peak'    },
+  { value: 'Yes',     className: 'pill-yes'     },
+  { value: 'No',      className: 'pill-no'      },
+  { value: 'Garbage', className: 'pill-garbage' },
 ];
 
-export default function RecommendPills({ value, onChange, disabled }: RecommendPillsProps) {
+export default function RecommendPills({ value, onChange, disabled, labelledBy }: RecommendPillsProps) {
   return (
-    <div className="pill-row" role="group" aria-label="Recommendation">
-      {PILLS.map(pill => (
-        <button
-          key={pill.value}
-          type="button"
-          id={`recommend-${pill.value.toLowerCase()}`}
-          onClick={() => onChange(value === pill.value ? '' : pill.value)}
-          className={`pill ${pill.className}${value === pill.value ? ' selected' : ''}`}
-          aria-pressed={value === pill.value}
-          disabled={disabled}
-        >
-          {pill.label}
-        </button>
-      ))}
+    <div
+      className="pill-row"
+      role="group"
+      aria-label={labelledBy ? undefined : 'Recommendation'}
+      aria-labelledby={labelledBy}
+    >
+      {PILLS.map(pill => {
+        const selected = value === pill.value;
+        return (
+          <button
+            key={pill.value}
+            type="button"
+            onClick={() => onChange(selected ? '' : pill.value)}
+            className={`pill ${pill.className}${selected ? ' selected' : ''}`}
+            aria-pressed={selected}
+            disabled={disabled}
+          >
+            {pill.value}
+          </button>
+        );
+      })}
     </div>
   );
 }

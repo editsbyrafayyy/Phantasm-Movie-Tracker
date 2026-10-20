@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 
 interface Option {
   value: string;
@@ -13,10 +13,14 @@ interface CustomSelectProps {
   options: Option[];
   onChange: (value: string) => void;
   ariaLabel?: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   align?: 'left' | 'right';
 }
 
+/**
+ * Styled single-select (listbox pattern). Keyboard: Enter/Space/ArrowUp/ArrowDown open,
+ * arrows/Home/End move, Enter/Space choose, Escape/Tab close.
+ */
 export default function CustomSelect({
   value,
   options,
@@ -26,100 +30,131 @@ export default function CustomSelect({
   align = 'left',
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const baseId = useId();
+  const listId = `${baseId}-list`;
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedIndex = options.findIndex(o => o.value === value);
+  const selectedOption = options[selectedIndex] ?? options[0];
 
-  // Close when clicking outside
+  function open(index = selectedIndex >= 0 ? selectedIndex : 0) {
+    setActiveIndex(index);
+    setIsOpen(true);
+  }
+  function close(refocus = false) {
+    setIsOpen(false);
+    if (refocus) triggerRef.current?.focus();
+  }
+  function choose(index: number) {
+    const opt = options[index];
+    if (opt) onChange(opt.value);
+    close(true);
+  }
+
+  // Close when clicking outside.
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+    if (!isOpen) return;
+    function onDown(e: MouseEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false);
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [isOpen]);
 
-  // Sync focused index when opening
+  // Keep the active option in view.
   useEffect(() => {
-    if (isOpen) {
-      const idx = options.findIndex(o => o.value === value);
-      setFocusedIndex(idx >= 0 ? idx : 0);
-    } else {
-      setFocusedIndex(-1);
-    }
-  }, [isOpen, value, options]);
+    if (!isOpen || activeIndex < 0) return;
+    const el = listRef.current?.children[activeIndex] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [isOpen, activeIndex]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (!isOpen) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
-        setIsOpen(true);
+        open();
       }
       return;
     }
-
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setFocusedIndex(prev => (prev + 1) % options.length);
+        setActiveIndex(i => (i + 1) % options.length);
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setFocusedIndex(prev => (prev - 1 + options.length) % options.length);
+        setActiveIndex(i => (i - 1 + options.length) % options.length);
+        break;
+      case 'Home':
+        e.preventDefault();
+        setActiveIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        setActiveIndex(options.length - 1);
         break;
       case 'Enter':
       case ' ':
         e.preventDefault();
-        if (focusedIndex >= 0 && focusedIndex < options.length) {
-          onChange(options[focusedIndex].value);
-        }
-        setIsOpen(false);
+        choose(activeIndex);
         break;
       case 'Escape':
         e.preventDefault();
-        setIsOpen(false);
+        e.stopPropagation();
+        close(true);
         break;
       case 'Tab':
-        setIsOpen(false);
+        close();
         break;
     }
   };
 
   return (
-    <div className="custom-select-container" ref={containerRef} onKeyDown={handleKeyDown}>
+    <div className="custom-select-container" ref={containerRef}>
       <button
+        ref={triggerRef}
         type="button"
         className={`custom-select-trigger${isOpen ? ' active' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => (isOpen ? close() : open())}
+        onKeyDown={handleKeyDown}
+        role="combobox"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        aria-controls={isOpen ? listId : undefined}
+        aria-activedescendant={isOpen && activeIndex >= 0 ? `${baseId}-opt-${activeIndex}` : undefined}
         aria-label={ariaLabel}
       >
-        {icon && <span className="custom-select-icon-wrap">{icon}</span>}
+        {icon && <span className="custom-select-icon-wrap" aria-hidden="true">{icon}</span>}
         <span className="custom-select-label">{selectedOption?.label ?? ''}</span>
-        <ChevronDown size={14} className={`custom-select-chevron ${isOpen ? 'open' : ''}`} aria-hidden="true" />
+        <ChevronDown size={16} className={`custom-select-chevron${isOpen ? ' open' : ''}`} aria-hidden="true" />
       </button>
 
       {isOpen && (
-        <ul className={`custom-select-dropdown align-${align}`} role="listbox">
+        <ul
+          ref={listRef}
+          id={listId}
+          className={`custom-select-dropdown align-${align}`}
+          role="listbox"
+          aria-label={ariaLabel}
+        >
           {options.map((option, idx) => {
             const isSelected = option.value === value;
-            const isFocused = idx === focusedIndex;
             return (
               <li
                 key={option.value}
+                id={`${baseId}-opt-${idx}`}
                 role="option"
                 aria-selected={isSelected}
-                className={`custom-select-option${isSelected ? ' selected' : ''}${isFocused ? ' focused' : ''}`}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
+                className={`custom-select-option${isSelected ? ' selected' : ''}${idx === activeIndex ? ' focused' : ''}`}
+                onMouseEnter={() => setActiveIndex(idx)}
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => choose(idx)}
               >
-                {option.label}
+                <span>{option.label}</span>
+                {isSelected && <Check size={14} aria-hidden="true" />}
               </li>
             );
           })}

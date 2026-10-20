@@ -1,39 +1,33 @@
-export function VaultSkeleton({ count = 18 }: { count?: number }) {
+/** Mirrors the vault layout: header, makeup bar, toolbar, poster grid. */
+export function VaultSkeleton({ count = 15 }: { count?: number }) {
   return (
-    <div className="vault-grid-container" style={{ padding: '0 48px 80px' }}>
-      <div className="movie-grid">
-        {Array.from({ length: count }).map((_, i) => (
-          <div key={i} className="movie-card-skeleton" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div
-              className="skeleton"
-              style={{
-                width: '100%',
-                aspectRatio: '2/3',
-                borderRadius: 10,
-                animationDelay: `${i * 40}ms`,
-                position: 'relative',
-              }}
-            >
-              <div
-                className="skeleton"
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  left: 8,
-                  width: 48,
-                  height: 22,
-                  borderRadius: 6,
-                  background: 'rgba(255,255,255,0.1)',
-                }}
-              />
-            </div>
-            <div className="skeleton" style={{ height: 14, width: '85%', borderRadius: 4, animationDelay: `${i * 40 + 20}ms` }} />
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <div className="skeleton" style={{ height: 11, width: '30%', borderRadius: 3, animationDelay: `${i * 40 + 40}ms` }} />
-              <div className="skeleton" style={{ height: 11, width: '45%', borderRadius: 3, animationDelay: `${i * 40 + 60}ms` }} />
-            </div>
+    <div className="vault-skeleton" aria-busy="true" aria-label="Loading vault">
+      <div className="vault-content vault-head">
+        <div className="vault-skel-header">
+          <div className="skeleton vault-skel-eyebrow" />
+          <div className="skeleton vault-skel-title" />
+        </div>
+      </div>
+      <div className="vault-content">
+        <div className="skeleton vault-skel-makeup" />
+        <div className="vault-skel-toolbar">
+          <div className="skeleton vault-skel-search" />
+          <div className="vault-skel-controls">
+            <div className="skeleton vault-skel-sort" />
+            <div className="skeleton vault-skel-filters" />
+            <div className="skeleton vault-skel-icon" />
+            <div className="skeleton vault-skel-icon" />
           </div>
-        ))}
+        </div>
+        <div className="movie-grid vault-movie-grid">
+          {Array.from({ length: count }).map((_, i) => (
+            <div
+              key={i}
+              className="skeleton vault-skel-card"
+              style={{ animationDelay: `${i * 40}ms` }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

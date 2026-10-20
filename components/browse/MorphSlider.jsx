@@ -6,12 +6,7 @@ import './MorphSlider.css';
 
 const TRANSITIONS = { melt: 0, ripple: 1, shear: 2, swirl: 3 };
 
-const DEFAULT_ITEMS = [
-  { image: 'https://images.unsplash.com/photo-1782977389500-dd7adad33ebe?q=80&w=1600&auto=format&fit=crop', caption: 'One' },
-  { image: 'https://images.unsplash.com/photo-1781499455083-6ccc3beb20cd?q=80&w=1600&auto=format&fit=crop', caption: 'Two' },
-  { image: 'https://images.unsplash.com/photo-1776394254711-4a0d7345269a?q=80&w=1600&auto=format&fit=crop', caption: 'Three' },
-  { image: 'https://images.unsplash.com/photo-1781242629922-6f39cc3671cd?q=80&w=1600&auto=format&fit=crop', caption: 'Four' }
-];
+const DEFAULT_ITEMS = [];
 
 const vertexShader = `
 attribute vec2 position;
@@ -193,8 +188,11 @@ function hexToRgb(hex) {
 }
 
 class MorphEngine {
-  constructor(container, { items, startIndex, reducedMotion, getOptions, onIndexChange, dprCap }) {
+  constructor(container, { items, startIndex, reducedMotion, getOptions, onIndexChange, onActiveChange, dprCap }) {
     this.container = container;
+    this.onActiveChange = onActiveChange;
+    this.destroyed = false;
+    this.images = [];
     this.items = items;
     this.getOptions = getOptions;
     this.onIndexChange = onIndexChange;
@@ -246,43 +244,64 @@ class MorphEngine {
     this.canvas.addEventListener('webglcontextlost', this.boundContextLost, false);
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
+    this.boundLoop = this.loop.bind(this);
+    // Pause rendering while offscreen or while the tab is hidden.
     this.isVisible = true;
     this.intersectionObserver = new IntersectionObserver((entries) => {
       const isIntersecting = entries[0]?.isIntersecting ?? true;
       if (this.isVisible !== isIntersecting) {
         this.isVisible = isIntersecting;
-        if (this.isVisible) {
-          cancelAnimationFrame(this.raf);
-          this.raf = requestAnimationFrame(this.boundLoop);
-        } else {
-          cancelAnimationFrame(this.raf);
-        }
+        this.updateRunning();
       }
     }, { threshold: 0.05 });
     this.intersectionObserver.observe(container);
+    this.boundVisibility = () => this.updateRunning();
+    document.addEventListener('visibilitychange', this.boundVisibility);
+    this.running = false;
     this.resize();
     this.loadTextures();
-    this.boundLoop = this.loop.bind(this);
-    this.raf = requestAnimationFrame(this.boundLoop);
+    this.updateRunning();
+  }
+
+  isActive() { return this.isVisible && !document.hidden && !this.destroyed; }
+
+  updateRunning() {
+    const active = this.isActive();
+    if (active === this.running) return;
+    this.running = active;
+    cancelAnimationFrame(this.raf);
+    if (active) this.raf = requestAnimationFrame(this.boundLoop);
+    if (this.onActiveChange) this.onActiveChange(active);
   }
 
   loadTextures() {
-    this.items.forEach((item, index) => {
+    // Current slide first; the rest start once it has arrived so the visible
+    // backdrop isn't competing with seven others for bandwidth.
+    const order = this.items.map((_, i) => this.wrap(this.current + i));
+    const load = (index, then) => {
+      const item = this.items[index];
+      if (!item || !item.image) { then?.(); return; }
       const img = new Image();
+      this.images.push(img);
       img.crossOrigin = 'anonymous';
-      img.src = item.image;
+      img.decoding = 'async';
       img.onload = () => {
+        if (this.destroyed) return;
         const texture = new Texture(this.gl, { generateMipmaps: false });
         texture.image = img;
         this.textures[index] = texture;
         this.sizes[index] = [img.naturalWidth || 1, img.naturalHeight || 1];
-        if (index === this.current) {
+        if (index === this.current && !this.animating && !this.dragging) {
           this.program.uniforms.tCurrent.value = texture;
           this.program.uniforms.uCurrentSize.value = this.sizes[index];
         }
+        then?.();
       };
-      img.onerror = () => {};
-    });
+      img.onerror = () => { if (!this.destroyed) then?.(); };
+      img.src = item.image;
+    };
+    const [first, ...rest] = order;
+    load(first, () => rest.forEach(i => load(i)));
   }
 
   resize() {
@@ -304,7 +323,7 @@ class MorphEngine {
   }
 
   loop(t) {
-    if (!this.isVisible) return;
+    if (!this.running) return;
     this.program.uniforms.uTime.value = t * 0.001;
     if (!this.dragging && !this.animating) this.syncOptions();
     this.renderer.render({ scene: this.mesh });
@@ -313,8 +332,8 @@ class MorphEngine {
 
   wrap(i) { const n = this.items.length; return ((i % n) + n) % n; }
 
-  prepareNext(dir) {
-    const target = this.wrap(this.current + dir);
+  prepareNext(dir, explicitTarget) {
+    const target = explicitTarget ?? this.wrap(this.current + dir);
     this.program.uniforms.tCurrent.value = this.textures[this.current];
     this.program.uniforms.uCurrentSize.value = this.sizes[this.current];
     this.program.uniforms.tNext.value = this.textures[target];
@@ -323,12 +342,12 @@ class MorphEngine {
     return target;
   }
 
-  goTo(dir) {
+  goTo(dir, explicitTarget) {
     if (this.animating || this.dragging || this.items.length < 2) return;
     const opts = this.getOptions();
-    if (!opts.loop) { const raw = this.current + dir; if (raw < 0 || raw > this.items.length - 1) return; }
+    if (explicitTarget === undefined && !opts.loop) { const raw = this.current + dir; if (raw < 0 || raw > this.items.length - 1) return; }
     this.syncOptions();
-    const target = this.prepareNext(dir);
+    const target = this.prepareNext(dir, explicitTarget);
     this.animating = true;
     this.announce(target);
     const duration = this.reducedMotion ? Math.min(opts.duration, 0.4) : opts.duration;
@@ -354,8 +373,9 @@ class MorphEngine {
   next() { this.goTo(1); }
   prev() { this.goTo(-1); }
   goToIndex(idx) {
-    if (idx === this.current) return;
-    this.goTo(idx > this.current ? 1 : -1);
+    const target = this.wrap(idx);
+    if (target === this.current) return;
+    this.goTo(target > this.current ? 1 : -1, target);
   }
 
   setPointer(x, y) { this.program.uniforms.uPointer.value = [x, y]; }
@@ -396,7 +416,12 @@ class MorphEngine {
   onContextLost(e) { e.preventDefault(); cancelAnimationFrame(this.raf); }
 
   destroy() {
+    this.destroyed = true;
+    this.running = false;
     cancelAnimationFrame(this.raf);
+    document.removeEventListener('visibilitychange', this.boundVisibility);
+    this.images.forEach(img => { img.onload = null; img.onerror = null; img.src = ''; });
+    this.images = [];
     if (this.tween) this.tween.kill();
     this.resizeObserver?.disconnect();
     this.intersectionObserver?.disconnect();
@@ -435,6 +460,7 @@ const MorphSlider = forwardRef(function MorphSlider({
   showControls = true,
   showIndicators = true,
   onSlideChange,
+  controlRef,
   className = '',
   ...props
 }, ref) {
@@ -442,20 +468,28 @@ const MorphSlider = forwardRef(function MorphSlider({
   const engineRef = useRef(null);
   const [index, setIndex] = useState(startIndex);
   const [hovering, setHovering] = useState(false);
+  // false while offscreen / tab hidden — autoplay waits instead of advancing.
+  const [active, setActive] = useState(true);
+  const [reducedMotion] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const onSlideChangeRef = useRef(onSlideChange);
+  useEffect(() => { onSlideChangeRef.current = onSlideChange; });
 
   const optsRef = useRef();
   optsRef.current = { transition, duration, ease, intensity, scale, aberration, drift, overlayColor, loop };
 
-  // Expose imperative controls to parent via ref
-  useImperativeHandle(ref, () => ({
+  // Expose imperative controls to parent via ref (or controlRef when loaded through next/dynamic)
+  const api = () => ({
     next: () => engineRef.current?.next(),
     prev: () => engineRef.current?.prev(),
     goTo: (i) => engineRef.current?.goToIndex(i),
-  }), []);
+  });
+  useImperativeHandle(ref, api, []);
+  useImperativeHandle(controlRef, api, []);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const engine = new MorphEngine(containerRef.current, {
       items,
       startIndex,
@@ -464,11 +498,11 @@ const MorphSlider = forwardRef(function MorphSlider({
       getOptions: () => optsRef.current,
       onIndexChange: (i) => {
         setIndex(i);
-        onSlideChange?.(i);
-      }
+        onSlideChangeRef.current?.(i);
+      },
+      onActiveChange: setActive,
     });
     engineRef.current = engine;
-    setIndex(startIndex);
     return () => { engine.destroy(); engineRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, startIndex]);
@@ -477,10 +511,10 @@ const MorphSlider = forwardRef(function MorphSlider({
   const handlePrev = useCallback(() => engineRef.current?.prev(), []);
 
   useEffect(() => {
-    if (!autoplay || hovering) return undefined;
+    if (!autoplay || reducedMotion || hovering || !active) return undefined;
     const id = setTimeout(() => engineRef.current?.next(), Math.max(autoplayDelay, 1) * 1000);
     return () => clearTimeout(id);
-  }, [autoplay, autoplayDelay, hovering, index]);
+  }, [autoplay, autoplayDelay, reducedMotion, hovering, active, index]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -582,7 +616,7 @@ const MorphSlider = forwardRef(function MorphSlider({
               aria-selected={i === index}
               aria-label={`Go to slide ${i + 1}`}
               className={`morph-slider-dot ${i === index ? 'is-active' : ''}`}
-              onClick={() => { const engine = engineRef.current; if (!engine || i === index) return; engine.goTo(i > index ? 1 : -1); }}
+              onClick={() => engineRef.current?.goToIndex(i)}
             />
           ))}
         </div>

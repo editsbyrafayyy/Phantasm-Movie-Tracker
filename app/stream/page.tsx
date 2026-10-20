@@ -11,10 +11,5 @@ export default async function StreamPage() {
 
   const isUnrestricted = isUnrestrictedUser(user);
 
-  return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <BrowseGrid canSave={!!user} isUnrestricted={isUnrestricted} />
-    </div>
-  );
+  return <BrowseGrid canSave isUnrestricted={isUnrestricted} variant="stream" />;
 }
-

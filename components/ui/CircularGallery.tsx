@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any -- OGL scene objects are untyped in this port */
 
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
 import { useEffect, useRef } from 'react';
@@ -12,123 +13,26 @@ interface GalleryItem {
 interface CircularGalleryProps {
   items?: GalleryItem[];
   bend?: number;
-  textColor?: string;
   borderRadius?: number;
-  font?: string;
-  fontUrl?: string;
   scrollSpeed?: number;
   scrollEase?: number;
   onChange?: (index: number) => void;
   currentIndex?: number;
 }
 
-function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout>;
-  return function (this: any, ...args: Parameters<T>) {
+function debounce(func: () => void, wait: number): { (): void; cancel: () => void } {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const debounced = () => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
+    timeout = setTimeout(func, wait);
   };
+  debounced.cancel = () => clearTimeout(timeout);
+  return debounced;
 }
 
 function lerp(p1: number, p2: number, t: number): number {
   return p1 + (p2 - p1) * t;
 }
-
-function autoBind(instance: any) {
-  const proto = Object.getPrototypeOf(instance);
-  Object.getOwnPropertyNames(proto).forEach(key => {
-    if (key !== 'constructor' && typeof instance[key] === 'function') {
-      instance[key] = instance[key].bind(instance);
-    }
-  });
-}
-
-const DEFAULT_FONT = 'bold 30px Figtree';
-const DEFAULT_FONT_URL = 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&display=swap';
-
-function deriveFontFamilyFromUrl(url: string): string {
-  const fileName = (url.split('/').pop() || 'custom-font').split('?')[0];
-  const base = fileName.replace(/\.(woff2?|ttf|otf|eot)$/i, '');
-  return base.replace(/[^a-zA-Z0-9-_ ]/g, '').trim() || 'CircularGalleryFont';
-}
-
-async function loadFontFromStylesheet(url: string): Promise<string> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to fetch font stylesheet (${response.status})`);
-  const cssText = await response.text();
-  const faceBlocks = cssText.match(/@font-face\s*{[^}]*}/g) || [];
-  let family: string | null = null;
-  const fontFaces: FontFace[] = [];
-  for (const block of faceBlocks) {
-    const familyMatch = block.match(/font-family:\s*['"]?([^;'"]+)['"]?/);
-    const urlMatch = block.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/);
-    if (!familyMatch || !urlMatch) continue;
-    family = familyMatch[1].trim();
-    const descriptors: any = {};
-    const weightMatch = block.match(/font-weight:\s*([^;]+);/);
-    const styleMatch = block.match(/font-style:\s*([^;]+);/);
-    const rangeMatch = block.match(/unicode-range:\s*([^;]+);/);
-    if (weightMatch) descriptors.weight = weightMatch[1].trim();
-    if (styleMatch) descriptors.style = styleMatch[1].trim();
-    if (rangeMatch) descriptors.unicodeRange = rangeMatch[1].trim();
-    fontFaces.push(new FontFace(family, `url(${urlMatch[1]})`, descriptors));
-  }
-  if (!family) throw new Error('No @font-face rule found in the stylesheet');
-  await Promise.allSettled(
-    fontFaces.map(async face => {
-      await face.load();
-      document.fonts.add(face);
-    })
-  );
-  return family;
-}
-
-async function loadFontFromFile(url: string): Promise<string> {
-  const family = deriveFontFamilyFromUrl(url);
-  const fontFace = new FontFace(family, `url(${url})`);
-  await fontFace.load();
-  document.fonts.add(fontFace);
-  return family;
-}
-
-async function loadCustomFont(fontUrl: string): Promise<string> {
-  const isStylesheet = fontUrl.includes('fonts.googleapis.com') || /\.css(\?.*)?$/i.test(fontUrl);
-  return isStylesheet ? loadFontFromStylesheet(fontUrl) : loadFontFromFile(fontUrl);
-}
-
-async function resolveFont(font: string, fontUrl?: string): Promise<string> {
-  const effectiveUrl = fontUrl || (font === DEFAULT_FONT ? DEFAULT_FONT_URL : null);
-  if (!effectiveUrl) {
-    if (document.fonts && document.fonts.load) {
-      try {
-        await document.fonts.load(font);
-        await document.fonts.ready;
-      } catch {
-        // Ignore
-      }
-    }
-    return font;
-  }
-  try {
-    const family = await loadCustomFont(effectiveUrl);
-    const sizeMatch = font.match(/^\s*(.*?\d+px)/);
-    const prefix = sizeMatch ? sizeMatch[1].trim() : 'bold 30px';
-    const resolved = `${prefix} "${family}"`;
-    if (document.fonts && document.fonts.load) {
-      try {
-        await document.fonts.load(resolved);
-      } catch {
-        // Ignore
-      }
-    }
-    return resolved;
-  } catch (error) {
-    console.error('CircularGallery: unable to load font from', fontUrl, error);
-    return font;
-  }
-}
-
-
 
 class Media {
   extra: number;
@@ -143,9 +47,9 @@ class Media {
   text: string;
   viewport: any;
   bend: number;
-  textColor: string;
   borderRadius: number;
-  font: string;
+  reducedMotion: boolean;
+  img: HTMLImageElement | null = null;
   program: any;
   plane: any;
   title: any;
@@ -170,9 +74,8 @@ class Media {
     text,
     viewport,
     bend,
-    textColor,
     borderRadius = 0,
-    font
+    reducedMotion = false
   }: any) {
     this.extra = 0;
     this.geometry = geometry;
@@ -186,9 +89,8 @@ class Media {
     this.text = text;
     this.viewport = viewport;
     this.bend = bend;
-    this.textColor = textColor;
     this.borderRadius = borderRadius;
-    this.font = font;
+    this.reducedMotion = reducedMotion;
     this.createShader();
     this.createMesh();
     this.onResize();
@@ -260,15 +162,23 @@ class Media {
       },
       transparent: true
     });
+    if (!this.image) return;
     const img = new Image();
+    this.img = img;
     img.crossOrigin = 'anonymous';
-    
-    // Load texture image directly from CDN/local assets without server-side proxy transformations
-    img.src = this.image;
+    img.decoding = 'async';
     img.onload = () => {
       texture.image = img;
       this.program.uniforms.uImageSizes.value = [img.naturalWidth, img.naturalHeight];
     };
+    img.src = this.image;
+  }
+
+  cancelImage() {
+    if (!this.img) return;
+    this.img.onload = null;
+    this.img.src = '';
+    this.img = null;
   }
   
   createMesh() {
@@ -306,7 +216,7 @@ class Media {
     }
 
     this.speed = scroll.current - scroll.last;
-    this.program.uniforms.uTime.value += 0.04;
+    if (!this.reducedMotion) this.program.uniforms.uTime.value += 0.04;
     this.program.uniforms.uSpeed.value = this.speed;
 
     const planeOffset = this.plane.scale.x / 2;
@@ -346,7 +256,12 @@ class App {
   container: HTMLElement;
   scrollSpeed: number;
   scroll: { ease: number; current: number; target: number; last: number; position?: number };
-  onCheckDebounce: () => void;
+  onCheckDebounce: { (): void; cancel: () => void };
+  reducedMotion: boolean;
+  isVisible = true;
+  running = false;
+  intersectionObserver?: IntersectionObserver;
+  boundVisibility!: () => void;
   renderer!: any;
   gl!: any;
   camera!: any;
@@ -374,15 +289,13 @@ class App {
     {
       items,
       bend,
-      textColor = '#ffffff',
       borderRadius = 0,
-      font = 'bold 30px Figtree',
       scrollSpeed = 2,
       scrollEase = 0.05
     }: any = {}
   ) {
-    document.documentElement.classList.remove('no-js');
     this.container = container;
+    this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onCheckDebounce = debounce(this.onCheck.bind(this), 200);
@@ -392,9 +305,18 @@ class App {
     this.createScene();
     this.onResize();
     this.createGeometry();
-    this.createMedias(items, bend, textColor, borderRadius, font);
-    this.update();
+    this.createMedias(items, bend, borderRadius);
     this.addEventListeners();
+    this.updateRunning();
+  }
+
+  /** Render loop runs only while on screen and the tab is visible. */
+  updateRunning() {
+    const active = this.isVisible && !document.hidden;
+    if (active === this.running) return;
+    this.running = active;
+    window.cancelAnimationFrame(this.raf);
+    if (active) this.raf = window.requestAnimationFrame(this.boundUpdate);
   }
   
   createRenderer() {
@@ -425,22 +347,8 @@ class App {
     });
   }
   
-  createMedias(items: any[], bend = 1, textColor: string, borderRadius: number, font: string) {
-    const defaultItems = [
-      { image: `https://picsum.photos/seed/1/800/600?grayscale`, text: 'Bridge' },
-      { image: `https://picsum.photos/seed/2/800/600?grayscale`, text: 'Desk Setup' },
-      { image: `https://picsum.photos/seed/3/800/600?grayscale`, text: 'Waterfall' },
-      { image: `https://picsum.photos/seed/4/800/600?grayscale`, text: 'Strawberries' },
-      { image: `https://picsum.photos/seed/5/800/600?grayscale`, text: 'Deep Diving' },
-      { image: `https://picsum.photos/seed/16/800/600?grayscale`, text: 'Train Track' },
-      { image: `https://picsum.photos/seed/17/800/600?grayscale`, text: 'Santorini' },
-      { image: `https://picsum.photos/seed/8/800/600?grayscale`, text: 'Blurry Lights' },
-      { image: `https://picsum.photos/seed/9/800/600?grayscale`, text: 'New York' },
-      { image: `https://picsum.photos/seed/10/800/600?grayscale`, text: 'Good Boy' },
-      { image: `https://picsum.photos/seed/21/800/600?grayscale`, text: 'Coastline' },
-      { image: `https://picsum.photos/seed/12/800/600?grayscale`, text: 'Palm Trees' }
-    ];
-    const galleryItems = items && items.length ? items : defaultItems;
+  createMedias(items: GalleryItem[] = [], bend = 1, borderRadius: number) {
+    const galleryItems = items;
     this.mediasImages = galleryItems.concat(galleryItems);
     this.medias = this.mediasImages.map((data, index) => {
       return new Media({
@@ -455,9 +363,8 @@ class App {
         text: data.text,
         viewport: this.viewport,
         bend,
-        textColor,
         borderRadius,
-        font
+        reducedMotion: this.reducedMotion
       });
     });
   }
@@ -538,6 +445,7 @@ class App {
   }
   
   update() {
+    if (!this.running) return;
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
     const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
     if (this.medias) {
@@ -583,10 +491,22 @@ class App {
     window.addEventListener('touchend', this.boundOnTouchUp);
 
     this.container?.addEventListener('keydown', this.boundOnKeyDown);
+
+    this.boundVisibility = () => this.updateRunning();
+    document.addEventListener('visibilitychange', this.boundVisibility);
+    this.intersectionObserver = new IntersectionObserver(entries => {
+      this.isVisible = entries[0]?.isIntersecting ?? true;
+      this.updateRunning();
+    }, { threshold: 0.01 });
+    this.intersectionObserver.observe(this.container);
   }
   
   destroy() {
+    this.running = false;
     window.cancelAnimationFrame(this.raf);
+    this.onCheckDebounce.cancel();
+    this.intersectionObserver?.disconnect();
+    document.removeEventListener('visibilitychange', this.boundVisibility);
     window.removeEventListener('resize', this.boundOnResize);
     this.container?.removeEventListener('mousewheel', this.boundOnWheel);
     this.container?.removeEventListener('wheel', this.boundOnWheel);
@@ -598,7 +518,8 @@ class App {
     window.removeEventListener('touchend', this.boundOnTouchUp);
 
     if (this.medias) {
-      this.medias.forEach((media: any) => {
+      this.medias.forEach((media: Media) => {
+        media.cancelImage();
         try {
           if (media.program && media.program.uniforms?.tMap?.value?.texture) {
             this.gl.deleteTexture(media.program.uniforms.tMap.value.texture);
@@ -611,6 +532,12 @@ class App {
         }
       });
       this.medias = [];
+    }
+
+    try {
+      this.gl?.getExtension('WEBGL_lose_context')?.loseContext();
+    } catch {
+      // Context already lost
     }
 
     if (this.renderer && this.renderer.gl && this.renderer.gl.canvas?.parentNode) {
@@ -626,10 +553,7 @@ class App {
 export default function CircularGallery({
   items,
   bend = 3,
-  textColor = '#ffffff',
   borderRadius = 0.05,
-  font = 'bold 30px Figtree',
-  fontUrl,
   scrollSpeed = 2,
   scrollEase = 0.05,
   onChange,
@@ -639,53 +563,45 @@ export default function CircularGallery({
   const appRef = useRef<App | null>(null);
   const onChangeRef = useRef(onChange);
   const lastSentIndexRef = useRef<number>(-1);
+  const startIndexRef = useRef(currentIndex);
 
   useEffect(() => {
     onChangeRef.current = onChange;
+    startIndexRef.current = currentIndex;
   });
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    let isMounted = true;
-    resolveFont(font, fontUrl).then(resolvedFont => {
-      if (!isMounted || !containerRef.current) return;
-      const app = new App(containerRef.current, {
-        items,
-        bend,
-        textColor,
-        borderRadius,
-        font: resolvedFont,
-        scrollSpeed,
-        scrollEase
-      });
-      app.onChangeCallback = (index) => {
-        lastSentIndexRef.current = index;
-        onChangeRef.current?.(index);
-      };
-      
-      // Initialize scroll position if starting on a slide index > 0
-      if (currentIndex !== undefined && currentIndex > 0 && app.medias && app.medias[0]) {
-        const width = app.medias[0].width;
-        const initialScroll = currentIndex * width;
-        app.scroll.target = initialScroll;
-        app.scroll.current = initialScroll;
-        app.scroll.last = initialScroll;
-        lastSentIndexRef.current = currentIndex;
-      } else if (currentIndex !== undefined) {
-        lastSentIndexRef.current = currentIndex;
-      }
-      
-      appRef.current = app;
+    if (!containerRef.current || !items?.length) return;
+    const app = new App(containerRef.current, {
+      items,
+      bend,
+      borderRadius,
+      scrollSpeed,
+      scrollEase
     });
-
-    return () => {
-      isMounted = false;
-      if (appRef.current) {
-        appRef.current.destroy();
-        appRef.current = null;
-      }
+    app.onChangeCallback = (index) => {
+      lastSentIndexRef.current = index;
+      onChangeRef.current?.(index);
     };
-  }, [items, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase]);
+
+    // Start on the parent's current slide (read once at mount; later changes go through the effect below)
+    const startIndex = startIndexRef.current;
+    if (startIndex !== undefined && startIndex > 0 && app.medias && app.medias[0]) {
+      const width = app.medias[0].width;
+      const initialScroll = startIndex * width;
+      app.scroll.target = initialScroll;
+      app.scroll.current = initialScroll;
+      app.scroll.last = initialScroll;
+      app.lastActiveIndex = startIndex;
+    }
+    lastSentIndexRef.current = startIndex ?? -1;
+
+    appRef.current = app;
+    return () => {
+      app.destroy();
+      appRef.current = null;
+    };
+  }, [items, bend, borderRadius, scrollSpeed, scrollEase]);
 
   useEffect(() => {
     const app = appRef.current;
@@ -724,7 +640,7 @@ export default function CircularGallery({
       ref={containerRef}
       tabIndex={0}
       role="region"
-      aria-label="Circular image gallery. Use left and right arrow keys to navigate."
+      aria-label="Featured films. Swipe or use the left and right arrow keys to browse."
     />
   );
 }

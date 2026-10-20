@@ -245,7 +245,7 @@ export function assignMoviesToMoods(
 
 // ── Cache Refresh Handler ─────────────────────────────────────────────────────
 
-export async function refreshMoodCache(): Promise<{ success: boolean; stats: any }> {
+export async function refreshMoodCache(): Promise<{ success: boolean; stats: Record<string, unknown> }> {
   const TMDB_API_KEY = process.env.TMDB_API_KEY;
   if (!TMDB_API_KEY) {
     throw new Error('TMDB_API_KEY is not configured');
@@ -256,8 +256,10 @@ export async function refreshMoodCache(): Promise<{ success: boolean; stats: any
 
   function logCall(endpoint: string) {
     tmdbCallCount++;
-    log.push(`[TMDB Call #${tmdbCallCount}] ${endpoint}`);
-    console.log(`[TMDB Call #${tmdbCallCount}] ${endpoint}`);
+    // Never log or return the TMDB API key — strip it from any query string.
+    const safe = endpoint.replace(/([?&])api_key=[^&]*&?/g, '$1').replace(/[?&]$/, '');
+    log.push(`[TMDB Call #${tmdbCallCount}] ${safe}`);
+    console.log(`[TMDB Call #${tmdbCallCount}] ${safe}`);
   }
 
   const serviceClient = createServiceClient();
@@ -367,12 +369,11 @@ export async function refreshMoodCache(): Promise<{ success: boolean; stats: any
     { sort_by: 'primary_release_date.desc', 'vote_average.gte': '5.0', page: '1' }
   ];
 
-  const tmdbMovies: any[] = [];
+  const tmdbMovies: { id: number; title: string; poster_path: string | null; vote_average: number; popularity: number }[] = [];
   const seenTmdbIds = new Set<number>();
 
   for (const params of discoverParamsList) {
     const url = new URL(`${TMDB_BASE}/discover/movie`);
-    url.searchParams.set('api_key', TMDB_API_KEY);
     url.searchParams.set('with_genres', '27'); // Horror
     url.searchParams.set('include_adult', 'false');
     
@@ -383,6 +384,8 @@ export async function refreshMoodCache(): Promise<{ success: boolean; stats: any
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
     logCall(`/discover/movie?${url.searchParams.toString()}`);
+    // Attach the key only after logging so it never appears in logs / stats.
+    url.searchParams.set('api_key', TMDB_API_KEY);
     try {
       const res = await fetch(url.toString());
       if (!res.ok) {
@@ -470,7 +473,7 @@ export async function refreshMoodCache(): Promise<{ success: boolean; stats: any
       }
 
       runtime = detail.runtime || null;
-      const genreNames = detail.genres ? detail.genres.map((g: any) => g.name) : [];
+      const genreNames = detail.genres ? detail.genres.map((g: { name: string }) => g.name) : [];
       const title = detail.title || m.title;
 
       const posterUrl = detail.poster_path ? `https://image.tmdb.org/t/p/w500${detail.poster_path}` : null;
@@ -547,7 +550,7 @@ export async function refreshMoodCache(): Promise<{ success: boolean; stats: any
 
   // 7. Persist to mood_cache
   const moodsList = Object.keys(MOOD_SCORERS);
-  const cacheStats: any = {};
+  const cacheStats: Record<string, number> = {};
 
   for (const mood of moodsList) {
     const assignedImdbIds = assignments.get(mood) ?? [];

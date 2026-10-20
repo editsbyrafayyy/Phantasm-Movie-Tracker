@@ -9,6 +9,7 @@ import RouletteTrigger from '@/components/home/RouletteTrigger';
 import ActivityFeed    from '@/components/home/ActivityFeed';
 import OnThisDayWidget from '@/components/home/OnThisDayWidget';
 import RecentlyViewedRow from '@/components/home/RecentlyViewedRow';
+import PageHeader from '@/components/ui/PageHeader';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getOwnerEntries } from '@/lib/data';
 import type { Entry } from '@/lib/types';
@@ -30,8 +31,8 @@ const SUBGENRE_ORDER = [
 ];
 
 export const metadata = {
-  title: "Vault — Horror Film Tracker",
-  description: "A curated collection of horror films, scored across 8 criteria.",
+  title: 'Phantasm — Horror Film Tracker',
+  description: 'A curated collection of horror films, scored across 8 criteria.',
 };
 
 export default async function HomePage() {
@@ -67,13 +68,9 @@ export default async function HomePage() {
     .slice(0, 8);
 
   return (
-    <div className="browse-page">
+    <div className="browse-page home-page">
       <HeroBackground />
 
-      {/* ── Film Roulette floating trigger ──────────────── */}
-      <RouletteTrigger entries={entries} canStream={!!user} />
-
-      {/* ── Hero Carousel ───────────────────────────── */}
       <HeroCarousel
         slides={slides}
         canStream={!!user}
@@ -81,50 +78,56 @@ export default async function HomePage() {
         totalFilms={entries.length}
       />
 
-      {/* ── Guest Notice ───────────────────────────── */}
       {!user && (
-        <div className="guest-notice-banner" style={{ marginTop: 24, marginBottom: 24 }}>
+        <div className="guest-notice-banner">
           <p className="guest-notice-text">
-            You are browsing as a guest. This is {ownerName}&apos;s personal horror vault.
+            You&apos;re browsing as a guest — this is {ownerName}&apos;s personal horror collection.
           </p>
-          <Link href="/login" className="guest-notice-link" prefetch={true}>
-            Sign in →
+          <Link href="/login" className="btn-secondary guest-notice-link">
+            Sign in
           </Link>
         </div>
       )}
 
-      {/* ── On This Day Nostalgia Banner ───────────────── */}
-      <div className="home-on-this-day-wrapper" style={{ marginTop: 24, marginBottom: 16 }}>
-        <OnThisDayWidget />
-      </div>
-
-      {/* ── Recently Viewed Row ───────────────────────── */}
-      <RecentlyViewedRow />
-
-      {/* ── Must Watch ────────────────────────────────── */}
-      {mustWatchEntries.length > 0 && (
-        <section className="home-must-watch-row" style={{ marginTop: 36, marginBottom: 12 }}>
-          <CategoryRow label="Must Watch" entries={mustWatchEntries} />
-        </section>
+      {user && (
+        <div className="home-on-this-day-wrapper">
+          <OnThisDayWidget />
+        </div>
       )}
 
-      {/* ── Coming Soon in Horror ──────────────────────────────── */}
+      <RecentlyViewedRow />
+
+      {mustWatchEntries.length > 0 && (
+        <CategoryRow label="Must watch" entries={mustWatchEntries} />
+      )}
+
       <Suspense fallback={null}>
         <ComingSoonWidget />
       </Suspense>
 
-      {/* ── Member Activity Feed ───────────────────────────────── */}
       <Suspense fallback={null}>
         <ActivityFeed />
       </Suspense>
 
-      {/* ── My Vault ──────────────────────────────────────────── */}
-      <div className="home-vault-section">
-        <h2 className="home-vault-heading">From the Vault</h2>
-        <p className="home-vault-sub">Curated films scored and stored by {ownerName}.</p>
-      </div>
+      <section className="home-vault-section">
+        <div className="home-section-head">
+          <PageHeader
+            as="section"
+            title="From the"
+            accent="vault"
+            subtitle={`Every film ${ownerName} has scored, grouped by subgenre.`}
+            actions={<Suspense fallback={null}><RouletteTrigger entries={entries} canStream={!!user} /></Suspense>}
+            className="home-vault-header"
+          />
+        </div>
 
-      <VaultFilter entries={remainingEntries} subgenreOrder={SUBGENRE_ORDER} ownerName={ownerName} />
+        <VaultFilter
+          entries={remainingEntries}
+          subgenreOrder={SUBGENRE_ORDER}
+          ownerName={ownerName}
+          canAdd={!!user}
+        />
+      </section>
     </div>
   );
 }

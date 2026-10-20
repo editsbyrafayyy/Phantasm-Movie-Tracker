@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchOmdb } from '@/lib/omdb';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { isUnrestrictedUser } from '@/lib/guards';
 
@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
   }
 
   // Rate limit: 30 searches per minute per IP
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 30, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 30, 60_000, 'GET /api/omdb-search')) {
     return NextResponse.json(
       { error: 'Too many searches. Please slow down.' },
       { status: 429, headers: { 'Retry-After': '60' } }
@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
   const tmdbMatch = q.match(/^tmdb:(\d+)$/i);
   if (tmdbMatch) {
     const tmdbId = tmdbMatch[1];
+    if (!/^\d{1,10}$/.test(tmdbId)) return NextResponse.json([]);
     const key = process.env.TMDB_API_KEY;
     if (!key) return NextResponse.json([]);
 
@@ -86,8 +87,14 @@ export async function GET(req: NextRequest) {
         if (extData.imdb_id) imdbId = extData.imdb_id;
       } catch { /* ignore */ }
 
+      // Result depends on the user's genre restriction — never share-cache it for signed-in users.
       return NextResponse.json([{ imdbID: imdbId, title, year, poster }], {
-        headers: { 'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400' },
+        headers: {
+          'Cache-Control': user
+            ? 'private, max-age=300'
+            : 'public, max-age=3600, stale-while-revalidate=86400',
+          'Vary': 'Cookie',
+        },
       });
     } catch {
       return NextResponse.json([], { status: 500 });

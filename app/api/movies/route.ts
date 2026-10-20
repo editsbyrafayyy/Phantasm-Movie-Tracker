@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 
 /**
  * GET /api/movies
@@ -9,8 +9,8 @@ import { rateLimit } from '@/lib/ratelimit';
  * should trigger a client-side refetch to handle the stale window.
  */
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 60, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 60, 60_000, 'GET /api/movies')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 

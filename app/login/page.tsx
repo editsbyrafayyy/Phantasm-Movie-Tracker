@@ -3,11 +3,24 @@
 import { useState, Suspense, type FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Moon, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import PageHeader from '@/components/ui/PageHeader';
+
+/** Only same-origin relative paths are allowed as post-login destinations. */
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) return '/';
+  try {
+    const url = new URL(raw, 'http://local.invalid');
+    if (url.origin !== 'http://local.invalid') return '/';
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return '/';
+  }
+}
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/';
+  const next = safeNext(searchParams.get('next'));
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -52,11 +65,12 @@ function LoginForm() {
     <section className="login-page">
       <div className="login-container">
         {/* Headline */}
-        <header className="login-header">
-          <p className="page-label">Welcome back</p>
-          <h1 className="page-title-serif">Sign in.</h1>
-          <p className="login-sub">This is a private vault. Accounts are by invitation only.</p>
-        </header>
+        <PageHeader
+          eyebrow="Welcome back"
+          title="Sign in"
+          subtitle="Phantasm is invite-only. Use the account the owner set up for you."
+          className="login-header"
+        />
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="login-form" noValidate>
@@ -77,7 +91,7 @@ function LoginForm() {
 
           <div className="form-field">
             <label htmlFor="password" className="form-label">Password</label>
-            <div style={{ position: 'relative' }}>
+            <div className="password-field">
               <input
                 id="password"
                 name="password"
@@ -88,29 +102,15 @@ function LoginForm() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={loading}
-                style={{ paddingRight: '40px' }}
               />
               <button
                 type="button"
                 className="password-toggle-btn"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '4px'
-                }}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -129,12 +129,12 @@ function LoginForm() {
             className="btn-primary"
             disabled={loading}
           >
-            {loading ? 'Signing in…' : 'Sign In →'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 
         <p className="login-invite-note">
-          Don&apos;t have an account? Ask the vault owner for an invite.
+          No account? Ask the owner for an invite.
         </p>
       </div>
     </section>
@@ -142,7 +142,7 @@ function LoginForm() {
 }
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="form-loading">Loading…</div>}>
+    <Suspense fallback={<div className="login-page" aria-busy="true" />}>
       <LoginForm />
     </Suspense>
   );

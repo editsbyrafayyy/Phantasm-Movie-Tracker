@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 
 import { logToastEvent } from '@/components/ui/ToastHistoryModal';
@@ -18,54 +18,59 @@ interface ToastProps {
 
 export default function Toast({ message, type, onDismiss, onUndo, undoLabel = 'Undo', duration = 4000 }: ToastProps) {
   const [visible, setVisible] = useState(false);
+  // Parents usually pass an inline onDismiss; keep the latest in a ref so a
+  // parent re-render doesn't restart the auto-dismiss timer.
+  const onDismissRef = useRef(onDismiss);
+  const loggedRef = useRef<string | null>(null);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const dismiss = useCallback(() => {
+  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
+
+  const dismiss = () => {
     setVisible(false);
-    setTimeout(onDismiss, 220);
-  }, [onDismiss]);
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    exitTimerRef.current = setTimeout(() => onDismissRef.current(), 220);
+  };
+  const dismissRef = useRef(dismiss);
+  useEffect(() => { dismissRef.current = dismiss; });
+
+  // Log each distinct message once (survives re-renders and Strict Mode re-runs).
+  useEffect(() => {
+    const key = `${type}:${message}`;
+    if (loggedRef.current === key) return;
+    loggedRef.current = key;
+    logToastEvent(message, type);
+  }, [type, message]);
 
   useEffect(() => {
-    // Trigger entrance animation
-    requestAnimationFrame(() => setVisible(true));
-    logToastEvent(message, type);
+    const raf = requestAnimationFrame(() => setVisible(true));
+    if (type === 'loading') return () => cancelAnimationFrame(raf);
+    const t = setTimeout(() => dismissRef.current(), duration);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+  }, [type, message, duration]);
 
-    if (type !== 'loading') {
-      const t = setTimeout(dismiss, duration);
-      return () => clearTimeout(t);
-    }
-  }, [type, message, duration, dismiss]);
+  useEffect(() => () => { if (exitTimerRef.current) clearTimeout(exitTimerRef.current); }, []);
 
   return (
     <div
       className={`toast toast-${type}${visible ? ' toast-visible' : ''}`}
-      role="alert"
-      aria-live="polite"
+      role={type === 'error' ? 'alert' : 'status'}
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
     >
       <span className="toast-message">{message}</span>
       {onUndo && (
         <button
+          type="button"
           className="toast-undo-btn"
           onClick={() => {
             onUndo();
             dismiss();
           }}
-          style={{
-            background: 'rgba(255,255,255,0.2)',
-            border: 'none',
-            color: '#ffffff',
-            fontWeight: 700,
-            fontSize: 12,
-            padding: '3px 9px',
-            borderRadius: 4,
-            cursor: 'pointer',
-            marginLeft: 12,
-            marginRight: 6,
-          }}
         >
           {undoLabel}
         </button>
       )}
-      <button className="toast-dismiss" onClick={dismiss} aria-label="Dismiss notification">
+      <button type="button" className="toast-dismiss" onClick={dismiss} aria-label="Dismiss notification">
         <X size={14} aria-hidden="true" />
       </button>
     </div>

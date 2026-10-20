@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 
 interface DiaryEntry {
   id: string;
@@ -27,7 +28,7 @@ function buildHeatmapGrid(entries: DiaryEntry[], year: number) {
   const startDate = new Date(year, 0, 1 - offset);
 
   const weeks: { date: Date; count: number; iso: string }[][] = [];
-  let cursor = new Date(startDate);
+  const cursor = new Date(startDate);
 
   for (let w = 0; w < 53; w++) {
     const week: { date: Date; count: number; iso: string }[] = [];
@@ -74,107 +75,92 @@ function cellColor(count: number, max: number): string {
   return `rgba(230,50,50,${alpha.toFixed(2)})`;
 }
 
-export default function CalendarHeatmap() {
-  const year = new Date().getFullYear();
-  const [entries, setEntries] = useState<DiaryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+const LEGEND_STEPS = [0, 0.25, 0.5, 0.75, 1];
+
+export default function CalendarHeatmap({ year }: { year: number }) {
+  const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; entries: DiaryEntry[] }>({
+    status: 'loading',
+    entries: [],
+  });
 
   useEffect(() => {
-    // Only fetch this year's entries — year filter handled server-side
-    fetch(`/api/diary?year=${year}`)
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data.diary)) setEntries(data.diary);
+    const controller = new AbortController();
+    fetch(`/api/diary?year=${year}`, { signal: controller.signal })
+      .then(async r => {
+        if (!r.ok) throw new Error(String(r.status));
+        const data = await r.json();
+        setState({ status: 'ready', entries: Array.isArray(data?.diary) ? data.diary : [] });
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if ((err as Error)?.name !== 'AbortError') setState({ status: 'error', entries: [] });
+      });
+    return () => controller.abort();
   }, [year]);
 
   const { weeks, monthLabels, maxCount, totalWatches, activeDays } = useMemo(
-    () => buildHeatmapGrid(entries, year),
-    [entries, year]
+    () => buildHeatmapGrid(state.entries, year),
+    [state.entries, year],
   );
 
-  const CELL = 12;
-  const GAP = 3;
-
   return (
-    <div className="stat-card" style={{ gridColumn: '1 / -1', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+    <div className="stat-card stat-card-wide heatmap-card">
+      <div className="heatmap-head">
         <div>
-          <p className="stat-card-label" style={{ marginBottom: 4 }}>Watch Activity — {year}</p>
-          {!loading && totalWatches > 0 && (
-            <p style={{ fontSize: 12, color: 'var(--text-dim)', margin: 0 }}>
-              <strong style={{ color: 'var(--text)' }}>{totalWatches}</strong> watches logged across{' '}
-              <strong style={{ color: 'var(--text)' }}>{activeDays}</strong> days this year
+          <h3 className="stat-card-label">Watch activity — {year}</h3>
+          {state.status === 'ready' && totalWatches > 0 && (
+            <p className="stat-card-desc">
+              <strong>{totalWatches}</strong> watches across <strong>{activeDays}</strong> days this year.
             </p>
           )}
-          {!loading && totalWatches === 0 && (
-            <p style={{ fontSize: 12, color: 'var(--text-dim)', margin: 0 }}>
-              No watches logged yet — use "Log Film" to track your viewings.
+          {state.status === 'ready' && totalWatches === 0 && (
+            <p className="stat-card-desc">
+              No watches logged yet. Log a viewing from any film page, or <Link href="/diary">open your diary</Link>.
             </p>
+          )}
+          {state.status === 'error' && (
+            <p className="stat-card-desc">Could not load watch activity.</p>
           )}
         </div>
-        {/* Legend */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>Less</span>
-          {[0, 0.25, 0.5, 0.75, 1].map(v => (
-            <div key={v} style={{
-              width: CELL, height: CELL, borderRadius: 2,
-              background: v === 0 ? 'rgba(255,255,255,0.04)' : `rgba(230,50,50,${0.2 + v * 0.8})`,
-            }} />
+        <div className="heatmap-legend" aria-hidden="true">
+          <span>Less</span>
+          {LEGEND_STEPS.map(v => (
+            <span
+              key={v}
+              className="heatmap-cell"
+              style={{ background: v === 0 ? 'rgba(255,255,255,0.04)' : `rgba(230,50,50,${0.2 + v * 0.8})` }}
+            />
           ))}
-          <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>More</span>
+          <span>More</span>
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 12, color: 'var(--text-dim)' }}>Loading…</span>
-        </div>
-      ) : (
-        <div style={{ overflowX: 'auto', maxWidth: '100%', WebkitOverflowScrolling: 'touch', paddingBottom: 4 }}>
-          <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 0 }}>
-            {/* Month labels row */}
-            <div style={{ display: 'flex', marginLeft: 28, marginBottom: 4 }}>
+      {state.status === 'loading' ? (
+        <div className="heatmap-loading" role="status">Loading…</div>
+      ) : state.status === 'ready' ? (
+        <div className="heatmap-scroll">
+          <div className="heatmap-grid" role="img" aria-label={`Watch activity calendar for ${year}`}>
+            <div className="heatmap-months">
               {weeks.map((_, wi) => {
                 const label = monthLabels.find(ml => ml.weekIdx === wi);
                 return (
-                  <div key={wi} style={{ width: CELL + GAP, flexShrink: 0 }}>
-                    {label && (
-                      <span style={{ fontSize: 9, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
-                        {MONTHS[label.month]}
-                      </span>
-                    )}
-                  </div>
+                  <span key={wi} className="heatmap-week-slot">
+                    {label ? MONTHS[label.month] : ''}
+                  </span>
                 );
               })}
             </div>
 
-            {/* Day rows */}
-            {[0,1,2,3,4,5,6].map(dayIdx => (
-              <div key={dayIdx} style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: GAP }}>
-                {/* Day label */}
-                <div style={{ width: 24, flexShrink: 0, textAlign: 'right', paddingRight: 4 }}>
-                  <span style={{ fontSize: 9, color: 'var(--text-dim)' }}>{DAYS[dayIdx]}</span>
-                </div>
-                {/* Cells */}
+            {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => (
+              <div key={dayIdx} className="heatmap-row">
+                <span className="heatmap-day">{DAYS[dayIdx]}</span>
                 {weeks.map((week, wi) => {
                   const cell = week[dayIdx];
                   return (
-                    <div
+                    <span
                       key={wi}
+                      className="heatmap-cell"
                       title={cell.count > 0 ? `${cell.iso}: ${cell.count} watch${cell.count !== 1 ? 'es' : ''}` : cell.iso}
-                      style={{
-                        width: CELL,
-                        height: CELL,
-                        marginRight: GAP,
-                        borderRadius: 2,
-                        background: cellColor(cell.count, maxCount),
-                        flexShrink: 0,
-                        cursor: cell.count > 0 ? 'default' : 'default',
-                        transition: 'opacity 0.15s',
-                      }}
+                      style={{ background: cellColor(cell.count, maxCount) }}
                     />
                   );
                 })}
@@ -182,7 +168,7 @@ export default function CalendarHeatmap() {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

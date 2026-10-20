@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import Toast, { type ToastType } from '@/components/ui/Toast';
 import { Pencil } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/layout/AuthProvider';
+import Toast, { type ToastType } from '@/components/ui/Toast';
 import type { Profile } from '@/lib/types';
 
 interface ProfileEditProps {
@@ -13,6 +14,7 @@ interface ProfileEditProps {
 
 export default function ProfileEdit({ profile }: ProfileEditProps) {
   const router = useRouter();
+  const auth = useAuth();
   const [displayName, setDisplayName] = useState(profile.display_name ?? '');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -20,76 +22,62 @@ export default function ProfileEdit({ profile }: ProfileEditProps) {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    const next = displayName.trim();
+    if (!next) return;
     setSaving(true);
     const supabase = createClient();
     const { error } = await supabase
       .from('profiles')
-      .update({ display_name: displayName.trim() })
+      .update({ display_name: next })
       .eq('id', profile.id);
 
     if (error) {
-      setToast({ message: 'Failed to update.', type: 'error' });
+      setToast({ message: 'Could not update your name.', type: 'error' });
     } else {
-      setToast({ message: 'Profile updated!', type: 'success' });
+      setToast({ message: 'Name updated.', type: 'success' });
       setEditing(false);
+      await auth.refreshProfile?.();
       router.refresh();
     }
     setSaving(false);
   }
 
   return (
-    <div style={{ marginBottom: 4 }}>
+    <div className="profile-name-block">
       {editing ? (
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+        <form onSubmit={handleSave} className="profile-edit-form">
+          <label htmlFor="display-name" className="form-label">Display name</label>
           <input
+            id="display-name"
             type="text"
-            className="form-input"
+            className="field-input"
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
-            placeholder={profile.display_name ?? profile.username}
+            onKeyDown={e => { if (e.key === 'Escape') setEditing(false); }}
+            placeholder={profile.username}
+            maxLength={40}
             disabled={saving}
             autoFocus
-            style={{ fontSize: 20, fontWeight: 600, padding: '8px 12px' }}
           />
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="submit" className="btn-primary" disabled={saving || !displayName.trim()} style={{ minHeight: 32, padding: '6px 16px', fontSize: 13, width: 'auto' }}>
+          <div className="profile-edit-actions">
+            <button type="submit" className="btn-primary" disabled={saving || !displayName.trim()}>
               {saving ? 'Saving…' : 'Save'}
             </button>
-            <button type="button" className="btn-ghost" onClick={() => setEditing(false)} style={{ minHeight: 32, padding: '6px 12px', fontSize: 13, width: 'auto', marginTop: 0 }}>
+            <button type="button" className="btn-secondary" onClick={() => setEditing(false)} disabled={saving}>
               Cancel
             </button>
           </div>
         </form>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text)', lineHeight: 1.2 }}>
-            {profile.display_name ?? profile.username}
-          </h2>
+        <div className="profile-name-row">
+          <h2 className="profile-display-name">{profile.display_name ?? profile.username}</h2>
           <button
+            type="button"
+            className="icon-btn"
             onClick={() => { setDisplayName(profile.display_name ?? ''); setEditing(true); }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 4,
-              borderRadius: 4,
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.color = 'var(--text)';
-              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.color = 'var(--text-muted)';
-              e.currentTarget.style.background = 'none';
-            }}
             aria-label="Edit display name"
           >
-            <Pencil size={14} />
+            <Pencil size={16} />
           </button>
         </div>
       )}

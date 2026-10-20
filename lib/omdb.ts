@@ -47,7 +47,7 @@ export async function searchOmdb(query: string): Promise<OmdbSearchHit[]> {
     }
   }
 
-  const url  = `${BASE}/?s=${encodeURIComponent(cleanQ)}&apikey=${KEY}`;
+  const url  = `${BASE}/?s=${encodeURIComponent(cleanQ)}&apikey=${encodeURIComponent(KEY)}`;
   const res  = await fetch(url, { next: { revalidate: 86400 } });
   const data = await res.json();
 
@@ -77,7 +77,7 @@ export async function fetchOmdbById(imdbId: string): Promise<{
   imdb_rating: number | null;
   genre_tags:  string[];
 } | null> {
-  const url  = `${BASE}/?i=${imdbId}&apikey=${KEY}`;
+  const url  = `${BASE}/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(KEY)}`;
   const res  = await fetch(url, { next: { revalidate: 604800 } });
   const data = (await res.json()) as OmdbMovieDetail;
 

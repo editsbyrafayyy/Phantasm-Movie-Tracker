@@ -1,122 +1,85 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Entry } from '@/lib/types';
 import { SUBGENRE_HEX } from '@/lib/config';
 
 interface SubgenreDistributionBarProps {
-  entries: Entry[];
+  entries:        { subgenre: string }[];
+  activeGenre?:   string | null;
+  /** When given, legend items become buttons that filter the grid. */
+  onSelectGenre?: (genre: string) => void;
 }
 
-export default function SubgenreDistributionBar({ entries }: SubgenreDistributionBarProps) {
-  const distribution = useMemo(() => {
-    if (!entries.length) return [];
+interface Slice { genre: string; label: string; count: number; pct: number; color: string; isOther?: boolean }
 
+const OTHER_COLOR = 'var(--text-muted)';
+
+export default function SubgenreDistributionBar({ entries, activeGenre, onSelectGenre }: SubgenreDistributionBarProps) {
+  const slices = useMemo<Slice[]>(() => {
+    if (!entries.length) return [];
     const counts = new Map<string, number>();
     for (const e of entries) {
-      if (!e.subgenre) continue;
-      counts.set(e.subgenre, (counts.get(e.subgenre) ?? 0) + 1);
+      if (e.subgenre) counts.set(e.subgenre, (counts.get(e.subgenre) ?? 0) + 1);
     }
-
     const total = entries.length;
-    const sorted = Array.from(counts.entries())
-      .map(([genre, count]) => ({
-        genre,
-        shortGenre: genre.replace(' Horror', '').replace(' (Non-Horror)', ''),
-        count,
-        pct: Math.round((count / total) * 100),
-        color: SUBGENRE_HEX[genre] ?? 'var(--red)',
-      }))
-      .sort((a, b) => b.count - a.count);
+    const sorted: Slice[] = Array.from(counts, ([genre, count]) => ({
+      genre,
+      label: genre.replace(' Horror', '').replace(' (Non-Horror)', ''),
+      count,
+      pct: (count / total) * 100,
+      color: SUBGENRE_HEX[genre] ?? 'var(--red)',
+    })).sort((a, b) => b.count - a.count);
 
-    // Keep top 4 and combine remaining into "Other"
-    const top = sorted.slice(0, 4);
-    const rest = sorted.slice(4);
-
-    if (rest.length > 0) {
-      const restCount = rest.reduce((acc, curr) => acc + curr.count, 0);
-      const restPct = Math.round((restCount / total) * 100);
-      if (restPct > 0) {
-        top.push({
-          genre: 'Other',
-          shortGenre: 'Other',
-          count: restCount,
-          pct: restPct,
-          color: 'var(--border-strong)',
-        });
-      }
+    const top = sorted.slice(0, 5);
+    const restCount = sorted.slice(5).reduce((n, s) => n + s.count, 0);
+    if (restCount > 0) {
+      top.push({ genre: 'Other', label: 'Other', count: restCount, pct: (restCount / total) * 100, color: OTHER_COLOR, isOther: true });
     }
-
     return top;
   }, [entries]);
 
-  if (!distribution.length) return null;
+  if (!slices.length) return null;
 
   return (
-    <div
-      className="subgenre-distribution-bar-wrap"
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '12px 16px',
-        marginBottom: 16,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)' }}>
-          Vault Subgenre Makeup
-        </span>
-        <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-          {entries.length} total film{entries.length === 1 ? '' : 's'}
-        </span>
-      </div>
-
-      {/* Multi-segment progress track */}
-      <div
-        style={{
-          display: 'flex',
-          height: 6,
-          width: '100%',
-          borderRadius: 3,
-          overflow: 'hidden',
-          background: 'var(--surface-2)',
-          marginBottom: 10,
-        }}
-      >
-        {distribution.map(item => (
-          <div
-            key={item.genre}
-            style={{
-              width: `${item.pct}%`,
-              background: item.color,
-              transition: 'width 0.4s ease',
-            }}
-            title={`${item.genre}: ${item.count} (${item.pct}%)`}
+    <section className="subgenre-makeup" aria-label="Subgenre makeup">
+      <div className="subgenre-makeup-track" aria-hidden="true">
+        {slices.map(s => (
+          <span
+            key={s.genre}
+            className={`subgenre-makeup-seg${activeGenre && activeGenre !== s.genre ? ' is-dim' : ''}`}
+            style={{ width: `${s.pct}%`, background: s.color }}
+            title={`${s.genre}: ${s.count}`}
           />
         ))}
       </div>
-
-      {/* Legend list */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11, color: 'var(--text-dim)' }}>
-        {distribution.map(item => (
-          <div key={item.genre} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: item.color,
-                display: 'inline-block',
-                flexShrink: 0,
-              }}
-            />
-            <span>
-              {item.shortGenre} <strong style={{ color: 'var(--text)' }}>{item.pct}%</strong>
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
+      <ul className="subgenre-makeup-legend">
+        {slices.map(s => {
+          const content = (
+            <>
+              <span className="vault-dot" style={{ background: s.color }} aria-hidden="true" />
+              <span>{s.label}</span>
+              <span className="subgenre-makeup-pct">{Math.round(s.pct)}%</span>
+            </>
+          );
+          return (
+            <li key={s.genre}>
+              {onSelectGenre && !s.isOther ? (
+                <button
+                  type="button"
+                  className="subgenre-makeup-item"
+                  aria-pressed={activeGenre === s.genre}
+                  onClick={() => onSelectGenre(s.genre)}
+                  title={`Show only ${s.genre}`}
+                >
+                  {content}
+                </button>
+              ) : (
+                <span className="subgenre-makeup-item">{content}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

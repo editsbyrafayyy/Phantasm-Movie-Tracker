@@ -8,7 +8,5 @@ export default async function BrowsePage() {
 
   const isUnrestricted = isUnrestrictedUser(user);
 
-  return <BrowseGrid canSave={!!user} isUnrestricted={isUnrestricted} />;
+  return <BrowseGrid canSave={!!user} isUnrestricted={isUnrestricted} variant="browse" />;
 }
-
-

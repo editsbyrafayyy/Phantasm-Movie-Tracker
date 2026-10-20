@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Film, Clock, ChevronLeft, ChevronRight, Eye, Trash2 } from 'lucide-react';
+import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface RecentlyViewedItem {
   id: string;
@@ -15,9 +15,44 @@ interface RecentlyViewedItem {
 }
 
 const STORAGE_KEY = 'vault_recently_viewed';
+const EMPTY: RecentlyViewedItem[] = [];
+
+// ── localStorage-backed store (cached by raw string so snapshots are stable) ──
+let cachedRaw: string | null = null;
+let cachedItems: RecentlyViewedItem[] = EMPTY;
+const localListeners = new Set<() => void>();
+
+function readItems(): RecentlyViewedItem[] {
+  let raw: string | null = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); } catch { /* storage blocked */ }
+  if (raw === cachedRaw) return cachedItems;
+  cachedRaw = raw;
+  try {
+    const parsed = raw ? JSON.parse(raw) : [];
+    cachedItems = Array.isArray(parsed) ? parsed : EMPTY;
+  } catch {
+    cachedItems = EMPTY;
+  }
+  return cachedItems;
+}
+
+function subscribe(cb: () => void) {
+  localListeners.add(cb);
+  const onStorage = (e: StorageEvent) => { if (e.key === STORAGE_KEY) cb(); };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    localListeners.delete(cb);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
+function clearItems() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+  localListeners.forEach(l => l());
+}
 
 export default function RecentlyViewedRow() {
-  const [items, setItems] = useState<RecentlyViewedItem[]>([]);
+  const items = useSyncExternalStore(subscribe, readItems, () => EMPTY);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -29,147 +64,91 @@ export default function RecentlyViewedRow() {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   };
 
+  // ResizeObserver fires once on observe and again on any size change.
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setItems(JSON.parse(stored));
-      }
-    } catch {
-      /* ignore storage errors */
-    }
-  }, []);
-
-  useEffect(() => {
-    updateScrollState();
     const el = scrollRef.current;
     if (!el) return;
-    const handleResize = () => updateScrollState();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [items]);
-
-  const clearRecentlyViewed = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-      setItems([]);
-    } catch {
-      /* ignore */
-    }
-  };
+    const ro = new ResizeObserver(() => {
+      setCanScrollLeft(el.scrollLeft > 4);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [items.length]);
 
   const scrollByAmount = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
     if (!el) return;
     const distance = el.clientWidth * 0.75;
-    el.scrollBy({
-      left: direction === 'left' ? -distance : distance,
-      behavior: 'smooth',
-    });
+    el.scrollBy({ left: direction === 'left' ? -distance : distance, behavior: 'smooth' });
   };
 
   if (!items.length) return null;
 
   return (
-    <section className="recently-viewed-section" aria-label="Recently Viewed">
-      <div className="recently-viewed-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Clock size={13} style={{ color: 'var(--red)' }} />
-          <span className="recently-viewed-label">RECENTLY VIEWED</span>
-          <span className="recently-viewed-count">{items.length} titles</span>
+    <section className="category-section recently-viewed-section" aria-labelledby="recently-viewed-heading">
+      <div className="category-header">
+        <div className="category-header-title-group">
+          <h2 id="recently-viewed-heading" className="category-heading">Recently viewed</h2>
+          <span className="category-count">{items.length} film{items.length === 1 ? '' : 's'}</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="category-header-actions">
+          <button type="button" className="text-btn" onClick={clearItems}>
+            Clear
+          </button>
           {items.length > 4 && (
-            <div className="recently-viewed-nav-btns">
+            <div className="category-nav-btns">
               <button
                 type="button"
-                className="recently-viewed-nav-btn"
+                className="category-nav-btn"
                 onClick={() => scrollByAmount('left')}
                 disabled={!canScrollLeft}
-                aria-label="Scroll left"
+                aria-label="Scroll recently viewed left"
               >
-                <ChevronLeft size={14} />
+                <ChevronLeft size={16} aria-hidden="true" />
               </button>
               <button
                 type="button"
-                className="recently-viewed-nav-btn"
+                className="category-nav-btn"
                 onClick={() => scrollByAmount('right')}
                 disabled={!canScrollRight}
-                aria-label="Scroll right"
+                aria-label="Scroll recently viewed right"
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={16} aria-hidden="true" />
               </button>
             </div>
           )}
-
-          <button
-            type="button"
-            className="recently-viewed-clear"
-            onClick={clearRecentlyViewed}
-            aria-label="Clear recently viewed history"
-          >
-            <Trash2 size={12} />
-            Clear
-          </button>
         </div>
       </div>
 
-      <div
-        className="recently-viewed-row"
-        ref={scrollRef}
-        onScroll={updateScrollState}
-      >
+      <div className="recently-viewed-row" ref={scrollRef} onScroll={updateScrollState}>
         {items.map(item => (
-          <Link
-            key={item.id}
-            href={`/vault/${item.id}`}
-            className="recently-viewed-card"
-          >
+          <Link key={item.id} href={`/vault/${item.id}`} className="recently-viewed-card">
             <div className="recently-viewed-poster">
               {item.poster_url ? (
                 <Image
                   src={item.poster_url}
-                  alt={item.title}
+                  alt=""
                   fill
-                  style={{ objectFit: 'cover' }}
+                  className="recently-viewed-poster-img"
                   sizes="(max-width: 768px) 90px, 110px"
                 />
               ) : (
-                <div
-                  style={{
-                    height: '100%',
-                    background: 'var(--surface-2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Film size={22} color="rgba(255,255,255,0.2)" />
+                <div className="recently-viewed-poster-fallback">
+                  <Film size={16} aria-hidden="true" />
                 </div>
               )}
 
-              {/* Eye hover overlay */}
-              <div className="recently-viewed-eye-overlay">
-                <Eye size={18} color="white" />
-              </div>
-
-              {/* Rating score badge */}
               {item.total !== null && item.total > 0 && (
-                <span className="recently-viewed-score">
-                  +{item.total}
+                <span className="recently-viewed-score" aria-label={`Score ${item.total} out of 10`}>
+                  {item.total}
                 </span>
               )}
             </div>
 
-            <p className="recently-viewed-title" title={item.title}>
-              {item.title}
-            </p>
-            {item.year && (
-              <p className="recently-viewed-year">
-                {item.year}
-              </p>
-            )}
+            <p className="recently-viewed-title">{item.title}</p>
+            {item.year && <p className="recently-viewed-year">{item.year}</p>}
           </Link>
         ))}
       </div>

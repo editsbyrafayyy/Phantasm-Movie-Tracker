@@ -1,8 +1,3 @@
-'use client';
-
-import { useMemo } from 'react';
-import { Film, Star, TrendingUp, Calendar, Award, Flame, Eye, Skull } from 'lucide-react';
-import { motion } from 'framer-motion';
 import type { Entry } from '@/lib/types';
 
 interface WrappedProps {
@@ -11,164 +6,96 @@ interface WrappedProps {
 }
 
 interface WrappedStat {
-  icon:      React.ReactNode;
-  label:     string;
-  value:     string | number;
-  subtext:   string;
-  color:     string;
+  label:   string;
+  value:   string | number;
+  subtext: string;
+  /** Short numeric values render large in Bebas; titles render as text. */
+  numeric?: boolean;
 }
 
-function pickQuirk(entries: Entry[]): { value: string; subtext: string } {
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function pickLowlight(entries: Entry[]): { value: string; subtext: string } {
   const scored = entries.filter(e => (e.total ?? 0) > 0);
   if (!scored.length) return { value: '—', subtext: 'no rated films' };
 
-  // Film rated below 3 with "Garbage" recommend
-  const garbage = scored.filter(e => e.recommend === 'Garbage').sort((a, b) => (a.total ?? 0) - (b.total ?? 0));
-  if (garbage[0]) return { value: garbage[0].movie?.title ?? '?', subtext: 'your biggest disappointment' };
+  const byScore = [...scored].sort((a, b) => (a.total ?? 0) - (b.total ?? 0));
+  const garbage = byScore.find(e => e.recommend === 'Garbage');
+  if (garbage) return { value: garbage.movie?.title ?? '?', subtext: 'your biggest disappointment' };
 
-  // Otherwise lowest score
-  const lowest = scored.sort((a, b) => (a.total ?? 0) - (b.total ?? 0))[0];
+  const lowest = byScore[0];
   return { value: lowest.movie?.title ?? '?', subtext: `your lowest score (${lowest.total})` };
 }
 
+function buildWrapped(thisYear: Entry[], year: number): WrappedStat[] {
+  const rated = thisYear.filter(e => (e.total ?? 0) > 0);
+  const totals = rated.map(e => e.total ?? 0);
+  const avg = totals.length ? (totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(1) : '—';
+
+  const topFilm = [...rated].sort((a, b) => (b.total ?? 0) - (a.total ?? 0))[0];
+
+  const subgenreCounts = new Map<string, number>();
+  for (const e of thisYear) {
+    const sg = e.subgenre ?? 'Unknown';
+    subgenreCounts.set(sg, (subgenreCounts.get(sg) ?? 0) + 1);
+  }
+  const topGenre = [...subgenreCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  const peakCount = rated.filter(e => e.recommend === 'Peak').length;
+
+  // 'YYYY-MM' keys, read straight from the timestamp string — no Date parsing,
+  // so the month never shifts for viewers west of UTC.
+  const monthCounts = new Map<string, number>();
+  for (const e of thisYear) {
+    const m = (e.created_at ?? '').slice(0, 7);
+    if (m) monthCounts.set(m, (monthCounts.get(m) ?? 0) + 1);
+  }
+  const topMonth = [...monthCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const monthLabel = topMonth ? MONTH_NAMES[Number(topMonth[0].slice(5, 7)) - 1] ?? '—' : '—';
+
+  const lowlight = pickLowlight(thisYear);
+
+  return [
+    { label: 'Films logged',  value: thisYear.length,         subtext: `in ${year}`, numeric: true },
+    { label: 'Avg score',     value: avg,                     subtext: 'out of 10', numeric: true },
+    { label: 'Best film',     value: topFilm?.movie?.title ?? '—', subtext: `${topFilm?.total ?? '—'}/10` },
+    { label: 'Top subgenre',  value: topGenre?.[0] ?? '—',    subtext: `${topGenre?.[1] ?? 0} films` },
+    { label: 'Peak films',    value: peakCount,               subtext: 'rated "Peak"', numeric: true },
+    { label: 'Busiest month', value: monthLabel,              subtext: `${topMonth?.[1] ?? 0} films logged` },
+    { label: 'Active months', value: monthCounts.size,        subtext: 'out of 12', numeric: true },
+    { label: 'Lowlight',      value: lowlight.value,          subtext: lowlight.subtext },
+  ];
+}
+
 export default function PhantasmWrapped({ entries, year }: WrappedProps) {
-  const thisYear = useMemo(() => entries.filter(e => {
-    const d = e.created_at ?? e.updated_at ?? '';
-    return d.startsWith(String(year));
-  }), [entries, year]);
+  const prefix = String(year);
+  const thisYear = entries.filter(e => (e.created_at ?? e.updated_at ?? '').startsWith(prefix));
+  if (thisYear.length < 3) return null; // not enough data for a year in review
 
-  if (thisYear.length < 3) return null; // not enough data for a "Wrapped" section
-
-  // Compute wrapped stats
-  const stats = useMemo((): WrappedStat[] => {
-    const rated = thisYear.filter(e => (e.total ?? 0) > 0);
-    const totals = rated.map(e => e.total ?? 0);
-    const avg = totals.length ? (totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(1) : '—';
-
-    const topFilm = [...rated].sort((a, b) => (b.total ?? 0) - (a.total ?? 0))[0];
-    const topTitle = topFilm?.movie?.title ?? '—';
-
-    const subgenreCounts = new Map<string, number>();
-    for (const e of thisYear) {
-      const sg = e.subgenre ?? 'Unknown';
-      subgenreCounts.set(sg, (subgenreCounts.get(sg) ?? 0) + 1);
-    }
-    const topGenre = [...subgenreCounts.entries()].sort((a, b) => b[1] - a[1])[0];
-
-    const peakCount    = rated.filter(e => e.recommend === 'Peak').length;
-    const garbageCount = rated.filter(e => e.recommend === 'Garbage').length;
-
-    const quirk = pickQuirk(thisYear);
-
-    // Streak: consecutive months with ≥1 entry this year
-    const monthsWithEntries = new Set(thisYear.map(e => (e.created_at ?? '').slice(0, 7)));
-
-    // Most productive month
-    const monthCounts = new Map<string, number>();
-    for (const e of thisYear) {
-      const m = (e.created_at ?? '').slice(0, 7);
-      if (m) monthCounts.set(m, (monthCounts.get(m) ?? 0) + 1);
-    }
-    const topMonth = [...monthCounts.entries()].sort((a, b) => b[1] - a[1])[0];
-    const monthLabel = topMonth ? new Date(topMonth[0] + '-01').toLocaleDateString('en-US', { month: 'long' }) : '—';
-
-    return [
-      {
-        icon:    <Film size={18} />,
-        label:   'Films Logged',
-        value:   thisYear.length,
-        subtext: `in ${year}`,
-        color:   '#e63232',
-      },
-      {
-        icon:    <Star size={18} />,
-        label:   'Avg Score',
-        value:   avg,
-        subtext: 'out of 10',
-        color:   '#f5c518',
-      },
-      {
-        icon:    <Award size={18} />,
-        label:   'Best Film',
-        value:   topTitle,
-        subtext: `${topFilm?.total ?? '—'}/10`,
-        color:   '#e63232',
-      },
-      {
-        icon:    <TrendingUp size={18} />,
-        label:   'Fave Genre',
-        value:   topGenre?.[0] ?? '—',
-        subtext: `${topGenre?.[1] ?? 0} films`,
-        color:   '#f5a623',
-      },
-      {
-        icon:    <Flame size={18} />,
-        label:   'Peak Films',
-        value:   peakCount,
-        subtext: 'rated "Peak"',
-        color:   '#e63232',
-      },
-      {
-        icon:    <Calendar size={18} />,
-        label:   'Busiest Month',
-        value:   monthLabel,
-        subtext: `${topMonth?.[1] ?? 0} films logged`,
-        color:   '#ffffff',
-      },
-      {
-        icon:    <Eye size={18} />,
-        label:   'Active Months',
-        value:   monthsWithEntries.size,
-        subtext: 'out of 12',
-        color:   '#d4d4d8',
-      },
-      {
-        icon:    <Skull size={18} />,
-        label:   'Skipped',
-        value:   quirk.value,
-        subtext: quirk.subtext,
-        color:   '#71717a',
-      },
-    ];
-  }, [thisYear, year]);
+  const stats = buildWrapped(thisYear, year);
 
   return (
-    <section className="wrapped-section">
+    <section className="wrapped-section" aria-labelledby="wrapped-title">
       <div className="wrapped-header">
-        <div className="wrapped-header-left">
-          <span className="wrapped-eyebrow">Year in Review</span>
-          <h2 className="wrapped-title">{year} Phantasm Wrapped</h2>
-          <p className="wrapped-sub">
-            You logged <strong>{thisYear.length}</strong>{' '}films this year. Here&apos;s how it looked.
-          </p>
-        </div>
-        <Skull size={24} className="wrapped-badge-icon" aria-hidden="true" />
+        <p className="wrapped-eyebrow">Year in review</p>
+        <h3 id="wrapped-title" className="wrapped-title">{year} <em className="page-header-accent">wrapped</em></h3>
+        <p className="wrapped-sub">
+          You logged <strong>{thisYear.length}</strong> films this year.
+        </p>
       </div>
 
       <div className="wrapped-grid">
         {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            className="wrapped-card"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="wrapped-card-icon" style={{ color: stat.color }}>
-              {stat.icon}
-            </div>
-            <div className="wrapped-card-body">
-              <span className="wrapped-card-label">{stat.label}</span>
-              <strong
-                className="wrapped-card-value"
-                style={{ color: stat.color }}
-                title={String(stat.value)}
-              >
-                {stat.value}
-              </strong>
-              <span className="wrapped-card-sub">{stat.subtext}</span>
-            </div>
-          </motion.div>
+          <div key={stat.label} className="wrapped-card" style={{ animationDelay: `${i * 50}ms` }}>
+            <span className="wrapped-card-label">{stat.label}</span>
+            <strong
+              className={`wrapped-card-value${stat.numeric ? ' is-numeric' : ''}`}
+              title={String(stat.value)}
+            >
+              {stat.value}
+            </strong>
+            <span className="wrapped-card-sub">{stat.subtext}</span>
+          </div>
         ))}
       </div>
     </section>

@@ -31,15 +31,14 @@ export default function ComingSoonRow({ films }: Props) {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   }, []);
 
+  // ResizeObserver fires once on observe and again whenever the track resizes.
   useEffect(() => {
-    updateScrollState();
     const el = scrollRef.current;
     if (!el) return;
-
-    const handleResize = () => updateScrollState();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [films, updateScrollState]);
+    const ro = new ResizeObserver(() => updateScrollState());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [films.length, updateScrollState]);
 
   const scrollByAmount = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
@@ -80,28 +79,28 @@ export default function ComingSoonRow({ films }: Props) {
   if (!films.length) return null;
 
   return (
-    <div className="coming-soon-carousel-container" style={{ position: 'relative' }}>
+    <div className="coming-soon-carousel-container">
       {/* Sub-header navigation row */}
       {films.length > 3 && (
-        <div className="category-header" style={{ marginBottom: 12, justifyContent: 'flex-end' }}>
+        <div className="category-header coming-soon-nav">
           <div className="category-nav-btns">
             <button
               type="button"
               className="category-nav-btn"
               onClick={() => scrollByAmount('left')}
               disabled={!canScrollLeft}
-              aria-label="Scroll left"
+              aria-label="Scroll coming soon left"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
             <button
               type="button"
               className="category-nav-btn"
               onClick={() => scrollByAmount('right')}
               disabled={!canScrollRight}
-              aria-label="Scroll right"
+              aria-label="Scroll coming soon right"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -139,11 +138,10 @@ export default function ComingSoonRow({ films }: Props) {
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
                 onMouseEnter={() => router.prefetch(`/stream/tmdb/${film.id}`)}
-                style={{ display: 'block' }}
               >
                 <Link
                   href={`/stream/tmdb/${film.id}?type=movie&from=${encodeURIComponent(pathname)}`}
-                  style={{ textDecoration: 'none', display: 'block' }}
+                  className="stream-card-link"
                   onClick={(e) => {
                     if (hasDragged.current) {
                       e.preventDefault();
@@ -155,24 +153,18 @@ export default function ComingSoonRow({ films }: Props) {
                   <div className="stream-card-poster">
                     <Image
                       src={posterUrl}
-                      alt={title}
+                      alt=""
                       fill
                       sizes="(max-width: 640px) 33vw, 160px"
                       className="stream-card-poster-img"
-                      style={{ objectFit: 'cover' }}
                       draggable={false}
                     />
                     <div className="stream-card-overlay" />
                     
-                    {month && year && (
-                      <span className="otd-year">{month} {year}</span>
-                    )}
                   </div>
-                  <p className="stream-card-title" style={{ color: '#fff', marginTop: 8 }}>{title}</p>
-                  {date && (
-                    <p className="stream-card-year" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
-                      {month} {year} • Coming Soon
-                    </p>
+                  <p className="stream-card-title category-card-title">{title}</p>
+                  {month && year && (
+                    <p className="stream-card-year category-card-meta">{month} {year}</p>
                   )}
                 </Link>
               </motion.div>

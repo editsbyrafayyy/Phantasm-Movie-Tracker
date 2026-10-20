@@ -1,243 +1,190 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link  from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, ChevronDown, RotateCcw, Film } from 'lucide-react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { SlidersHorizontal, ChevronDown, X } from 'lucide-react';
 import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
 interface Mood {
   id:          string;
   label:       string;
   description: string;
-  accent:      string;
-  params: {
-    sort_by?:              string;
-    'vote_average.gte'?:   number;
-    'vote_average.lte'?:   number;
-    'vote_count.gte'?:     number;
-    'vote_count.lte'?:     number;
-    'with_runtime.lte'?:   number;
-    'with_runtime.gte'?:   number;
-    'primary_release_date.lte'?: string;
-    'primary_release_date.gte'?: string;
-    with_keywords?:        string;
-  };
 }
 
 const MOODS: Mood[] = [
-  {
-    id: 'terrifying',
-    label: 'Terrify Me',
-    description: 'Critically acclaimed, highly rated horror masterpieces that deliver maximum scares.',
-    accent: '#e63232',
-    params: {},
-  },
-  {
-    id: 'psychological',
-    label: 'Mess With My Head',
-    description: 'Psychological horror and mind-benders that will keep you guessing and questioning reality.',
-    accent: '#a82020',
-    params: {},
-  },
-  {
-    id: 'quick',
-    label: 'Quick Watch',
-    description: 'Fast-paced, high-intensity horror flicks clocking in under 95 minutes for a quick thrill.',
-    accent: '#f5c518',
-    params: {},
-  },
-  {
-    id: 'classic',
-    label: 'Old School',
-    description: 'Nostalgic classics and vintage horror masterpieces released in 1999 or earlier.',
-    accent: '#a89070',
-    params: {},
-  },
-  {
-    id: 'recent',
-    label: 'Fresh Nightmare',
-    description: 'The latest chilling releases and modern nightmares from the last two years.',
-    accent: '#52b044',
-    params: {},
-  },
-  {
-    id: 'hidden',
-    label: 'Hidden Gem',
-    description: 'Underrated sleeper hits and lesser-known horror movies rated 6.5 to 7.5.',
-    accent: '#3b82f6',
-    params: {},
-  },
-  {
-    id: 'popular',
-    label: "Everyone's Watching",
-    description: 'Highly rated horror movies with a massive following and high popularity ratings.',
-    accent: '#ff6b35',
-    params: {},
-  },
-  {
-    id: 'extreme',
-    label: 'Stomach of Steel',
-    description: 'Visceral gore, body horror, and intense films that will test the limits of your stomach.',
-    accent: '#6b6b6b',
-    params: {},
-  },
+  { id: 'terrifying',    label: 'Terrify Me',          description: 'Critically acclaimed, highly rated horror masterpieces that deliver maximum scares.' },
+  { id: 'psychological', label: 'Mess With My Head',   description: 'Psychological horror and mind-benders that will keep you guessing and questioning reality.' },
+  { id: 'quick',         label: 'Quick Watch',         description: 'Fast-paced, high-intensity horror flicks clocking in under 95 minutes for a quick thrill.' },
+  { id: 'classic',       label: 'Old School',          description: 'Nostalgic classics and vintage horror masterpieces released in 1999 or earlier.' },
+  { id: 'recent',        label: 'Fresh Nightmare',     description: 'The latest chilling releases and modern nightmares from the last two years.' },
+  { id: 'hidden',        label: 'Hidden Gem',          description: 'Underrated sleeper hits and lesser-known horror movies rated 6.5 to 7.5.' },
+  { id: 'popular',       label: "Everyone's Watching", description: 'Highly rated horror movies with a massive following and high popularity ratings.' },
+  { id: 'extreme',       label: 'Stomach of Steel',    description: 'Visceral gore, body horror, and intense films that will test the limits of your stomach.' },
 ];
 
-export default function MoodPicker() {
+type MoodData = Record<string, TmdbDiscoverMovie[]>;
+
+// ── Shared, de-duplicated fetch of every mood's picks ─────────────────────────
+// The trigger prefetches on open and chip clicks await the same promise, so a
+// click during prefetch never fires a second /api/stream/moods request.
+let moodCache: MoodData | null = null;
+let moodPromise: Promise<MoodData> | null = null;
+
+export function loadMoods(): Promise<MoodData> {
+  if (moodCache) return Promise.resolve(moodCache);
+  if (!moodPromise) {
+    moodPromise = fetch('/api/stream/moods')
+      .then(res => {
+        if (!res.ok) throw new Error(`moods ${res.status}`);
+        return res.json() as Promise<MoodData>;
+      })
+      .then(data => { moodCache = data ?? {}; return moodCache; })
+      .finally(() => { moodPromise = null; });
+  }
+  return moodPromise;
+}
+
+/** Toolbar button that opens the mood panel. Pair with <MoodPanel id={controlsId}>. */
+export function MoodPickerTrigger({ open, onToggle, controlsId }: { open: boolean; onToggle: () => void; controlsId: string }) {
+  return (
+    <button
+      type="button"
+      className={`btn-secondary mood-trigger${open ? ' is-active' : ''}`}
+      onClick={() => {
+        if (!open) loadMoods().catch(() => { /* surfaced when a mood is picked */ });
+        onToggle();
+      }}
+      aria-expanded={open}
+      aria-controls={controlsId}
+    >
+      <SlidersHorizontal size={16} aria-hidden="true" />
+      <span>Pick by mood</span>
+      <ChevronDown size={16} aria-hidden="true" className={`mood-chevron${open ? ' rotated' : ''}`} />
+    </button>
+  );
+}
+
+interface MoodPanelProps {
+  id:      string;
+  open:    boolean;
+  onClose: () => void;
+}
+
+/** Inline, labelled panel of mood chips + results. Stays mounted so picks survive close/reopen. */
+export default function MoodPanel({ id, open, onClose }: MoodPanelProps) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Mood | null>(null);
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [fetched, setFetched] = useState(false);
-  const [allMoodData, setAllMoodData] = useState<Record<string, any[]>>({});
-  const [initialLoading, setInitialLoading] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const [data, setData]             = useState<MoodData | null>(() => moodCache);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [status, setStatus]         = useState<'idle' | 'loading' | 'error'>('idle');
+  const mountedRef = useRef(true);
 
-  // Pre-fetch all mood categories when the panel is toggled open
-  const handleToggle = async () => {
-    const nextOpen = !open;
-    setOpen(nextOpen);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
-    if (nextOpen && Object.keys(allMoodData).length === 0 && !initialLoading) {
-      setInitialLoading(true);
-      try {
-        const res = await fetch('/api/stream/moods');
-        if (res.ok) {
-          const data = await res.json();
-          setAllMoodData(data);
-          // If a mood is already selected (e.g. user clicked chip quickly), update results
-          if (selected) {
-            setResults(data[selected.id] ?? []);
-            setFetched(true);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to pre-fetch mood recommendations:', err);
-      } finally {
-        setInitialLoading(false);
-      }
-    }
-  };
+  // Escape closes the panel.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
 
-  async function pickMood(mood: Mood) {
-    setSelected(mood);
-    setLoading(true);
-    setFetched(false);
-
-    // If pre-fetched cache has data, use it instantly
-    if (Object.keys(allMoodData).length > 0) {
-      setResults(allMoodData[mood.id] ?? []);
-      setLoading(false);
-      setFetched(true);
+  async function pickMood(moodId: string) {
+    setSelectedId(moodId);
+    const ready = data ?? moodCache;
+    if (ready) {
+      if (!data) setData(ready);
       return;
     }
-
-    // Fallback if data is not loaded yet (clicked chip before prefetch finished)
-    setInitialLoading(true);
+    setStatus('loading');
     try {
-      const res = await fetch('/api/stream/moods');
-      if (res.ok) {
-        const data = await res.json();
-        setAllMoodData(data);
-        setResults(data[mood.id] ?? []);
-      } else {
-        setResults([]);
-      }
+      const result = await loadMoods();
+      if (!mountedRef.current) return;
+      setData(result);
+      setStatus('idle');
     } catch {
-      setResults([]);
-    } finally {
-      setInitialLoading(false);
-      setLoading(false);
-      setFetched(true);
+      if (mountedRef.current) setStatus('error');
     }
   }
 
-  function reset() {
-    setSelected(null);
-    setResults([]);
-    setFetched(false);
-  }
+  const selected = MOODS.find(m => m.id === selectedId) ?? null;
+  const results  = selected && data ? data[selected.id] ?? [] : [];
+  const headingId = `${id}-heading`;
 
   return (
-    <div className="mood-picker-wrapper">
-      <button
-        className={`mood-toggle-btn${open ? ' open' : ''}`}
-        onClick={handleToggle}
-        aria-expanded={open}
-      >
-        <SlidersHorizontal size={15} />
-        <span>Pick by Mood</span>
-        <ChevronDown size={14} className={`mood-chevron${open ? ' rotated' : ''}`} />
-      </button>
+    <AnimatePresence initial={false}>
+      {open && (
+        <motion.section
+          id={id}
+          className="mood-panel"
+          role="region"
+          aria-labelledby={headingId}
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+          animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="mood-panel-inner">
+            <div className="mood-panel-head">
+              <h2 id={headingId} className="mood-heading">How do you want to feel tonight?</h2>
+              <button type="button" className="icon-btn" onClick={onClose} aria-label="Close mood picker">
+                <X size={16} />
+              </button>
+            </div>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            className="mood-panel"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            style={{ overflow: 'hidden' }}
-          >
-            <div className="mood-panel-inner">
-              <p className="mood-heading">How do you want to feel tonight?</p>
+            <div className="mood-chip-grid" role="group" aria-label="Moods">
+              {MOODS.map(mood => (
+                <button
+                  key={mood.id}
+                  type="button"
+                  className="mood-chip"
+                  aria-pressed={selectedId === mood.id}
+                  onClick={() => pickMood(mood.id)}
+                >
+                  <span className="mood-chip-label">{mood.label}</span>
+                  <span className="mood-chip-desc">{mood.description}</span>
+                </button>
+              ))}
+            </div>
 
-              <div className="mood-chip-grid">
-                {MOODS.map(mood => (
-                  <button
-                    key={mood.id}
-                    className={`mood-chip${selected?.id === mood.id ? ' active' : ''}`}
-                    onClick={() => pickMood(mood)}
-                    disabled={loading}
-                    style={selected?.id === mood.id ? { borderColor: mood.accent } : {}}
-                  >
-                    <span
-                      className="mood-chip-accent-dot"
-                      style={{ background: mood.accent }}
-                    />
-                    <span className="mood-chip-label">{mood.label}</span>
-                    <span className="mood-chip-desc">{mood.description}</span>
+            <div aria-live="polite" aria-busy={status === 'loading'}>
+              {status === 'loading' && (
+                <div className="mood-results-loading">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="skeleton mood-skeleton" style={{ animationDelay: `${i * 60}ms` }} />
+                  ))}
+                </div>
+              )}
+
+              {status === 'error' && (
+                <div className="mood-empty">
+                  <p>Couldn’t load mood picks.</p>
+                  <button type="button" className="btn-secondary" onClick={() => selectedId && pickMood(selectedId)}>
+                    Try again
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
 
-              <AnimatePresence mode="wait">
-                {(loading || initialLoading) && (
-                  <motion.div
-                    key="loading"
-                    className="mood-results-loading"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="skeleton mood-skeleton" style={{ animationDelay: `${i * 60}ms` }} />
-                    ))}
-                  </motion.div>
-                )}
-
-                {fetched && !loading && !initialLoading && results.length > 0 && (
-                  <motion.div
-                    key="results"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.35 }}
-                  >
-                    <div className="mood-results-header">
-                      <span className="mood-results-label">
-                        {selected?.label} — {results.length} picks
-                      </span>
-                      <button className="mood-reset-btn" onClick={reset}>
-                        <RotateCcw size={12} /> Clear
-                      </button>
-                    </div>
-                    <div className="mood-results-grid">
-                      {results.map(film => (
+              {status === 'idle' && selected && data && results.length > 0 && (
+                <div>
+                  <div className="mood-results-header">
+                    <span className="mood-results-label">
+                      {selected.label} — {results.length} picks
+                    </span>
+                    <button type="button" className="btn-ghost mood-reset-btn" onClick={() => setSelectedId(null)}>
+                      Clear
+                    </button>
+                  </div>
+                  <div className="mood-results-grid">
+                    {results.map(film => {
+                      const name = film.title ?? film.name ?? '';
+                      return (
                         <Link
                           key={film.id}
                           href={`/stream/tmdb/${film.id}?type=movie&from=${encodeURIComponent(pathname)}`}
@@ -247,47 +194,36 @@ export default function MoodPicker() {
                             {film.poster_path ? (
                               <Image
                                 src={film.poster_path.startsWith('http') ? film.poster_path : `https://image.tmdb.org/t/p/w342${film.poster_path}`}
-                                alt={film.title ?? film.name ?? ''}
+                                alt={name}
                                 fill
                                 sizes="(max-width: 640px) 40vw, 120px"
-                                style={{ objectFit: 'cover' }}
+                                className="browse-card-img"
                               />
                             ) : (
-                              <div className="mood-result-fallback">
-                                <Film size={20} opacity={0.3} />
-                              </div>
+                              <div className="mood-result-fallback" aria-hidden="true">{name.charAt(0).toUpperCase()}</div>
                             )}
                             {film.vote_average > 0 && (
-                              <span className="mood-result-rating">
-                                {film.vote_average.toFixed(1)}
-                              </span>
+                              <span className="mood-result-rating">{film.vote_average.toFixed(1)}</span>
                             )}
                           </div>
-                          <p className="mood-result-title">{film.title ?? film.name}</p>
+                          <p className="mood-result-title">{name}</p>
                           <p className="mood-result-year">
                             {(film.release_date ?? film.first_air_date ?? '').slice(0, 4)}
                           </p>
                         </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-                {fetched && !loading && !initialLoading && results.length === 0 && (
-                  <motion.p
-                    key="empty"
-                    className="mood-empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    No results for this mood right now. Try another!
-                  </motion.p>
-                )}
-              </AnimatePresence>
+              {status === 'idle' && selected && data && results.length === 0 && (
+                <p className="mood-empty">No picks for this mood right now. Try another.</p>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
+        </motion.section>
+      )}
+    </AnimatePresence>
   );
 }

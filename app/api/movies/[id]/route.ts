@@ -5,8 +5,18 @@ import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
 import { computeTotal } from '@/lib/config';
 import { guardOwnerEntry, OWNER_ID } from '@/lib/guards';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import type { MovieFormData, Entry } from '@/lib/types';
+import {
+  escapeLike,
+  insertMovieOrGetExisting,
+  isAcceptableMovieRef,
+  isValidBonus,
+  isValidRecommend,
+  isValidSecondaryTag,
+  isValidSubgenre,
+  sanitizeCustomTags,
+} from '../../_lib/entryValidation';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -23,8 +33,8 @@ interface MoviePayload {
 
 // ── GET /api/movies/[id] ──────────────────────────────────────────────────────
 export async function GET(req: NextRequest, { params }: Params) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 60, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 60, 60_000, 'GET /api/movies/[id]')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
@@ -50,8 +60,8 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 // ── PATCH /api/movies/[id] ────────────────────────────────────────────────────
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 30, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 30, 60_000, 'PATCH /api/movies/[id]')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
@@ -81,6 +91,34 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         return NextResponse.json({ error: `Invalid value for ${field}. Maximum allowed is ${max}.` }, { status: 400 });
       }
     }
+  }
+
+  // Enum / shape validation (400 instead of letting DB constraints 500)
+  if (body.subgenre !== undefined && !isValidSubgenre(body.subgenre)) {
+    return NextResponse.json({ error: 'Invalid subgenre' }, { status: 400 });
+  }
+  if (body.secondaryTag !== undefined && !isValidSecondaryTag(body.secondaryTag)) {
+    return NextResponse.json({ error: 'Invalid secondary tag' }, { status: 400 });
+  }
+  if (body.recommend !== undefined && !isValidRecommend(body.recommend)) {
+    return NextResponse.json({ error: 'Invalid recommendation' }, { status: 400 });
+  }
+  if (body.bonus !== undefined && !isValidBonus(body.bonus)) {
+    return NextResponse.json({ error: 'Invalid bonus value' }, { status: 400 });
+  }
+  if (body.omdbId !== undefined && body.omdbId !== '' && body.omdbId !== null && !isAcceptableMovieRef(body.omdbId)) {
+    return NextResponse.json({ error: 'Invalid IMDb ID' }, { status: 400 });
+  }
+  if (body.title !== undefined && (typeof body.title !== 'string' || body.title.length > 200)) {
+    return NextResponse.json({ error: 'Invalid title' }, { status: 400 });
+  }
+  let cleanTags: string[] | undefined;
+  if (body.custom_tags !== undefined) {
+    const sanitized = sanitizeCustomTags(body.custom_tags);
+    if (sanitized === null) {
+      return NextResponse.json({ error: 'Invalid tags (max 20 tags, 40 characters each)' }, { status: 400 });
+    }
+    cleanTags = sanitized;
   }
 
   // Verify the entry belongs to this user (extra check on top of RLS)
@@ -209,18 +247,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         }
         resolvedMovieId = movie.id;
       } else {
-        // Insert new movie
-        const { data: movie, error: movieError } = await serviceClient
-          .from('movies')
-          .insert(moviePayload)
-          .select('id')
-          .single();
-
-        if (movieError || !movie) {
-          console.error('movies insert error in PATCH', movieError);
+        // Insert new movie (re-selects the existing row if a concurrent insert won)
+        const insertedId = await insertMovieOrGetExisting(serviceClient, { ...moviePayload });
+        if (!insertedId) {
           return NextResponse.json({ error: 'Failed to save movie metadata' }, { status: 500 });
         }
-        resolvedMovieId = movie.id;
+        resolvedMovieId = insertedId;
       }
     } else {
       // Manual entry (no omdbId)
@@ -230,11 +262,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       const { data: existingMovie } = await serviceClient
         .from('movies')
         .select('id')
-        .ilike('title', normalised)
-        .maybeSingle();
+        .ilike('title', escapeLike(normalised))
+        .limit(1);
 
-      if (existingMovie) {
-        resolvedMovieId = existingMovie.id;
+      if (existingMovie?.[0]) {
+        resolvedMovieId = existingMovie[0].id;
       } else {
         // Create a new movie row since it doesn't exist
         const insertPayload: MoviePayload = {
@@ -281,18 +313,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           }
           resolvedMovieId = movie.id;
         } else {
-          // Insert it
-          const { data: movie, error: movieError } = await serviceClient
-            .from('movies')
-            .insert(insertPayload)
-            .select('id')
-            .single();
-
-          if (movieError || !movie) {
-            console.error('movies insert error in PATCH', movieError);
+          // Insert it (re-selects the existing row if a concurrent insert won)
+          const insertedId = await insertMovieOrGetExisting(serviceClient, { ...insertPayload });
+          if (!insertedId) {
             return NextResponse.json({ error: 'Failed to save manual movie' }, { status: 500 });
           }
-          resolvedMovieId = movie.id;
+          resolvedMovieId = insertedId;
         }
       }
     }
@@ -306,9 +332,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       .eq('user_id', user.id)
       .eq('movie_id', resolvedMovieId)
       .neq('id', id)
-      .maybeSingle();
+      .limit(1);
 
-    if (duplicateEntry) {
+    if (duplicateEntry?.[0]) {
       return NextResponse.json(
         { error: 'You already have this movie in your vault.' },
         { status: 409 }
@@ -322,7 +348,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     'visuals', 'thrill', 'sound', 'impact', 'bonus'
   ].some(k => k in body);
 
-  const updatePayload: Record<string, any> = {};
+  const updatePayload: Record<string, unknown> = {};
 
   if (resolvedMovieId) {
     updatePayload.movie_id = resolvedMovieId;
@@ -340,7 +366,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     updatePayload.notes = body.notes ? String(body.notes).trim().slice(0, 500) : null;
   }
   if (body.custom_tags !== undefined) {
-    updatePayload.custom_tags = Array.isArray(body.custom_tags) ? body.custom_tags : [];
+    updatePayload.custom_tags = cleanTags ?? [];
   }
   if (body.must_watch !== undefined && user.id === OWNER_ID) {
     updatePayload.must_watch = !!body.must_watch;
@@ -356,7 +382,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       thrill:     body.thrill     ?? existingEntry.thrill     ?? '',
       sound:      body.sound      ?? existingEntry.sound      ?? '',
       impact:     body.impact     ?? existingEntry.impact     ?? '',
-      bonus:      body.bonus      ?? existingEntry.bonus      ?? 0,
+      bonus:      (body.bonus !== undefined && body.bonus !== null
+                    ? Number(body.bonus)
+                    : existingEntry.bonus ?? 0) as 0 | 1,
     });
 
     updatePayload.atmosphere = body.atmosphere !== undefined ? (body.atmosphere !== '' ? body.atmosphere : null) : existingEntry.atmosphere;
@@ -367,7 +395,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     updatePayload.thrill     = body.thrill     !== undefined ? (body.thrill     !== '' ? body.thrill     : null) : existingEntry.thrill;
     updatePayload.sound      = body.sound      !== undefined ? (body.sound      !== '' ? body.sound      : null) : existingEntry.sound;
     updatePayload.impact     = body.impact     !== undefined ? (body.impact     !== '' ? body.impact     : null) : existingEntry.impact;
-    updatePayload.bonus      = body.bonus      !== undefined ? (body.bonus ?? 0) : existingEntry.bonus;
+    updatePayload.bonus      = body.bonus      !== undefined ? Number(body.bonus ?? 0) : existingEntry.bonus;
     updatePayload.total      = total;
   }
 
@@ -377,6 +405,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     .eq('id', id)
     .select('*, movie:movies (*)')
     .single();
+
+  if (error?.code === '23505') {
+    return NextResponse.json({ error: 'You already have this movie in your vault.' }, { status: 409 });
+  }
 
   if (error || !data) {
     console.error('PATCH /api/movies/[id] error', error);
@@ -394,8 +426,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 // ── DELETE /api/movies/[id] ───────────────────────────────────────────────────
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 30, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 30, 60_000, 'DELETE /api/movies/[id]')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 

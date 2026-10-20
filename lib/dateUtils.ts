@@ -3,22 +3,26 @@
  */
 
 /**
+ * Parses a date. Plain 'YYYY-MM-DD' values (e.g. diary watched_at) are read as
+ * a local calendar date, not UTC midnight, so they never shift a day west of UTC
+ * and render identically on server and client.
+ */
+function toDate(dateInput: string | Date): Date {
+  if (typeof dateInput !== 'string') return dateInput;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    const [y, m, d] = dateInput.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return new Date(dateInput);
+}
+
+/**
  * Returns a human-readable relative date string (e.g. "Today", "Yesterday", "3 days ago").
  */
 export function formatRelativeDate(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return '';
 
-  let date: Date;
-  if (typeof dateInput === 'string') {
-    if (/^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
-      const [y, m, d] = dateInput.slice(0, 10).split('-').map(Number);
-      date = new Date(y, m - 1, d);
-    } else {
-      date = new Date(dateInput);
-    }
-  } else {
-    date = dateInput;
-  }
+  const date = toDate(dateInput);
   if (isNaN(date.getTime())) return String(dateInput);
 
   const now = new Date();
@@ -54,7 +58,7 @@ export function formatRelativeDate(dateInput: string | Date | null | undefined):
 export function formatFullDate(dateInput: string | Date | null | undefined): string {
   if (!dateInput) return '';
 
-  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  const date = toDate(dateInput);
   if (isNaN(date.getTime())) return String(dateInput);
 
   return date.toLocaleDateString('en-US', {

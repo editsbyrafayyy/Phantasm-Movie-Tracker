@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
+import { OWNER_ID } from '@/lib/guards';
 
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -8,15 +9,9 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
-  // Check if the requester is the owner
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  const isOwner = profile?.role === 'owner' || user.id === process.env.OWNER_USER_ID;
+    // Owner check: authorize strictly by OWNER_USER_ID (profiles.role is user-editable).
+    // Fails closed when OWNER_USER_ID is not configured.
+    const isOwner = !!OWNER_ID && user.id === OWNER_ID;
 
   if (!isOwner) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -30,7 +25,8 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[GET /api/admin/users]', error);
+    return NextResponse.json({ error: 'Failed to load users' }, { status: 500 });
   }
 
   return NextResponse.json(users);

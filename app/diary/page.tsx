@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import DiaryFeedClient from '@/components/diary/DiaryFeedClient';
+import DiaryFeedClient, { type DiaryItem } from '@/components/diary/DiaryFeedClient';
+import PageHeader from '@/components/ui/PageHeader';
 
 export const metadata: Metadata = {
   title: 'Diary — Phantasm',
@@ -18,7 +19,7 @@ export default async function DiaryPage() {
 
   const { data: diary, error } = await supabase
     .from('diary_entries')
-    .select('*, movie:movies (*)')
+    .select('id, movie_id, watched_at, rewatch, quick_note, movie:movies (id, title, poster_url, year)')
     .eq('user_id', user.id)
     .order('watched_at', { ascending: false })
     .order('created_at', { ascending: false });
@@ -28,13 +29,12 @@ export default async function DiaryPage() {
   }
 
   return (
-    <div className="page-container diary-page" style={{ maxWidth: 900, margin: '0 auto' }}>
-      <header className="form-header" style={{ marginBottom: 36 }}>
-        <p className="page-label">Watch History</p>
-        <h1 className="page-title-serif">Your Diary.</h1>
-      </header>
-
-      <DiaryFeedClient initialDiary={diary ?? []} />
+    <div className="page-container diary-page">
+      <PageHeader title="Diary" eyebrow="Watch history" />
+      <DiaryFeedClient
+        initialDiary={(diary ?? []) as unknown as DiaryItem[]}
+        loadError={!!error}
+      />
     </div>
   );
 }

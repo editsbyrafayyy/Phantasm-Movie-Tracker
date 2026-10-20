@@ -1,6 +1,3 @@
-'use client';
-
-import { useMemo } from 'react';
 import type { Entry } from '@/lib/types';
 
 interface Props {
@@ -49,78 +46,36 @@ function buildFingerprint(entries: Entry[]): { insights: Insight[]; overallAvg: 
 }
 
 export default function TasteFingerprint({ entries }: Props) {
-  const result = useMemo(() => buildFingerprint(entries), [entries]);
+  const result = buildFingerprint(entries);
 
   if (!result || result.insights.length < 2) return null;
   const { insights, overallAvg } = result;
 
   return (
-    <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
-      <p className="stat-card-label">Personal Taste Fingerprint</p>
-      <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 20, marginTop: -8 }}>
-        How your subgenre preferences compare to your overall average of{' '}
-        <strong style={{ color: 'var(--text)' }}>{overallAvg.toFixed(1)}</strong>.
+    <div className="stat-card stat-card-wide">
+      <h3 className="stat-card-label">Taste fingerprint</h3>
+      <p className="stat-card-desc">
+        How each subgenre scores against your overall average of <strong>{overallAvg.toFixed(1)}</strong>.
       </p>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))',
-        gap: 12,
-      }}>
+      <div className="taste-grid">
         {insights.map(ins => {
           const isHigher = ins.direction === 'higher';
           const absDelta = Math.abs(ins.delta);
-          const color = isHigher ? '#52b044' : '#e63232';
-          const bgColor = isHigher ? 'rgba(82,176,68,0.08)' : 'rgba(230,50,50,0.08)';
-          const borderColor = isHigher ? 'rgba(82,176,68,0.25)' : 'rgba(230,50,50,0.25)';
-
           return (
-            <div
-              key={ins.subgenre}
-              style={{
-                background: bgColor,
-                border: `1px solid ${borderColor}`,
-                borderRadius: 10,
-                padding: '12px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-                minWidth: 0,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-                  {ins.subgenre}
-                </span>
-                <span style={{
-                  fontFamily: 'var(--font-sans)',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color,
-                }}>
-                  {isHigher ? '+' : ''}{ins.delta.toFixed(0)}%
-                </span>
+            <div key={ins.subgenre} className={`taste-card ${isHigher ? 'is-higher' : 'is-lower'}`}>
+              <div className="taste-card-head">
+                <span className="taste-card-name">{ins.subgenre}</span>
+                <span className="taste-card-delta">{isHigher ? '+' : '−'}{absDelta.toFixed(0)}%</span>
               </div>
-
-              {/* Diverging bar */}
-              <div style={{ position: 'relative', height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  [isHigher ? 'left' : 'right']: '50%',
-                  width: `${Math.min(absDelta / 2, 50)}%`,
-                  height: '100%',
-                  background: color,
-                  borderRadius: 2,
-                }} />
-                {/* Center line */}
-                <div style={{ position: 'absolute', left: '50%', top: 0, width: 1, height: '100%', background: 'rgba(255,255,255,0.2)' }} />
+              <div className="taste-bar" aria-hidden="true">
+                <span
+                  className="taste-bar-fill"
+                  style={{ width: `${Math.min(absDelta / 2, 50)}%` }}
+                />
               </div>
-
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-dim)' }}>
-                You rate {ins.subgenre}{' '}
-                <strong style={{ color }}>{absDelta.toFixed(0)}% {ins.direction}</strong>{' '}
-                than your avg · {ins.count} films · avg {ins.avgScore.toFixed(1)}
+              <span className="taste-card-sub">
+                avg {ins.avgScore.toFixed(1)} · {ins.count} films
               </span>
             </div>
           );

@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, FileText, FileCode } from 'lucide-react';
+import { Download } from 'lucide-react';
+
+type Format = 'csv' | 'json';
 
 export default function ExportButton() {
-  const [downloading, setDownloading] = useState<'csv' | 'json' | null>(null);
+  const [downloading, setDownloading] = useState<Format | null>(null);
 
-  function handleExport(format: 'csv' | 'json') {
+  function handleExport(format: Format) {
     setDownloading(format);
     const link = document.createElement('a');
     link.href = `/api/export?format=${format}`;
@@ -14,44 +16,29 @@ export default function ExportButton() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    setTimeout(() => {
-      setDownloading(null);
-    }, 1500);
+    setTimeout(() => setDownloading(null), 1500);
   }
 
   return (
-    <div className="export-container">
-      <div className="export-header">
-        <h3 className="export-title">Export Vault Data</h3>
-        <p className="export-subtitle">
-          Download a complete archive of your logged films, ratings, scores, and personal notes.
-        </p>
+    <section className="settings-block" aria-labelledby="export-heading">
+      <h3 id="export-heading" className="settings-title">Export your data</h3>
+      <p className="settings-desc">
+        Download every logged film with its ratings, scores and notes.
+      </p>
+      <div className="settings-actions">
+        {(['csv', 'json'] as const).map(format => (
+          <button
+            key={format}
+            type="button"
+            onClick={() => handleExport(format)}
+            disabled={downloading !== null}
+            className="btn-secondary"
+          >
+            <Download size={16} aria-hidden="true" />
+            {downloading === format ? 'Preparing…' : format.toUpperCase()}
+          </button>
+        ))}
       </div>
-
-      <div className="export-actions">
-        <button
-          onClick={() => handleExport('csv')}
-          disabled={downloading !== null}
-          className="btn-edit export-btn"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
-        >
-          <FileText size={15} style={{ color: 'var(--red)' }} />
-          <span>{downloading === 'csv' ? 'Downloading CSV…' : 'Export as CSV'}</span>
-          <Download size={14} style={{ opacity: 0.7 }} />
-        </button>
-
-        <button
-          onClick={() => handleExport('json')}
-          disabled={downloading !== null}
-          className="btn-edit export-btn"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
-        >
-          <FileCode size={15} style={{ color: '#9b59f5' }} />
-          <span>{downloading === 'json' ? 'Downloading JSON…' : 'Export as JSON'}</span>
-          <Download size={14} style={{ opacity: 0.7 }} />
-        </button>
-      </div>
-    </div>
+    </section>
   );
 }

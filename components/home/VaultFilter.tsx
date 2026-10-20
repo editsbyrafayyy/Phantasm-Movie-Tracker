@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useTransition } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, X, Star, Film, Plus } from 'lucide-react';
+import { Search, X, Film, Plus } from 'lucide-react';
 import CategoryRow from '@/components/browse/CategoryRow';
 import CustomSelect from '@/components/ui/CustomSelect';
 import type { Entry } from '@/lib/types';
@@ -12,9 +12,11 @@ type Props = {
   entries: Entry[];
   subgenreOrder: string[];
   ownerName?: string;
+  /** Signed-in members get a "Log this film" shortcut on empty searches. */
+  canAdd?: boolean;
 };
 
-export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafayyy' }: Props) {
+export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafayyy', canAdd = false }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [recFilter, setRecFilter] = useState<string>('All');
@@ -96,23 +98,23 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
   }, [entries]);
 
   return (
-    <div style={{ marginTop: 0, paddingTop: 16, paddingBottom: 80 }}>
+    <div className="home-vault-body">
       {/* Search & Filter Controls Bar */}
-      <div className="home-vault-filters" style={{ opacity: isPending ? 0.7 : 1, transition: 'opacity 0.15s' }}>
+      <div className={`home-vault-filters${isPending ? ' is-pending' : ''}`}>
         {/* Search Input */}
         <div className="home-vault-search-container">
-          <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
-            Search Rated Films
+          <label htmlFor="home-vault-search" className="home-filter-label">
+            Search
           </label>
           <div className="home-vault-search-wrap">
-            <Search className="home-vault-search-icon" size={15} />
+            <Search className="home-vault-search-icon" size={16} aria-hidden="true" />
             <input
-              type="text"
+              id="home-vault-search"
+              type="search"
               className="home-vault-search-input"
-              placeholder={`Search ${ownerName}'s rated horror movies (title, director, cast)...`}
+              placeholder="Title, director, cast, tag…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              aria-label={`Search ${ownerName}'s rated films`}
             />
             {searchQuery && (
               <button
@@ -124,41 +126,37 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
                 }}
                 aria-label="Clear search"
               >
-                <X size={14} />
+                <X size={16} aria-hidden="true" />
               </button>
             )}
           </div>
         </div>
 
         {/* Recommended Filter */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
-            Verdict
-          </label>
+        <div className="home-filter-field">
+          <span className="home-filter-label" aria-hidden="true">Verdict</span>
           <CustomSelect
             value={recFilter}
             onChange={(v) => startTransition(() => setRecFilter(v))}
             options={[
-              { value: 'All', label: 'All Statuses' },
+              { value: 'All', label: 'All verdicts' },
               { value: 'Peak', label: 'Peak' },
               { value: 'Yes', label: 'Yes' },
               { value: 'No', label: 'No' },
               { value: 'Garbage', label: 'Garbage' },
             ]}
-            ariaLabel="Filter by recommendation"
+            ariaLabel="Filter by verdict"
           />
         </div>
 
         {/* Genre Filter */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1 }}>
-            Genre
-          </label>
+        <div className="home-filter-field">
+          <span className="home-filter-label" aria-hidden="true">Genre</span>
           <CustomSelect
             value={genreFilter}
             onChange={(v) => startTransition(() => setGenreFilter(v))}
             options={[
-              { value: 'All', label: 'All Genres' },
+              { value: 'All', label: 'All genres' },
               ...availableGenres.map(g => ({ value: g, label: g })),
             ]}
             ariaLabel="Filter by genre"
@@ -173,7 +171,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
           {searchedEntries.length > 0 ? (
             <>
               <div className="home-search-summary-bar">
-                <span className="home-search-summary-text">
+                <span className="home-search-summary-text" aria-live="polite">
                   Found <strong className="home-search-summary-count">{searchedEntries.length}</strong> {searchedEntries.length === 1 ? 'film' : 'films'} rated by {ownerName} matching &ldquo;{debouncedSearch}&rdquo;
                 </span>
                 <button
@@ -182,15 +180,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
                     setSearchQuery('');
                     setDebouncedSearch('');
                   }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--red)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    padding: '4px 8px',
-                  }}
+                  className="text-btn home-search-clear-link"
                 >
                   Clear search
                 </button>
@@ -214,21 +204,20 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
                         {poster ? (
                           <Image
                             src={poster}
-                            alt={title}
+                            alt=""
                             fill
                             sizes="(max-width: 768px) 50vw, 220px"
-                            style={{ objectFit: 'cover' }}
+                            className="home-search-poster-img"
                           />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Film size={28} color="rgba(255,255,255,0.25)" />
+                          <div className="home-search-poster-fallback">
+                            <Film size={32} aria-hidden="true" />
                           </div>
                         )}
 
                         {/* Owner's Score Badge */}
                         {entry.total !== null && entry.total !== undefined && entry.total > 0 && (
                           <span className="home-search-score-badge">
-                            <Star size={10} fill="currentColor" style={{ color: '#ffd700' }} />
                             <span>{entry.total}</span>
                             <small>/10</small>
                           </span>
@@ -260,28 +249,29 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
               </div>
             </>
           ) : (
-            <div className="home-search-empty">
-              <Search size={32} style={{ color: 'var(--red)', opacity: 0.8, marginBottom: 12 }} />
-              <h3 className="home-search-empty-title">No rated films found for &ldquo;{debouncedSearch}&rdquo;</h3>
-              <p className="home-search-empty-sub">
-                {ownerName} has not logged or rated this film in the vault yet.
+            <div className="empty-state">
+              <Search size={32} aria-hidden="true" />
+              <h3 className="empty-state-title">No matches for &ldquo;{debouncedSearch}&rdquo;</h3>
+              <p className="empty-state-body">
+                {ownerName} hasn&apos;t rated this one yet.
               </p>
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 18, flexWrap: 'wrap' }}>
-                <Link
-                  href={`/add?title=${encodeURIComponent(debouncedSearch)}`}
-                  className="btn-primary"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, width: 'auto' }}
-                >
-                  <Plus size={14} />
-                  Add &ldquo;{debouncedSearch}&rdquo; to Vault
-                </Link>
+              <div className="home-search-empty-actions">
+                {canAdd && (
+                  <Link
+                    href={`/add?title=${encodeURIComponent(debouncedSearch)}`}
+                    className="btn-primary"
+                  >
+                    <Plus size={16} aria-hidden="true" />
+                    Log &ldquo;{debouncedSearch}&rdquo;
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={() => {
                     setSearchQuery('');
                     setDebouncedSearch('');
                   }}
-                  className="btn-edit"
+                  className="btn-secondary"
                 >
                   Clear search
                 </button>
@@ -300,11 +290,9 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
           })}
 
           {filteredEntries.length === 0 && (
-            <div style={{
-              padding:'80px 48px', textAlign:'center',
-              color:'var(--text-muted)', fontFamily:'var(--font-sans)', fontSize:14,
-            }}>
-              No films match your selected filters.
+            <div className="empty-state">
+              <p className="empty-state-title">Nothing matches</p>
+              <p className="empty-state-body">No films match the selected verdict and genre.</p>
             </div>
           )}
         </>

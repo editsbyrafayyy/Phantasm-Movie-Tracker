@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Film, ChevronDown, ChevronUp, MessageSquare, Bookmark } from 'lucide-react';
+import { Film, ChevronDown, ChevronUp } from 'lucide-react';
+import PageHeader from '@/components/ui/PageHeader';
 
 export interface ActivityItem {
   id:            string;
@@ -16,6 +17,10 @@ export interface ActivityItem {
   must_watch?:   boolean;
   notes?:        string | null;
   user_id?:      string;
+  /** Detail link, or null when the viewer can't open this member's entry. */
+  href:          string | null;
+  /** Relative time, computed on the server. */
+  timeLabel:     string;
   movie: {
     title:       string;
     poster_url:  string | null;
@@ -64,33 +69,6 @@ function getActivityAction(item: ActivityItem): { verb: string; isMustWatchActio
   return { verb: isUpdate ? 'updated' : 'logged' };
 }
 
-function timeAgo(dateStr: string | null | undefined): string {
-  if (!dateStr) return '';
-  const timestamp = new Date(dateStr).getTime();
-  if (isNaN(timestamp)) return '';
-
-  const diffMs = Date.now() - timestamp;
-  if (diffMs < 45000) return 'just now'; // under 45s
-
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 60) return `${mins}m ago`;
-
-  const hours = Math.floor(diffMs / 3600000);
-  if (hours < 24) return `${hours}h ago`;
-
-  const days = Math.floor(diffMs / 86400000);
-  if (days < 7) return `${days}d ago`;
-
-  const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks}w ago`;
-
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months}mo ago`;
-
-  const years = Math.floor(days / 365);
-  return `${years}y ago`;
-}
-
 export default function ActivityFeedClient({ items }: { items: ActivityItem[] }) {
   const [expanded, setExpanded] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -100,13 +78,7 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
 
   return (
     <section className="activity-section" ref={sectionRef}>
-      <div className="activity-header">
-        <div className="activity-header-left">
-          <span className="activity-eyebrow">Live</span>
-          <h2 className="activity-title">Recent Activity</h2>
-        </div>
-        <span className="activity-pulse" aria-hidden="true" />
-      </div>
+      <PageHeader as="section" eyebrow="From members" title="Recent activity" />
 
       <div className="activity-feed">
         {displayItems.map(item => {
@@ -115,17 +87,17 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
           const initial = (Array.from(displayName)[0] || 'M').toUpperCase();
           const action = getActivityAction(item);
 
-          return (
-            <Link key={item.id} href={`/vault/${item.id}`} className="activity-item">
+          const body = (
+            <>
               {/* Avatar */}
-              <div className="activity-avatar" aria-label={displayName} style={{ position: 'relative', overflow: 'hidden' }}>
+              <div className="activity-avatar" aria-hidden="true">
                 {item.profile?.avatar_url ? (
                   <Image
                     src={item.profile.avatar_url}
-                    alt={displayName}
+                    alt=""
                     fill
                     sizes="34px"
-                    style={{ objectFit: 'cover', borderRadius: '50%' }}
+                    className="activity-avatar-img"
                   />
                 ) : (
                   initial
@@ -137,13 +109,13 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
                 {item.movie.poster_url ? (
                   <Image
                     src={item.movie.poster_url}
-                    alt={item.movie.title}
+                    alt=""
                     fill
                     sizes="44px"
-                    style={{ objectFit: 'cover' }}
+                    className="activity-poster-img"
                   />
                 ) : (
-                  <Film size={14} color="rgba(255,255,255,0.2)" />
+                  <Film size={14} aria-hidden="true" />
                 )}
               </div>
 
@@ -158,9 +130,7 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
                 </p>
                 <div className="activity-badges">
                   {item.must_watch && (
-                    <span className="activity-badge-must-watch">
-                      ★ Must Watch
-                    </span>
+                    <span className="activity-badge-must-watch">Must watch</span>
                   )}
                   {item.total !== null && item.total !== undefined && item.total > 0 && (
                     <span className="activity-score">{item.total}<small>/10</small></span>
@@ -174,23 +144,28 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
                     <span className="activity-subgenre">{item.subgenre}</span>
                   )}
                   {item.notes && item.notes.trim().length > 0 && (
-                    <span className="activity-badge-notes">
-                      <MessageSquare size={11} style={{ marginRight: 3, verticalAlign: 'middle' }} />
-                      Review
-                    </span>
+                    <span className="activity-badge-notes">Review</span>
                   )}
                 </div>
               </div>
 
               {/* Time */}
-              <span className="activity-time">{timeAgo(item.updated_at)}</span>
-            </Link>
+              <span className="activity-time">{item.timeLabel}</span>
+            </>
+          );
+
+          return item.href ? (
+            <Link key={item.id} href={item.href} className="activity-item">{body}</Link>
+          ) : (
+            <div key={item.id} className="activity-item is-static">{body}</div>
           );
         })}
       </div>
 
       {hasMore && (
-        <button 
+        <button
+          type="button"
+          aria-expanded={expanded}
           className="activity-show-more"
           onClick={() => {
             if (expanded && sectionRef.current) {
@@ -201,9 +176,9 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
           }}
         >
           {expanded ? (
-            <>Show Less <ChevronUp size={16} /></>
+            <>Show less <ChevronUp size={16} aria-hidden="true" /></>
           ) : (
-            <>Show More <ChevronDown size={16} /></>
+            <>Show more <ChevronDown size={16} aria-hidden="true" /></>
           )}
         </button>
       )}

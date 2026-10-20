@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Film, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SUBGENRE_HEX } from '@/lib/config';
 import type { Entry } from '@/lib/types';
@@ -33,15 +33,14 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   }, []);
 
+  // ResizeObserver fires once on observe and again whenever the track resizes.
   useEffect(() => {
-    updateScrollState();
     const el = scrollRef.current;
     if (!el) return;
-
-    const handleResize = () => updateScrollState();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [entries, updateScrollState]);
+    const ro = new ResizeObserver(() => updateScrollState());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [entries.length, updateScrollState]);
 
   const scrollByAmount = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
@@ -82,7 +81,7 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
   if (entries.length === 0) return null;
 
   return (
-    <section className="category-section" style={{ position: 'relative' }}>
+    <section className="category-section">
       <div className="category-header">
         <div className="category-header-title-group">
           {label && <h2 className="category-heading">{label}</h2>}
@@ -96,18 +95,18 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
               className="category-nav-btn"
               onClick={() => scrollByAmount('left')}
               disabled={!canScrollLeft}
-              aria-label="Scroll left"
+              aria-label={`Scroll ${label || 'row'} left`}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
             <button
               type="button"
               className="category-nav-btn"
               onClick={() => scrollByAmount('right')}
               disabled={!canScrollRight}
-              aria-label="Scroll right"
+              aria-label={`Scroll ${label || 'row'} right`}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
         )}
@@ -140,7 +139,7 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
               >
                 <Link
                   href={`/vault/${entry.id}?from=${encodeURIComponent(pathname)}`}
-                  style={{ textDecoration: 'none', display: 'block' }}
+                  className="stream-card-link"
                   onClick={(e) => {
                     if (hasDragged.current) {
                       e.preventDefault();
@@ -153,7 +152,7 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
                     {img ? (
                       <Image
                         src={img}
-                        alt={movie.title}
+                        alt=""
                         fill
                         className="stream-card-poster-img"
                         sizes="(max-width: 640px) 33vw, 160px"
@@ -162,37 +161,30 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
                         draggable={false}
                       />
                     ) : (
-                      <div style={{
-                        height: '100%',
-                        background: `linear-gradient(160deg, #111 0%, ${genreHex}22 100%)`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <Film size={24} color="rgba(255,255,255,0.12)" />
+                      <div
+                        className="category-card-fallback"
+                        style={{ background: `linear-gradient(160deg, #111 0%, ${genreHex}22 100%)` }}
+                      >
+                        <Film size={32} aria-hidden="true" />
                       </div>
                     )}
 
                     <div className="stream-card-overlay" />
 
-                    {/* View overlay */}
-                    <div className="stream-card-play-btn">
-                      <div className="stream-card-play-circle" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
-                        <Eye size={16} color="white" />
-                      </div>
-                    </div>
-
                     {/* Vault score */}
                     {entry.total !== null && entry.total > 0 && (
-                      <span
-                        className="movie-card-score"
-                        style={{ top: 8, right: 8, bottom: 'auto', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.15)' }}
-                      >
-                        +{entry.total}
+                      <span className="movie-card-score" aria-label={`Score ${entry.total} out of 10`}>
+                        {entry.total}
                       </span>
                     )}
                   </div>
 
-                  <p className="stream-card-title" style={{ color: '#fff', marginTop: 8 }}>{movie.title}</p>
-                  {movie.year && <p className="stream-card-year" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{movie.year} • {movie.runtime_min ? `${movie.runtime_min}min` : 'Movie'}</p>}
+                  <p className="stream-card-title category-card-title">{movie.title}</p>
+                  {movie.year && (
+                    <p className="stream-card-year category-card-meta">
+                      {movie.year}{movie.runtime_min ? ` · ${movie.runtime_min} min` : ''}
+                    </p>
+                  )}
                 </Link>
               </motion.div>
             );

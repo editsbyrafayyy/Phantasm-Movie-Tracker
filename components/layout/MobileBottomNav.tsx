@@ -2,82 +2,80 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Clapperboard, Film, Play, Plus, LogIn, Bookmark } from 'lucide-react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { House, Film, Play, Plus, LogIn, Bookmark, Compass, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
+
+const SESSION_HINT_KEY = 'vault_has_session';
+
+interface Tab { href: string; label: string; icon: LucideIcon; primary?: boolean }
+
+// Max 5 tabs. Diary/Browse/Profile for members live in the avatar menu (StreamRail).
+const MEMBER_TABS: Tab[] = [
+  { href: '/',          label: 'Home',        icon: House },
+  { href: '/vault',     label: 'My Vault',    icon: Film },
+  { href: '/add',       label: 'Log Film',    icon: Plus, primary: true },
+  { href: '/watchlist', label: 'Watch Later', icon: Bookmark },
+  { href: '/stream',    label: 'Stream',      icon: Play },
+];
+
+const GUEST_TABS: Tab[] = [
+  { href: '/',       label: 'Home',    icon: House },
+  { href: '/vault',  label: 'Vault',   icon: Film },
+  { href: '/browse', label: 'Browse',  icon: Compass },
+  { href: '/login',  label: 'Sign in', icon: LogIn },
+];
+
+// Cached "was signed in last visit" hint so the right tab set shows before auth resolves.
+const noopSubscribe = () => () => {};
+function readSessionHint(): boolean | null {
+  try {
+    const v = localStorage.getItem(SESSION_HINT_KEY);
+    return v === 'true' ? true : v === 'false' ? false : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  const [mounted, setMounted] = useState(false);
-  const [optimisticLoggedIn, setOptimisticLoggedIn] = useState<boolean | null>(null);
+  const cachedHint = useSyncExternalStore(noopSubscribe, readSessionHint, () => null);
 
+  // Persist the hint once auth has resolved.
   useEffect(() => {
-    setMounted(true);
-    const cached = localStorage.getItem('vault_has_session');
-    if (cached === 'true') {
-      setOptimisticLoggedIn(true);
-    } else if (cached === 'false') {
-      setOptimisticLoggedIn(false);
-    }
-  }, []);
-
-  // Sync with actual auth state once loaded
-  useEffect(() => {
-    if (!loading) {
-      const hasSession = !!user;
-      setOptimisticLoggedIn(hasSession);
-      localStorage.setItem('vault_has_session', hasSession ? 'true' : 'false');
-    }
+    if (loading) return;
+    try { localStorage.setItem(SESSION_HINT_KEY, user ? 'true' : 'false'); } catch { /* storage blocked */ }
   }, [user, loading]);
 
+  const showLoggedIn = loading ? cachedHint === true : !!user;
+  const tabs = showLoggedIn ? MEMBER_TABS : GUEST_TABS;
+
   function isActive(path: string) {
-    if (path === '/') {
-      return pathname === '/' ? ' active' : '';
-    }
-    return pathname.startsWith(path) ? ' active' : '';
+    if (path === '/') return pathname === '/';
+    return pathname === path || pathname.startsWith(`${path}/`);
   }
 
-  // Use actual state if loaded, otherwise fallback to optimistic state, default to false (guest)
-  const showLoggedIn = optimisticLoggedIn !== null ? optimisticLoggedIn : false;
-
-  const ICON_SIZE = 22;
-  const STROKE_WIDTH = 1.5;
-
   return (
-    <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-      <Link href="/" className={`mobile-bottom-nav-link${isActive('/')}`} prefetch={true}>
-        <Clapperboard size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-        <span>{showLoggedIn ? 'Curated' : 'Vault'}</span>
-      </Link>
-      
-      {showLoggedIn ? (
-        <>
-          <Link href="/vault" className={`mobile-bottom-nav-link${isActive('/vault')}`} prefetch={true}>
-            <Film size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            <span>My Vault</span>
+    <nav className="mobile-bottom-nav" aria-label="Primary">
+      {tabs.map(({ href, label, icon: Icon, primary }) => {
+        const active = isActive(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`mobile-bottom-nav-link${primary ? ' mobile-bottom-nav-add' : ''}${active ? ' active' : ''}`}
+            aria-current={active ? 'page' : undefined}
+          >
+            {primary ? (
+              <span className="mobile-nav-add-icon" aria-hidden="true"><Icon size={16} /></span>
+            ) : (
+              <Icon size={20} aria-hidden="true" />
+            )}
+            <span>{label}</span>
           </Link>
-          <Link href="/add" className={`mobile-bottom-nav-link mobile-bottom-nav-add${isActive('/add')}`} prefetch={true}>
-            <div className="mobile-nav-add-icon">
-              <Plus size={18} strokeWidth={2.5} />
-            </div>
-            <span>Log Film</span>
-          </Link>
-          <Link href="/watchlist" className={`mobile-bottom-nav-link${isActive('/watchlist')}`} prefetch={true}>
-            <Bookmark size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            <span>Watch Later</span>
-          </Link>
-          <Link href="/stream" className={`mobile-bottom-nav-link${isActive('/stream')}`} prefetch={true}>
-            <Play size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-            <span>Stream</span>
-          </Link>
-        </>
-      ) : (
-        <Link href="/login" className={`mobile-bottom-nav-link${isActive('/login')}`} prefetch={true}>
-          <LogIn size={ICON_SIZE} strokeWidth={STROKE_WIDTH} />
-          <span>Sign In</span>
-        </Link>
-      )}
+        );
+      })}
     </nav>
   );
 }

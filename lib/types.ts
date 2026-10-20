@@ -45,6 +45,41 @@ export interface Entry {
   movie:         Movie;              // joined from movies table
 }
 
+// ── Slim entry shapes (only the fields the vault UI renders) ────────────────
+/** One card in the vault grid — projected server-side to keep the RSC payload small. */
+export interface VaultGridEntry {
+  id:            string;
+  subgenre:      string;
+  secondary_tag: string | null;
+  recommend:     Recommend | null;
+  total:         number | null;
+  created_at:    string;
+  movie: {
+    title:        string;
+    year:         number | null;
+    runtime_min:  number | null;
+    poster_url:   string | null;
+    backdrop_url: string | null;
+    director:     string | null;
+    tmdb_id:      number | null;
+    /** Cast names only — used by the vault search. */
+    cast_names:   string[];
+  };
+}
+
+/** A related entry shown on the detail page (similar films, franchise track). */
+export interface RelatedEntry {
+  id:    string;
+  total: number | null;
+  movie: {
+    id:           string;
+    title:        string;
+    year:         number | null;
+    poster_url:   string | null;
+    backdrop_url: string | null;
+  };
+}
+
 // ── Form data (Add / Update forms) ───────────────────────────────────────────
 export interface MovieFormData {
   title:        string;

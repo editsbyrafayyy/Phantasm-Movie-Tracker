@@ -8,9 +8,9 @@ export const metadata = {
 export default function VaultLayout({ children }: { children: ReactNode }) {
   return (
     <div className="stream-layout">
-      <main className="stream-main">
+      <div className="stream-main">
         {children}
-      </main>
+      </div>
     </div>
   );
 }

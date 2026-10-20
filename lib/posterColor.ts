@@ -56,7 +56,7 @@ export async function extractDominantColor(src: string): Promise<string | null> 
         const bAvg = Math.round(bSum / count);
 
         resolve(`rgb(${rAvg}, ${gAvg}, ${bAvg})`);
-      } catch (err) {
+      } catch {
         resolve(null);
       }
     };

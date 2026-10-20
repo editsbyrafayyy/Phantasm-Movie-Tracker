@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
+import { OWNER_ID } from '@/lib/guards';
 
 export async function POST(request: Request) {
   try {
@@ -9,15 +10,9 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Check if the requester is the owner
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    const isOwner = profile?.role === 'owner' || user.id === process.env.OWNER_USER_ID;
+    // Owner check: authorize strictly by OWNER_USER_ID (profiles.role is user-editable).
+    // Fails closed when OWNER_USER_ID is not configured.
+    const isOwner = !!OWNER_ID && user.id === OWNER_ID;
 
     if (!isOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -25,7 +20,11 @@ export async function POST(request: Request) {
 
     const { userId, newPassword } = await request.json();
 
-    if (!userId || !newPassword || newPassword.length < 6) {
+    if (
+      typeof userId !== 'string' ||
+      typeof newPassword !== 'string' ||
+      newPassword.length < 6
+    ) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
@@ -36,11 +35,13 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[POST /api/admin/reset-user-password]', error);
+      return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    console.error('[POST /api/admin/reset-user-password] Unexpected error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

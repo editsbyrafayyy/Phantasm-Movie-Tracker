@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 
 export const revalidate = 60; // ISR cache at CDN level for 1 minute
 
 export async function GET(req: NextRequest) {
   // Apply general rate limit (60 requests per minute)
-  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
-  if (!rateLimit(ip, 60, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 60, 60_000, 'GET /api/stream/moods')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       }
 
       // Convert array to a key-value dictionary mapping mood -> payload
-      const allMoods: Record<string, any[]> = {};
+      const allMoods: Record<string, unknown[]> = {};
       if (data) {
         for (const row of data) {
           allMoods[row.mood] = row.payload;
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
         }
       });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[GET /api/stream/moods] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

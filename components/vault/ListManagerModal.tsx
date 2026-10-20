@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Plus, Check, Layers, Lock, Globe } from 'lucide-react';
-import Toast from '@/components/ui/Toast';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Check, Globe, Lock, Plus } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import Spinner from '@/components/ui/Spinner';
 
 interface ListSummary {
   id: string;
@@ -13,211 +14,205 @@ interface ListSummary {
 }
 
 interface ListManagerModalProps {
-  movieId?: string;
+  movieId?:    string;
   movieTitle?: string;
-  isOpen: boolean;
-  onClose: () => void;
+  onClose:     () => void;
+  /** Feedback goes to the parent's toast so it survives the modal closing. */
+  onNotify?:   (message: string, type: 'success' | 'error') => void;
 }
 
-export default function ListManagerModal({ movieId, movieTitle, isOpen, onClose }: ListManagerModalProps) {
-  const [lists, setLists] = useState<ListSummary[]>([]);
-  const [loading, setLoading] = useState(false);
+/** Add/remove a film from the user's stacks, or create a new stack. Mount only while open. */
+export default function ListManagerModal({ movieId, movieTitle, onClose, onNotify }: ListManagerModalProps) {
+  const [lists, setLists]       = useState<ListSummary[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
-  // New list form state
   const [newTitle, setNewTitle] = useState('');
-  const [newDesc, setNewDesc] = useState('');
+  const [newDesc, setNewDesc]   = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
   useEffect(() => {
-    if (!isOpen) return;
-    setLoading(true);
-    fetch('/api/lists')
-      .then(res => res.json())
-      .then(data => {
-        setLists(data.lists || []);
+    const ctrl = new AbortController();
+    fetch('/api/lists', { signal: ctrl.signal })
+      .then(res => {
+        if (!res.ok) throw new Error(`Failed to load stacks (${res.status})`);
+        return res.json();
       })
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, [isOpen]);
+      .then((data: { lists?: ListSummary[] }) => setLists(data.lists ?? []))
+      .catch(err => {
+        if ((err as Error).name !== 'AbortError') setLoadError(true);
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setLoading(false);
+      });
+    return () => ctrl.abort();
+  }, []);
 
-  if (!isOpen) return null;
-
-  async function handleCreateList(e: React.FormEvent) {
+  async function handleCreateList(e: FormEvent) {
     e.preventDefault();
     if (!newTitle.trim()) return;
-
     setSubmitting(true);
     try {
       const res = await fetch('/api/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: newTitle,
-          description: newDesc,
+          title: newTitle.trim(),
+          description: newDesc.trim(),
           is_public: isPublic,
           movieIds: movieId ? [movieId] : [],
         }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not create stack');
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create list');
-
-      setToast({ message: 'Stack created successfully!', type: 'success' });
-      const newList = {
+      const newList: ListSummary = {
         ...data.list,
-        items: movieId ? [{ id: 'temp-' + Date.now(), movie: { id: movieId } }] : [],
+        items: movieId ? [{ id: `temp-${data.list?.id ?? newTitle}`, movie: { id: movieId } }] : [],
       };
       setLists(prev => [newList, ...prev]);
       setNewTitle('');
       setNewDesc('');
       setCreating(false);
-    } catch (err: any) {
-      setToast({ message: err.message || 'Error creating stack', type: 'error' });
+      onNotify?.('Stack created', 'success');
+    } catch (err: unknown) {
+      onNotify?.(err instanceof Error ? err.message : 'Could not create stack', 'error');
     } finally {
       setSubmitting(false);
     }
   }
 
   async function toggleMovieInList(listId: string, isInList: boolean) {
-    if (!movieId) return;
-
+    if (!movieId || pendingId) return;
+    setPendingId(listId);
     try {
       const res = await fetch(`/api/lists/${listId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          isInList
-            ? { removeMovieId: movieId }
-            : { addMovieId: movieId }
-        ),
+        body: JSON.stringify(isInList ? { removeMovieId: movieId } : { addMovieId: movieId }),
       });
-
       if (!res.ok) throw new Error('Update failed');
-
       setLists(prev => prev.map(l => {
         if (l.id !== listId) return l;
-        const currentItems = l.items || [];
-        const nextItems = isInList
-          ? currentItems.filter(item => item.movie?.id !== movieId)
-          : [...currentItems, { id: Date.now().toString(), movie: { id: movieId } }];
-        return { ...l, items: nextItems };
+        const items = l.items ?? [];
+        return {
+          ...l,
+          items: isInList
+            ? items.filter(item => item.movie?.id !== movieId)
+            : [...items, { id: `temp-${movieId}`, movie: { id: movieId } }],
+        };
       }));
-
-      setToast({
-        message: isInList ? 'Removed from stack' : 'Added to stack!',
-        type: 'success',
-      });
-    } catch (err) {
-      console.error(err);
-      setToast({ message: 'Failed to update stack', type: 'error' });
+      onNotify?.(isInList ? 'Removed from stack' : 'Added to stack', 'success');
+    } catch {
+      onNotify?.('Could not update stack', 'error');
+    } finally {
+      setPendingId(null);
     }
   }
 
   return (
-    <div className="list-modal-backdrop" onClick={onClose}>
-      {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
-      
-      <div className="list-modal-container" onClick={e => e.stopPropagation()}>
-        <div className="list-modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Layers size={18} style={{ color: 'var(--red)' }} />
-            <h3 className="list-modal-title">
-              {movieId ? `Save "${movieTitle}" to Stack` : 'Custom Stacks'}
-            </h3>
-          </div>
-          <button className="list-modal-close" onClick={onClose} aria-label="Close modal">
-            <X size={16} />
-          </button>
-        </div>
+    <Modal
+      title={movieId ? 'Save to stack' : 'Your stacks'}
+      onClose={onClose}
+      size="sm"
+      className="list-modal"
+    >
+      {movieTitle && <p className="list-modal-sub">{movieTitle}</p>}
 
-        <div className="list-modal-body">
-          {creating ? (
-            <form onSubmit={handleCreateList} className="list-create-form">
+      {creating ? (
+        <form onSubmit={handleCreateList} className="list-create-form">
+          <label className="form-label" htmlFor="stack-title">Stack name</label>
+          <input
+            id="stack-title"
+            type="text"
+            className="form-input"
+            placeholder="e.g. 80s slasher classics"
+            value={newTitle}
+            onChange={e => setNewTitle(e.target.value)}
+            required
+            data-autofocus
+          />
+          <label className="form-label" htmlFor="stack-desc">
+            Description <span className="optional">(optional)</span>
+          </label>
+          <textarea
+            id="stack-desc"
+            className="form-input"
+            value={newDesc}
+            onChange={e => setNewDesc(e.target.value)}
+            rows={2}
+          />
+          <div className="list-form-footer">
+            <label className="list-toggle-label">
               <input
-                type="text"
-                className="list-input"
-                placeholder="Stack Title (e.g. 80s Slasher Classics)"
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
-                required
-                autoFocus
+                type="checkbox"
+                className="list-checkbox-input"
+                checked={isPublic}
+                onChange={e => setIsPublic(e.target.checked)}
               />
-              <textarea
-                className="list-textarea"
-                placeholder="Short description (optional)..."
-                value={newDesc}
-                onChange={e => setNewDesc(e.target.value)}
-                rows={2}
-              />
-              <div className="list-form-footer">
-                <label className="list-toggle-label">
-                  <input
-                    type="checkbox"
-                    className="list-checkbox-input"
-                    checked={isPublic}
-                    onChange={e => setIsPublic(e.target.checked)}
-                  />
-                  <span className="list-toggle-span">
-                    {isPublic ? <Globe size={14} /> : <Lock size={14} />}
-                    <span>{isPublic ? 'Public Stack' : 'Private Stack'}</span>
-                  </span>
-                </label>
-                <div className="list-actions-group">
-                  <button type="button" className="list-btn-secondary" onClick={() => setCreating(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="list-btn-primary" disabled={submitting}>
-                    {submitting ? 'Creating...' : 'Create Stack'}
-                  </button>
-                </div>
-              </div>
-            </form>
-          ) : (
-            <>
-              <button className="list-add-new-btn" onClick={() => setCreating(true)}>
-                <Plus size={16} /> Create New Stack
+              <span className="list-toggle-span">
+                {isPublic ? <Globe size={14} aria-hidden="true" /> : <Lock size={14} aria-hidden="true" />}
+                <span>{isPublic ? 'Public' : 'Private'}</span>
+              </span>
+            </label>
+            <div className="list-actions-group">
+              <button type="button" className="btn-secondary" onClick={() => setCreating(false)}>
+                Cancel
               </button>
+              <button type="submit" className="btn-primary list-create-submit" disabled={submitting}>
+                {submitting ? 'Creating…' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <>
+          <button type="button" className="list-add-new-btn" onClick={() => setCreating(true)}>
+            <Plus size={16} aria-hidden="true" /> New stack
+          </button>
 
-              {loading ? (
-                <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-dim)', fontSize: 13 }}>
-                  Loading your stacks...
-                </div>
-              ) : lists.length === 0 ? (
-                <p className="list-empty-text">No custom stacks created yet.</p>
-              ) : (
-                <div className="list-select-items">
-                  {lists.map(l => {
-                    const isInList = !!(movieId && l.items?.some(i => i.movie?.id === movieId));
-                    return (
-                      <div
-                        key={l.id}
-                        className={`list-item-row${isInList ? ' selected' : ''}`}
-                        onClick={() => movieId && toggleMovieInList(l.id, isInList)}
-                      >
-                        <div>
-                          <p className="list-item-name">{l.title}</p>
-                          <span className="list-item-sub">
-                            {l.items?.length || 0} movies {l.is_public ? '· Public' : '· Private'}
-                          </span>
-                        </div>
-                        {movieId && (
-                          <div className={`list-checkbox${isInList ? ' active' : ''}`}>
-                            {isInList && <Check size={14} color="white" />}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </>
+          {loading ? (
+            <div className="list-modal-status" role="status"><Spinner /> Loading stacks…</div>
+          ) : loadError ? (
+            <p className="list-empty-text" role="alert">Could not load your stacks. Close and try again.</p>
+          ) : lists.length === 0 ? (
+            <p className="list-empty-text">No stacks yet. Create one to start grouping films.</p>
+          ) : (
+            <ul className="list-select-items">
+              {lists.map(l => {
+                const isInList = !!(movieId && l.items?.some(i => i.movie?.id === movieId));
+                const count = l.items?.length ?? 0;
+                return (
+                  <li key={l.id}>
+                    <button
+                      type="button"
+                      className={`list-item-row${isInList ? ' selected' : ''}`}
+                      onClick={() => toggleMovieInList(l.id, isInList)}
+                      aria-pressed={movieId ? isInList : undefined}
+                      disabled={!movieId || pendingId === l.id}
+                    >
+                      <span>
+                        <span className="list-item-name">{l.title}</span>
+                        <span className="list-item-sub">
+                          {count} film{count === 1 ? '' : 's'} · {l.is_public ? 'Public' : 'Private'}
+                        </span>
+                      </span>
+                      {movieId && (
+                        <span className={`list-checkbox${isInList ? ' active' : ''}`} aria-hidden="true">
+                          {isInList && <Check size={14} />}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </Modal>
   );
 }

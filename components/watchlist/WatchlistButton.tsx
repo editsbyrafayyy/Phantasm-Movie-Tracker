@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { Bookmark, BookmarkCheck } from 'lucide-react';
+import { useAuth } from '@/components/layout/AuthProvider';
 
 interface WatchlistButtonProps {
   tmdbId:    number;
@@ -14,19 +15,77 @@ interface WatchlistButtonProps {
   className?: string;
 }
 
-// Simple in-memory cache for the current session so we don't refetch on every render
-const savedIds = new Set<string>();
-let cacheLoaded = false;
+// ── Shared session cache ──────────────────────────────────────────────────────
+// One GET /api/watchlist per signed-in user, shared by every button on the page.
 
-async function loadCache(): Promise<void> {
-  if (cacheLoaded) return;
-  try {
-    const res = await fetch('/api/watchlist');
-    if (!res.ok) return;
-    const items = await res.json() as { tmdb_id: number; media_type: string }[];
-    items.forEach(i => savedIds.add(`${i.tmdb_id}:${i.media_type}`));
-    cacheLoaded = true;
-  } catch { /* silently fail — user is logged out */ }
+interface CacheState {
+  userId:   string | null;
+  ids:      Set<string>;
+  loaded:   boolean;
+  inFlight: Promise<void> | null;
+  version:  number;
+}
+
+const cache: CacheState = { userId: null, ids: new Set(), loaded: false, inFlight: null, version: 0 };
+const listeners = new Set<() => void>();
+let inFlightToken: object | null = null;
+
+function emit() {
+  cache.version++;
+  listeners.forEach(l => l());
+}
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  return () => { listeners.delete(cb); };
+}
+const getVersion = () => cache.version;
+
+/**
+ * Drop the cached watchlist so the next button mount re-fetches it.
+ * Call after changing the watchlist outside this component (e.g. WatchlistRemoveButton).
+ */
+export function invalidateWatchlistCache(): void {
+  cache.ids = new Set();
+  cache.loaded = false;
+  cache.inFlight = null;
+  inFlightToken = null;
+  emit();
+}
+
+function ensureLoaded(userId: string): Promise<void> {
+  if (cache.userId !== userId) {
+    // Different account (or first load) — start fresh.
+    cache.userId = userId;
+    cache.ids = new Set();
+    cache.loaded = false;
+    cache.inFlight = null;
+    inFlightToken = null;
+  }
+  if (cache.loaded) return Promise.resolve();
+  if (cache.inFlight) return cache.inFlight;
+
+  const token = {};
+  inFlightToken = token;
+  const p = (async () => {
+    try {
+      const res = await fetch('/api/watchlist');
+      if (!res.ok) return;
+      const items = (await res.json()) as { tmdb_id: number; media_type: string }[];
+      if (cache.userId !== userId || inFlightToken !== token) return; // stale
+      cache.ids = new Set(items.map(i => `${i.tmdb_id}:${i.media_type}`));
+      cache.loaded = true;
+    } catch {
+      /* network error — leave unloaded so a later mount can retry */
+    } finally {
+      if (inFlightToken === token) {
+        inFlightToken = null;
+        cache.inFlight = null;
+      }
+      emit();
+    }
+  })();
+  cache.inFlight = p;
+  return p;
 }
 
 export default function WatchlistButton({
@@ -38,70 +97,63 @@ export default function WatchlistButton({
   showLabel = true,
   className = '',
 }: WatchlistButtonProps) {
-  const key          = `${tmdbId}:${mediaType}`;
-  const [saved,    setSaved]    = useState(savedIds.has(key));
-  const [loading,  setLoading]  = useState(false);
-  const [ready,    setReady]    = useState(cacheLoaded);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const key = `${tmdbId}:${mediaType}`;
+  const [busy, setBusy] = useState(false);
 
-  // Load cache once on mount
+  // Re-render whenever the shared cache changes.
+  useSyncExternalStore(subscribe, getVersion, getVersion);
+
   useEffect(() => {
-    if (cacheLoaded) {
-      setSaved(savedIds.has(key));
-      setReady(true);
-      return;
-    }
-    loadCache().then(() => {
-      setSaved(savedIds.has(key));
-      setReady(true);
-    });
-  }, [key]);
+    if (userId) void ensureLoaded(userId);
+  }, [userId]);
+
+  const ready = !!userId && cache.userId === userId && cache.loaded;
+  const saved = ready && cache.ids.has(key);
 
   const toggle = useCallback(async () => {
-    if (loading || !ready) return;
-    setLoading(true);
+    if (busy || !ready) return;
+    setBusy(true);
     const next = !saved;
-
     try {
-      if (next) {
-        const res = await fetch('/api/watchlist', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ tmdb_id: tmdbId, media_type: mediaType, title, poster_url: posterUrl, year }),
-        });
-        if (res.ok) {
-          savedIds.add(key);
-          setSaved(true);
-        } else if (res.status === 401) {
-          // Not logged in — silently ignore (button shouldn't be shown anyway)
-        }
-      } else {
-        const res = await fetch(`/api/watchlist?tmdb_id=${tmdbId}&media_type=${mediaType}`, {
-          method: 'DELETE',
-        });
-        if (res.ok) {
-          savedIds.delete(key);
-          setSaved(false);
-        }
+      const res = next
+        ? await fetch('/api/watchlist', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ tmdb_id: tmdbId, media_type: mediaType, title, poster_url: posterUrl, year }),
+          })
+        : await fetch(`/api/watchlist?tmdb_id=${tmdbId}&media_type=${mediaType}`, { method: 'DELETE' });
+      if (res.ok) {
+        if (next) cache.ids.add(key);
+        else cache.ids.delete(key);
+        emit();
       }
-    } catch { /* network error — silently fail */ }
-    finally { setLoading(false); }
-  }, [loading, ready, saved, tmdbId, mediaType, title, posterUrl, year, key]);
+    } catch {
+      /* network error — state unchanged */
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, ready, saved, tmdbId, mediaType, title, posterUrl, year, key]);
 
-  if (!ready) return null; // Don't flash un-saved state before cache loaded
+  // Guests have no watchlist; hide until the saved state is known to avoid a flash.
+  if (!ready) return null;
+
+  const label = saved ? 'Remove from Watch Later' : 'Save to Watch Later';
 
   return (
     <button
+      type="button"
       className={`watchlist-btn${saved ? ' saved' : ''}${showLabel ? ' has-label' : ''}${className ? ` ${className}` : ''}`}
-      onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(); }}
-      aria-label={saved ? 'Remove from watchlist' : 'Add to watchlist'}
-      title={saved ? 'Remove from Watch Later' : 'Save to Watch Later'}
-      disabled={loading}
+      onClick={e => { e.preventDefault(); e.stopPropagation(); void toggle(); }}
+      aria-label={label}
+      aria-pressed={saved}
+      title={label}
+      disabled={busy}
     >
-      {saved ? (
-        <BookmarkCheck size={showLabel ? 14 : 16} className="watchlist-icon" />
-      ) : (
-        <Bookmark size={showLabel ? 14 : 16} className="watchlist-icon" />
-      )}
+      {saved
+        ? <BookmarkCheck size={16} className="watchlist-icon" aria-hidden="true" />
+        : <Bookmark size={16} className="watchlist-icon" aria-hidden="true" />}
       {showLabel && <span>{saved ? 'Saved' : 'Watch Later'}</span>}
     </button>
   );

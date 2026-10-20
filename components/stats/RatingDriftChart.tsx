@@ -1,6 +1,3 @@
-'use client';
-
-import { useMemo } from 'react';
 import type { Entry } from '@/lib/types';
 
 interface Props {
@@ -55,7 +52,7 @@ function buildDriftData(entries: Entry[]) {
 const LINE_COLORS = ['#e63232', '#9b59f5', '#52b044', '#f5a623'];
 
 export default function RatingDriftChart({ entries }: Props) {
-  const { topSubgenres, months, series } = useMemo(() => buildDriftData(entries), [entries]);
+  const { topSubgenres, months, series } = buildDriftData(entries);
 
   if (months.length < 2 || topSubgenres.length < 2) return null;
 
@@ -99,27 +96,24 @@ export default function RatingDriftChart({ entries }: Props) {
   const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   return (
-    <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
-      <p className="stat-card-label">Rating Drift — Score Trends by Subgenre</p>
-      <p style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 16, marginTop: -8 }}>
-        How your average score per subgenre has changed month by month this year.
-      </p>
+    <div className="stat-card stat-card-wide">
+      <h3 className="stat-card-label">Rating drift</h3>
+      <p className="stat-card-desc">Your average score per subgenre, month by month over the last year.</p>
 
-      {/* Legend */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 18px', marginBottom: 16 }}>
+      <ul className="stat-legend">
         {topSubgenres.map((sg, i) => (
-          <div key={sg} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 20, height: 3, background: LINE_COLORS[i], borderRadius: 2 }} />
-            <span style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: 'var(--font-sans)' }}>{sg}</span>
-          </div>
+          <li key={sg} className="stat-legend-item">
+            <span className="stat-legend-swatch" style={{ background: LINE_COLORS[i] }} />
+            {sg}
+          </li>
         ))}
-      </div>
+      </ul>
 
-      {/* SVG Chart */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        style={{ width: '100%', height: 'auto', overflow: 'visible' }}
-        aria-label="Rating drift line chart"
+        className="stat-svg"
+        role="img"
+        aria-label="Line chart of average score by subgenre over the last 12 months"
       >
         {/* Grid lines */}
         {gridLines.map(g => (

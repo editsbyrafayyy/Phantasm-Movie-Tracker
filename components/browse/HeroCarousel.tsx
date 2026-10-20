@@ -1,19 +1,69 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, useSyncExternalStore } from 'react';
+import dynamic from 'next/dynamic';
 import Link  from 'next/link';
 import { Play } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 import { extractDominantColor } from '@/lib/posterColor';
-import CircularGallery from '@/components/ui/CircularGallery';
-import MorphSlider from '@/components/browse/MorphSlider';
 import type { MorphSliderRef } from '@/components/browse/MorphSlider';
+
+// WebGL heroes load only for the layout that is actually shown.
+const MorphSlider     = dynamic(() => import('@/components/browse/MorphSlider'), { ssr: false });
+const CircularGallery = dynamic(() => import('@/components/ui/CircularGallery'), { ssr: false });
 
 interface HeroCarouselProps {
   slides:      Entry[];
   canStream:   boolean;
   ownerName:   string;
   totalFilms:  number;
+}
+
+const MOBILE_QUERY = '(max-width: 640px)';
+
+function subscribeMobile(cb: () => void) {
+  const mq = window.matchMedia(MOBILE_QUERY);
+  mq.addEventListener('change', cb);
+  return () => mq.removeEventListener('change', cb);
+}
+const getMobile = () => window.matchMedia(MOBILE_QUERY).matches;
+/** Unknown on the server → render a lightweight placeholder until the client knows. */
+const getMobileServer = () => null;
+
+function HeroText({ entry, eyebrow, canStream }: { entry: Entry; eyebrow: string; canStream: boolean }) {
+  const movie = entry.movie;
+  const streamPath = `/stream/${movie.omdb_id || movie.tmdb_id || entry.id}`;
+  return (
+    <>
+      <p className="hero-eyebrow">{eyebrow}</p>
+      <h1 className="hero-title">{movie.title}</h1>
+      {entry.total !== null && entry.total > 0 && (
+        <div className="hero-score-row">
+          <span className="hero-score">{entry.total}</span>
+          <span className="hero-score-denom">/ 10</span>
+        </div>
+      )}
+      {movie.year && (
+        <p className="hero-meta">
+          {movie.year}
+          {movie.director && <> &middot; {movie.director}</>}
+          {movie.runtime_min && <> &middot; {movie.runtime_min} min</>}
+        </p>
+      )}
+      <div className="hero-actions">
+        <Link
+          href={canStream ? streamPath : `/login?next=${encodeURIComponent(streamPath)}`}
+          className="btn-watch"
+        >
+          <Play size={16} fill="currentColor" aria-hidden="true" />
+          Watch now
+        </Link>
+        <Link href={`/vault/${entry.id}`} className="btn-edit">
+          View details
+        </Link>
+      </div>
+    </>
+  );
 }
 
 export default function HeroCarousel({
@@ -24,50 +74,33 @@ export default function HeroCarousel({
 }: HeroCarouselProps) {
   // current drives both desktop (MorphSlider) and mobile (CircularGallery)
   const [current, setCurrent] = useState(0);
-
-  // Ref for imperative MorphSlider control
   const morphRef = useRef<MorphSliderRef | null>(null);
+  const isMobile = useSyncExternalStore(subscribeMobile, getMobile, getMobileServer);
 
-  // Mobile state & cache
-  const [isMobile, setIsMobile] = useState(false);
-  const [glowColors, setGlowColors] = useState<Record<number, string>>({});
-  const [glowColor, setGlowColor]  = useState<string>('var(--red)');
+  // Dominant poster colour per image URL, for the mobile ambient glow.
+  const [glowCache, setGlowCache] = useState<Record<string, string>>({});
+  const glowSrc = slides[current]?.movie.poster_url ?? slides[current]?.movie.backdrop_url ?? null;
+  const glowColor = (glowSrc && glowCache[glowSrc]) || 'var(--red)';
 
-  // Detect mobile breakpoint
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
-    setIsMobile(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  // Color extraction for mobile glow
-  useEffect(() => {
-    if (!isMobile) return;
-    const entry = slides[current];
-    const src = entry?.movie.poster_url ?? entry?.movie.backdrop_url ?? null;
-    if (!src) { setGlowColor('var(--red)'); return; }
-    if (glowColors[current]) { setGlowColor(glowColors[current]); return; }
-    extractDominantColor(src).then(color => {
-      const resolved = color ?? 'var(--red)';
-      setGlowColors(prev => ({ ...prev, [current]: resolved }));
-      setGlowColor(resolved);
+    if (!isMobile || !glowSrc || glowCache[glowSrc]) return;
+    let stale = false;
+    extractDominantColor(glowSrc).then(color => {
+      if (stale) return; // user already swiped to another slide
+      setGlowCache(prev => ({ ...prev, [glowSrc]: color ?? 'var(--red)' }));
     });
-  }, [current, isMobile, slides]);
+    return () => { stale = true; };
+  }, [isMobile, glowSrc, glowCache]);
 
-  // Dot handler — drive MorphSlider imperatively when a dot is clicked
   const goTo = useCallback((idx: number) => {
     morphRef.current?.goTo(idx);
   }, []);
 
-  // MorphSlider items — backdrop preferred, poster as fallback
   const morphItems = useMemo(() => slides.map(s => ({
     image: s.movie.backdrop_url ?? s.movie.poster_url ?? '',
     caption: s.movie.title,
   })), [slides]);
 
-  // Mobile circular gallery items
   const galleryItems = useMemo(() => slides.map(s => ({
     image: s.movie.poster_url ?? s.movie.backdrop_url ?? '',
     text: s.movie.title,
@@ -75,17 +108,42 @@ export default function HeroCarousel({
 
   if (!slides.length) return null;
 
-  const entry = slides[current];
-  const movie = entry.movie;
+  const entry = slides[Math.min(current, slides.length - 1)];
+  const eyebrow = `Top rated by ${ownerName} · ${totalFilms} films`;
+
+  const dots = slides.length > 1 && (
+    <div className="hero-dots" role="group" aria-label="Choose featured film">
+      {slides.map((s, i) => (
+        <button
+          key={s.id}
+          type="button"
+          className={`hero-dot${i === current ? ' active' : ''}`}
+          onClick={() => (isMobile ? setCurrent(i) : goTo(i))}
+          aria-label={`Show ${s.movie.title}`}
+          aria-current={i === current ? 'true' : undefined}
+        />
+      ))}
+    </div>
+  );
+
+  if (isMobile === null) {
+    return (
+      <div className="hero-carousel">
+        <div className="hero-placeholder">
+          <div className="hero-content">
+            <HeroText entry={entry} eyebrow={eyebrow} canStream={canStream} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="hero-carousel">
-
-      {/* ── DESKTOP: MorphSlider — bounded, inset, rounded ── */}
-      {!isMobile && (
+      {!isMobile ? (
         <div className="hero-morph-wrapper">
           <MorphSlider
-            ref={morphRef}
+            controlRef={morphRef}
             items={morphItems}
             transition="melt"
             intensity={0.5}
@@ -101,81 +159,23 @@ export default function HeroCarousel({
             onSlideChange={(i: number) => setCurrent(i)}
           />
 
-          {/* Gradient overlays on top of the morph canvas */}
-          <div className="hero-gradient-left"  />
+          <div className="hero-gradient-left" />
           <div className="hero-gradient-bottom" />
 
-          {/* Content overlay — driven by current (synced from MorphSlider via onSlideChange) */}
-          <div
-            className="hero-content"
-            key={current}
-            style={{ animation: 'heroFadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both' }}
-          >
-            <p className="hero-eyebrow">
-              {ownerName}&apos;s Phantasm &middot; {totalFilms} Films Rated
-            </p>
-
-            <h1 className="hero-title">{movie.title}</h1>
-
-            {entry.total !== null && entry.total > 0 && (
-              <div className="hero-score-row">
-                <span className="hero-score">{entry.total}</span>
-                <span className="hero-score-denom">/ 10</span>
-              </div>
-            )}
-
-            {movie.year && (
-              <p className="hero-meta">
-                {movie.year}
-                {movie.director && <> &middot; {movie.director}</>}
-                {movie.runtime_min && <> &middot; {movie.runtime_min} min</>}
-              </p>
-            )}
-
-            <div className="hero-actions">
-              {entry.id && (
-                <Link
-                  href={canStream ? `/stream/${movie.omdb_id || movie.tmdb_id || entry.id}` : `/login?next=${encodeURIComponent(`/stream/${movie.omdb_id || movie.tmdb_id || entry.id}`)}`}
-                  className="btn-watch"
-                >
-                  <Play size={14} fill="white" color="white" />
-                  Watch Now
-                </Link>
-              )}
-              <Link href={`/vault/${entry.id}`} className="btn-edit">
-                View Details
-              </Link>
-            </div>
+          <div className="hero-content hero-content-anim" key={current}>
+            <HeroText entry={entry} eyebrow={eyebrow} canStream={canStream} />
           </div>
 
-          {/* Dot indicators */}
-          {slides.length > 1 && (
-            <div className="hero-dots">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  className={`hero-dot${i === current ? ' active' : ''}`}
-                  onClick={() => goTo(i)}
-                  aria-label={`Go to slide ${i + 1}`}
-                />
-              ))}
-            </div>
-          )}
+          {dots}
         </div>
-      )}
-
-      {/* ── MOBILE: poster-led layout (unchanged) ── */}
-      {isMobile && (
+      ) : (
         <div className="hero-mobile-wrap">
-          {/* Ambient glow */}
           <div className="hero-mobile-glow" style={{ background: glowColor }} />
 
-          {/* Centered WebGL poster gallery */}
           <div className="hero-mobile-gallery-container">
             <CircularGallery
               items={galleryItems}
               bend={2}
-              textColor="rgba(255,255,255,0.7)"
               borderRadius={0.05}
               scrollEase={0.03}
               currentIndex={current}
@@ -183,53 +183,11 @@ export default function HeroCarousel({
             />
           </div>
 
-          {/* Text block */}
           <div className="hero-mobile-content">
-            <p className="hero-eyebrow">
-              {ownerName}&apos;s Phantasm &middot; {totalFilms} Films Rated
-            </p>
-            <h1 className="hero-title">{movie.title}</h1>
-            {entry.total !== null && entry.total > 0 && (
-              <div className="hero-score-row">
-                <span className="hero-score">{entry.total}</span>
-                <span className="hero-score-denom">/ 10</span>
-              </div>
-            )}
-            {movie.year && (
-              <p className="hero-meta">
-                {movie.year}
-                {movie.director && <> &middot; {movie.director}</>}
-                {movie.runtime_min && <> &middot; {movie.runtime_min} min</>}
-              </p>
-            )}
-            <div className="hero-actions">
-              {entry.id && (
-                <Link
-                  href={canStream ? `/stream/${movie.omdb_id || movie.tmdb_id || entry.id}` : `/login?next=${encodeURIComponent(`/stream/${movie.omdb_id || movie.tmdb_id || entry.id}`)}`}
-                  className="btn-watch"
-                >
-                  <Play size={14} fill="white" color="white" /> Watch Now
-                </Link>
-              )}
-              <Link href={`/vault/${entry.id}`} className="btn-edit">
-                View Details
-              </Link>
-            </div>
+            <HeroText entry={entry} eyebrow={eyebrow} canStream={canStream} />
           </div>
 
-          {/* Dot indicators */}
-          {slides.length > 1 && (
-            <div className="hero-dots">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  className={`hero-dot${i === current ? ' active' : ''}`}
-                  onClick={() => setCurrent(i)}
-                  aria-label={`Go to slide ${i + 1}`}
-                />
-              ))}
-            </div>
-          )}
+          {dots}
         </div>
       )}
     </div>

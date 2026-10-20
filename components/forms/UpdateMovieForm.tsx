@@ -1,333 +1,246 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import OmdbSearchInput from '@/components/forms/OmdbSearchInput';
-import ScoreField     from '@/components/ScoreField';
-import RecommendPills from '@/components/RecommendPills';
-import BonusToggle    from '@/components/BonusToggle';
 import Toast, { type ToastType } from '@/components/ui/Toast';
 import Spinner        from '@/components/ui/Spinner';
 import ScoreReveal    from '@/components/ui/ScoreReveal';
-import { SUBGENRES, SECONDARY_TAGS, SCORE_FIELDS, computeTotal } from '@/lib/config';
-import type { Entry, MovieFormData, OmdbSearchHit } from '@/lib/types';
+import RatingFormFields, {
+  FormSubmitBar, validateRatingForm, type RatingForm, type RatingErrors,
+} from '@/components/forms/RatingFormFields';
+import { SCORE_FIELDS, computeTotal } from '@/lib/config';
+import type { Entry, OmdbSearchHit } from '@/lib/types';
 
-type UpdateForm = MovieFormData & { notes: string };
+type ScoreSnapshot = Pick<RatingForm, typeof SCORE_FIELDS[number]['key'] | 'bonus'>;
+type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
+
+const draftKey = (id: string) => `vault_draft_note_${id}`;
+
+function readDraft(id: string): string | null {
+  try { return localStorage.getItem(draftKey(id)); } catch { return null; }
+}
+function writeDraft(id: string, value: string) {
+  try {
+    if (value) localStorage.setItem(draftKey(id), value);
+    else localStorage.removeItem(draftKey(id));
+  } catch { /* storage unavailable */ }
+}
 
 export default function UpdateMovieForm() {
-  const router       = useRouter();
   const searchParams = useSearchParams();
-  const entryId      = searchParams.get('id') ?? '';
+  const entryId = searchParams.get('id') ?? '';
 
-  const [entry,   setEntry]   = useState<Entry | null>(null);
-  const [form,    setForm]    = useState<UpdateForm | null>(null);
-  const [fetching, setFetching] = useState(!!entryId);
-  const [loading,  setLoading]  = useState(false);
-  const [showReveal, setShowReveal] = useState(false);
-  const [toast,    setToast]    = useState<{ message: string; type: ToastType } | null>(null);
-  const [errors,   setErrors]   = useState<Partial<Record<keyof UpdateForm, string>>>({});
-  const vaultCacheRef = useRef<Entry[] | null>(null);
-
-  // Cache vault data once on mount
-  useEffect(() => {
-    fetch('/api/owner-vault')
-      .then(r => r.json())
-      .then((data: Entry[]) => {
-        if (Array.isArray(data)) vaultCacheRef.current = data;
-      })
-      .catch(() => {});
-  }, []);
-
-  // Compute subgenre average from cached data
-  const subgenreAvg = useMemo(() => {
-    if (!form?.subgenre || !vaultCacheRef.current) return null;
-    const matches = vaultCacheRef.current.filter(
-      e => e.subgenre === form.subgenre && e.total !== null && e.total > 0
+  if (!entryId) {
+    return (
+      <div className="empty-state">
+        <p className="empty-state-title">No film selected</p>
+        <p className="empty-state-body">Open a film in your vault and choose Edit to change its rating.</p>
+        <Link href="/vault" className="btn-primary">Go to vault</Link>
+      </div>
     );
-    if (!matches.length) return null;
-    const sum = matches.reduce((acc, curr) => acc + (curr.total ?? 0), 0);
-    return Math.round((sum / matches.length) * 10) / 10;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form?.subgenre]);
+  }
 
-  const [prevEntryScore, setPrevEntryScore] = useState<number | null>(null);
-  const [prevScores, setPrevScores] = useState<Partial<UpdateForm> | null>(null);
+  return <UpdateMovieFormInner key={entryId} entryId={entryId} />;
+}
 
+function UpdateMovieFormInner({ entryId }: { entryId: string }) {
+  const router = useRouter();
+
+  const [status,     setStatus]     = useState<LoadState>('loading');
+  const [form,       setForm]       = useState<RatingForm | null>(null);
+  const [matchedTitle, setMatchedTitle] = useState('');
+  const [prevTotal,  setPrevTotal]  = useState<number | null>(null);
+  const [prevScores, setPrevScores] = useState<ScoreSnapshot | null>(null);
+  const [myEntries,  setMyEntries]  = useState<Pick<Entry, 'id' | 'subgenre' | 'total'>[]>([]);
+  const [loading,    setLoading]    = useState(false);
+  const [showReveal, setShowReveal] = useState(false);
+  const [toast,      setToast]      = useState<{ message: string; type: ToastType } | null>(null);
+  const [errors,     setErrors]     = useState<RatingErrors>({});
+
+  // Load the entry being edited
   useEffect(() => {
-    if (!entryId) return;
-    fetch(`/api/movies/${entryId}`)
-      .then(r => r.json())
-      .then((data: Entry) => {
-        setEntry(data);
-        setPrevEntryScore(data.total ?? null);
-        setPrevScores({
+    const controller = new AbortController();
+    fetch(`/api/movies/${entryId}`, { signal: controller.signal })
+      .then(async r => {
+        if (r.status === 404) { setStatus('not-found'); return; }
+        if (!r.ok) { setStatus('error'); return; }
+        const data: Entry = await r.json();
+        const scores: ScoreSnapshot = {
           atmosphere: data.atmosphere ?? '',
-          story:        data.story        ?? '',
-          characters:   data.characters   ?? '',
-          pacing:       data.pacing       ?? '',
-          visuals:      data.visuals      ?? '',
-          thrill:       data.thrill       ?? '',
-          sound:        data.sound        ?? '',
-          impact:       data.impact       ?? '',
-          bonus:        data.bonus        ?? 0,
-        });
-        const draftKey = `vault_draft_note_${entryId}`;
-        const savedDraft = typeof window !== 'undefined' ? localStorage.getItem(draftKey) : null;
+          story:      data.story      ?? '',
+          characters: data.characters ?? '',
+          pacing:     data.pacing     ?? '',
+          visuals:    data.visuals    ?? '',
+          thrill:     data.thrill     ?? '',
+          sound:      data.sound      ?? '',
+          impact:     data.impact     ?? '',
+          bonus:      data.bonus      ?? 0,
+        };
+        const title = data.movie?.title ?? '';
+        setPrevTotal(data.total ?? null);
+        setPrevScores(scores);
+        setMatchedTitle(title);
         setForm({
-          title:        data.movie?.title ?? '',
+          ...scores,
+          title,
           omdbId:       data.movie?.omdb_id ?? '',
-          subgenre:     data.subgenre     ?? '',
+          subgenre:     data.subgenre      ?? '',
           secondaryTag: data.secondary_tag ?? '',
-          recommend:    data.recommend    ?? '',
-          atmosphere:   data.atmosphere   ?? '',
-          story:        data.story        ?? '',
-          characters:   data.characters   ?? '',
-          pacing:       data.pacing       ?? '',
-          visuals:      data.visuals      ?? '',
-          thrill:       data.thrill       ?? '',
-          sound:        data.sound        ?? '',
-          impact:       data.impact       ?? '',
-          bonus:        data.bonus        ?? 0,
-          notes:        savedDraft ?? data.notes ?? '',
+          recommend:    data.recommend     ?? '',
+          notes:        readDraft(entryId) ?? data.notes ?? '',
         });
+        setStatus('ready');
       })
-      .catch(() => setToast({ message: 'Could not load entry.', type: 'error' }))
-      .finally(() => setFetching(false));
+      .catch(err => {
+        if ((err as Error)?.name !== 'AbortError') setStatus('error');
+      });
+    return () => controller.abort();
   }, [entryId]);
 
-  function set<K extends keyof UpdateForm>(key: K, value: UpdateForm[K]) {
-    setForm(prev => prev ? { ...prev, [key]: value } : prev);
-    if (key === 'notes' && entryId) {
-      if (value) {
-        localStorage.setItem(`vault_draft_note_${entryId}`, String(value));
-      } else {
-        localStorage.removeItem(`vault_draft_note_${entryId}`);
-      }
-    }
+  // The current user's own entries — for the "your average" hint
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/movies', { signal: controller.signal })
+      .then(r => (r.ok ? r.json() : []))
+      .then((data: unknown) => {
+        if (Array.isArray(data)) setMyEntries(data as Entry[]);
+      })
+      .catch(() => { /* hint is optional */ });
+    return () => controller.abort();
+  }, []);
+
+  const subgenre = form?.subgenre ?? '';
+  const subgenreAvg = useMemo(() => {
+    if (!subgenre) return null;
+    const matches = myEntries.filter(
+      e => e.id !== entryId && e.subgenre === subgenre && e.total !== null && e.total > 0,
+    );
+    if (!matches.length) return null;
+    const sum = matches.reduce((acc, e) => acc + (e.total ?? 0), 0);
+    return { avg: Math.round((sum / matches.length) * 10) / 10, count: matches.length };
+  }, [myEntries, subgenre, entryId]);
+
+  function setField<K extends keyof RatingForm>(key: K, value: RatingForm[K]) {
+    setForm(prev => (prev ? { ...prev, [key]: value } : prev));
+    if (key === 'notes') writeDraft(entryId, String(value));
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: undefined }));
   }
 
-  function handleOmdbSelect(hit: OmdbSearchHit) {
-    set('omdbId', hit.imdbID);
-    set('title', hit.title);
+  function handleTitleChange(title: string) {
+    setForm(prev => prev ? {
+      ...prev,
+      title,
+      omdbId: prev.omdbId && title.trim() !== matchedTitle.trim() ? '' : prev.omdbId,
+    } : prev);
+    if (errors.title) setErrors(prev => ({ ...prev, title: undefined }));
   }
 
-  function validate() {
-    const newErrors: Partial<Record<keyof UpdateForm, string>> = {};
-    if (!form?.title?.trim()) newErrors.title = 'Title is required';
-    if (!form?.subgenre)      newErrors.subgenre = 'Please select a subgenre';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  function handleOmdbSelect(hit: OmdbSearchHit) {
+    setMatchedTitle(hit.title);
+    setForm(prev => (prev ? { ...prev, title: hit.title, omdbId: hit.imdbID } : prev));
+    if (errors.title) setErrors(prev => ({ ...prev, title: undefined }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form || !entryId) return;
-    if (!validate()) {
-      setToast({ message: 'Please fix the errors below.', type: 'error' });
+    if (!form) return;
+    const newErrors = validateRatingForm(form);
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      document.getElementById(newErrors.title ? 'title' : 'subgenre')?.focus();
       return;
     }
-    setLoading(true);
-    setToast({ message: 'Saving…', type: 'loading' });
 
+    setLoading(true);
     try {
-      const res  = await fetch(`/api/movies/${entryId}`, {
+      const res = await fetch(`/api/movies/${entryId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(form),
       });
-      const data = await res.json();
-
       if (!res.ok) {
-        setToast({ message: data.error ?? 'Update failed.', type: 'error' });
+        let message = 'Update failed.';
+        try {
+          const data = await res.json();
+          if (data.error) message = data.error;
+        } catch { /* keep default */ }
+        setToast({ message, type: 'error' });
         setLoading(false);
         return;
       }
 
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(`vault_draft_note_${entryId}`);
-      }
-      setToast({ message: 'Rating updated!', type: 'success' });
-      setShowReveal(true);
+      writeDraft(entryId, '');
+      if (computeTotal(form) > 0) setShowReveal(true);
+      else router.push(`/vault/${entryId}`);
     } catch {
       setToast({ message: 'Network error. Try again.', type: 'error' });
       setLoading(false);
     }
   }
 
-  if (!entryId) {
-    return <p className="form-error-state">No entry selected. Go back and choose a film to edit.</p>;
+  if (status === 'loading') {
+    return <div className="form-loading" role="status"><Spinner size={24} /> Loading entry…</div>;
   }
 
-  if (fetching) {
-    return <div className="form-loading"><Spinner size={24} /> Loading…</div>;
-  }
-
-  if (!entry || !form) {
-    return <p className="form-error-state">Entry not found.</p>;
+  if (status !== 'ready' || !form) {
+    const notFound = status === 'not-found';
+    return (
+      <div className="empty-state">
+        <p className="empty-state-title">{notFound ? 'Entry not found' : 'Could not load entry'}</p>
+        <p className="empty-state-body">
+          {notFound
+            ? 'This rating does not exist or belongs to someone else.'
+            : 'Something went wrong loading this rating. Try again in a moment.'}
+        </p>
+        <Link href="/vault" className="btn-primary">Back to vault</Link>
+      </div>
+    );
   }
 
   const total = computeTotal(form);
+  const canRestore = prevScores !== null && prevTotal !== null && total !== prevTotal;
 
   return (
     <form onSubmit={handleSubmit} className="movie-form" noValidate>
-      {/* Title + OMDB autocomplete */}
-      <div className="form-section">
-        <p className="section-label">Film Title</p>
-        <OmdbSearchInput
-          value={form.title}
-          onTitleChange={v => { set('title', v); if (!v) set('omdbId', ''); }}
-          onSelect={handleOmdbSelect}
-          disabled={loading}
-        />
-        {errors.title && <p className="field-error">{errors.title}</p>}
-        {form.omdbId && (
-          <p className="omdb-selected-note">
-            OMDB matched — metadata will be saved automatically.{' '}
-            <button type="button" className="link-btn" onClick={() => { set('omdbId', ''); }}>
-              Clear match
-            </button>
-          </p>
-        )}
-      </div>
-
-      {/* Subgenre */}
-      <div className="form-section">
-        <p className="section-label">Subgenre</p>
-        <select
-          className="form-input"
-          value={form.subgenre}
-          onChange={e => set('subgenre', e.target.value)}
-          disabled={loading}
-        >
-          <option value="">Select a subgenre…</option>
-          {SUBGENRES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        {subgenreAvg !== null && (
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-            💡 Your avg for <strong style={{ color: 'var(--text)' }}>{form.subgenre.replace(' Horror', '').replace(' (Non-Horror)', '')}</strong>: <strong style={{ color: 'var(--accent)' }}>{subgenreAvg}/10</strong>
-          </p>
-        )}
-        {errors.subgenre && <p className="field-error">{errors.subgenre}</p>}
-      </div>
-
-      {/* Secondary tag */}
-      <div className="form-section">
-        <p className="section-label">Secondary Tag <span className="optional">(optional)</span></p>
-        <select
-          className="form-input"
-          value={form.secondaryTag}
-          onChange={e => set('secondaryTag', e.target.value)}
-          disabled={loading}
-        >
-          <option value="">None</option>
-          {SECONDARY_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
-      </div>
-
-      {/* Recommend */}
-      <div className="form-section">
-        <p className="section-label">Recommend?</p>
-        <RecommendPills
-          value={form.recommend}
-          onChange={v => set('recommend', v)}
-          disabled={loading}
-        />
-      </div>
-
-      {/* Scores */}
-      <div className="form-section">
-        <p className="section-label">Scores</p>
-        <div className="score-grid">
-          {SCORE_FIELDS.map(f => (
-            <ScoreField
-              key={f.key}
-              id={f.key}
-              label={f.label}
-              max={f.max}
-              value={form[f.key as keyof UpdateForm] as number | ''}
-              onChange={v => set(f.key as keyof UpdateForm, v as UpdateForm[keyof UpdateForm])}
-              disabled={loading}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Bonus */}
-      <BonusToggle
-        value={form.bonus}
-        onChange={v => set('bonus', v)}
+      <RatingFormFields
+        form={form}
+        errors={errors}
         disabled={loading}
+        onField={setField}
+        onTitleChange={handleTitleChange}
+        onOmdbSelect={handleOmdbSelect}
+        onClearMatch={() => { setMatchedTitle(''); setField('omdbId', ''); }}
+        subgenreExtra={subgenreAvg && (
+          <p className="field-hint">
+            Your average for this subgenre: <strong>{subgenreAvg.avg}/10</strong> across {subgenreAvg.count} film{subgenreAvg.count === 1 ? '' : 's'}
+          </p>
+        )}
       />
 
-      {/* Personal Notes */}
-      <div className="form-section">
-        <p className="section-label">
-          Personal Notes <span className="optional">(optional)</span>
-        </p>
-        <div style={{ position: 'relative' }}>
-          <textarea
-            className="form-input notes-textarea"
-            value={form.notes ?? ''}
-            onChange={e => setForm(prev => prev ? { ...prev, notes: e.target.value.slice(0, 500) } : prev)}
-            placeholder="Your thoughts, what stood out, a quote, anything…"
-            rows={3}
-            disabled={loading}
-            maxLength={500}
-            aria-label="Personal notes"
-          />
-          <span className="notes-char-count">
-            {(form.notes ?? '').length}/500
-          </span>
-        </div>
-      </div>
-
-      {/* Running total */}
-      <div className="total-bar">
-        <span className="total-bar-label">RUNNING TOTAL</span>
-        <span className={`total-bar-value${total > 0 ? ' active' : ''}`}>
-          {total > 0 ? total : '—'}
-        </span>
-      </div>
-
-      {prevEntryScore !== null && prevScores && total !== prevEntryScore && (
-        <div style={{ textAlign: 'right', marginTop: -8, marginBottom: 16 }}>
+      <FormSubmitBar total={total} loading={loading} label="Save changes">
+        {canRestore && (
           <button
             type="button"
-            className="link-btn"
-            onClick={() => {
-              setForm(prev => prev ? { ...prev, ...prevScores } : prev);
-            }}
-            style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'underline', cursor: 'pointer' }}
+            className="link-btn form-restore-btn"
+            onClick={() => setForm(prev => (prev ? { ...prev, ...prevScores } : prev))}
+            disabled={loading}
           >
-            ↺ Restore previous rating ({prevEntryScore}/10)
+            Restore previous scores ({prevTotal}/10)
           </button>
-        </div>
-      )}
-
-      <button
-        type="submit"
-        className="btn-primary"
-        disabled={loading}
-      >
-        {loading ? 'Saving…' : 'Save Changes'}
-      </button>
+        )}
+      </FormSubmitBar>
 
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
 
-      {/* Score Reveal */}
       {showReveal && (
         <ScoreReveal
           total={total}
           title={form.title}
           recommend={form.recommend}
-          isUpdate={true}
+          isUpdate
           onDone={() => router.push(`/vault/${entryId}`)}
         />
       )}

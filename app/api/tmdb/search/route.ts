@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { isUnrestrictedUser } from '@/lib/guards';
 
@@ -11,8 +11,8 @@ export async function GET(req: NextRequest) {
   }
 
   // Enforce IP rate limiting (60 requests per minute per IP)
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 60, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 60, 60_000, 'GET /api/tmdb/search')) {
     return NextResponse.json(
       { error: 'Too many requests. Please slow down.' },
       {
@@ -107,9 +107,14 @@ export async function GET(req: NextRequest) {
       });
     }
     
+    // Output varies by user (genre restriction), so only guest responses may be
+    // shared-cached; signed-in users get a private (browser-only) cache.
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': user
+          ? 'private, max-age=300'
+          : 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Vary': 'Cookie',
       },
     });
   } catch (err: unknown) {

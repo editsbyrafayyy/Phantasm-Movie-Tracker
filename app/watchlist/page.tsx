@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { Bookmark } from 'lucide-react';
-import WatchlistClient from '@/components/watchlist/WatchlistClient';
+import WatchlistClient, { type WatchlistRow } from '@/components/watchlist/WatchlistClient';
 
 export const metadata: Metadata = {
   title: 'Watch Later — Phantasm',
@@ -16,33 +15,19 @@ export default async function WatchlistPage() {
 
   const { data, error } = await supabase
     .from('watchlist')
-    .select('*')
+    .select('id, tmdb_id, media_type, title, poster_url, year, added_at')
     .eq('user_id', user.id)
     .order('added_at', { ascending: false });
 
-  const items = error ? [] : (data ?? []);
+  if (error) {
+    console.error('Watchlist page fetch error:', error);
+  }
+
+  const items = (error ? [] : (data ?? [])) as WatchlistRow[];
 
   return (
-    <div className="watchlist-page">
-      {/* Header */}
-      <header className="watchlist-header">
-        <div className="watchlist-header-inner">
-          <div className="watchlist-header-left">
-            <span className="watchlist-eyebrow">Your Queue</span>
-            <h1 className="watchlist-title">Watch Later</h1>
-            <p className="watchlist-sub">
-              {items.length > 0
-                ? `${items.length} film${items.length === 1 ? '' : 's'} saved to your queue`
-                : 'Your watchlist is empty'}
-            </p>
-          </div>
-          <span className="watchlist-header-icon" aria-hidden="true">
-            <Bookmark size={32} strokeWidth={1.5} />
-          </span>
-        </div>
-      </header>
-
-      <WatchlistClient items={items} />
+    <div className="page-container watchlist-page">
+      <WatchlistClient items={items} loadError={!!error} />
     </div>
   );
 }

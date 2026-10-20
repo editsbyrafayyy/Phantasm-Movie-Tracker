@@ -3,33 +3,34 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Film, Clapperboard, CheckCircle2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMovieFranchise, FRANCHISE_TOTALS } from '@/lib/config';
-import type { Entry } from '@/lib/types';
+import type { RelatedEntry } from '@/lib/types';
 
 interface FranchiseTrackProps {
-  currentEntry: Entry;
-  allEntries: Entry[];
-  diaryMap?: Record<string, number>;
+  currentId:    string;
+  currentTitle: string;
+  /** Candidate entries (usually pre-filtered to this franchise on the server). */
+  entries:      RelatedEntry[];
+  diaryMap?:    Record<string, number>;
 }
 
-export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: FranchiseTrackProps) {
-  const currentTitle = currentEntry.movie?.title ?? '';
+export default function FranchiseTrack({ currentId, currentTitle, entries, diaryMap }: FranchiseTrackProps) {
   const franchiseName = useMemo(() => getMovieFranchise(currentTitle), [currentTitle]);
 
   const series = useMemo(() => {
     if (!franchiseName) return [];
-    return allEntries
+    return entries
       .filter(e => {
         const title = e.movie?.title ?? '';
         return getMovieFranchise(title) === franchiseName;
       })
       .sort((a, b) => (a.movie?.year ?? 0) - (b.movie?.year ?? 0));
-  }, [franchiseName, allEntries]);
+  }, [franchiseName, entries]);
 
   const totalFilms = useMemo(() => {
     if (!franchiseName) return 0;
-    return FRANCHISE_TOTALS[franchiseName] ?? series.length;
+    return Math.max(FRANCHISE_TOTALS[franchiseName] ?? 0, series.length);
   }, [franchiseName, series.length]);
 
   // Carousel & Scroll state
@@ -49,14 +50,13 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
     setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
   }, []);
 
+  // ResizeObserver fires once on observe and on every size change — no sync setState in the effect.
   useEffect(() => {
-    updateScrollState();
     const el = scrollRef.current;
     if (!el) return;
-
-    const handleResize = () => updateScrollState();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const ro = new ResizeObserver(() => updateScrollState());
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [series, updateScrollState]);
 
   // Scroll to active movie on initial mount
@@ -119,18 +119,10 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
       {/* Header */}
       <div className="franchise-track-header">
         <div className="franchise-title-group">
-          <div className="franchise-kicker">
-            <Clapperboard size={12} className="franchise-icon" />
-            <span>FRANCHISE CHRONOLOGY</span>
-          </div>
+          <p className="franchise-kicker">Franchise</p>
           <div className="franchise-main-title">
-            <h3 className="franchise-track-title">{franchiseName}</h3>
-            {isComplete && (
-              <span className="franchise-complete-badge">
-                <CheckCircle2 size={11} className="franchise-complete-icon" />
-                <span>COMPLETE SAGA</span>
-              </span>
-            )}
+            <h2 className="franchise-track-title">{franchiseName}</h2>
+            {isComplete && <span className="franchise-complete-badge">Complete</span>}
           </div>
         </div>
 
@@ -138,7 +130,7 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
         <div className="franchise-header-controls">
           <div className="franchise-progress-container">
             <div className="franchise-progress-labels">
-              <span className="franchise-progress-count">{series.length} / {totalFilms} Watched</span>
+              <span className="franchise-progress-count">{series.length} of {totalFilms} rated</span>
               <span className="franchise-progress-pct">{pct}%</span>
             </div>
             <div className="franchise-progress-bar-bg">
@@ -184,7 +176,7 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
           onMouseLeave={handleMouseUpOrLeave}
         >
           {series.map(entry => {
-            const isCurrent = entry.id === currentEntry.id;
+            const isCurrent = entry.id === currentId;
             const poster = entry.movie?.poster_url;
             const title = entry.movie?.title ?? 'Unknown';
             const year = entry.movie?.year;
@@ -193,6 +185,7 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
               <Link
                 key={entry.id}
                 href={`/vault/${entry.id}`}
+                aria-current={isCurrent ? 'page' : undefined}
                 className={`franchise-track-card${isCurrent ? ' active' : ''}`}
                 onClick={(e) => {
                   if (hasDragged.current) {
@@ -206,15 +199,15 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
                   {poster ? (
                     <Image
                       src={poster}
-                      alt={title}
+                      alt=""
                       fill
                       sizes="110px"
-                      style={{ objectFit: 'cover' }}
+                      className="detail-cover-img"
                       draggable={false}
                     />
                   ) : (
                     <div className="franchise-poster-fallback">
-                      <Film size={22} />
+                      <Film size={32} aria-hidden="true" />
                     </div>
                   )}
 
@@ -225,14 +218,14 @@ export default function FranchiseTrack({ currentEntry, allEntries, diaryMap }: F
 
                   {entry.movie?.id && diaryMap && (diaryMap[entry.movie.id] ?? 0) > 1 && (
                     <span className="franchise-rewatch-badge" title={`${diaryMap[entry.movie.id]} viewings`}>
-                      <RotateCcw size={9} /> {diaryMap[entry.movie.id]}×
+                      {diaryMap[entry.movie.id]}×
                     </span>
                   )}
 
                   {/* Active Entry Status */}
                   {isCurrent && (
                     <div className="franchise-current-badge">
-                      <span>NOW VIEWING</span>
+                      <span>Viewing</span>
                     </div>
                   )}
                 </div>

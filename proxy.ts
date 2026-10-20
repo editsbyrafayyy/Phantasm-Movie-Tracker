@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function proxy(req: NextRequest) {
@@ -17,7 +17,7 @@ export async function proxy(req: NextRequest) {
           return req.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => req.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
           res = NextResponse.next({
             request: {
               headers: req.headers,
@@ -56,14 +56,15 @@ export async function proxy(req: NextRequest) {
   // Members only routes: /add, /update, /profile, /stream, /stats, /diary, /watchlist, /api/add-movie, /api/stats
   const membersOnly = ['/add', '/update', '/profile', '/stream', '/stats', '/diary', '/watchlist', '/api/add-movie', '/api/stats'];
   if (membersOnly.some(p => pathname.startsWith(p)) && !user) {
+    // API callers get a JSON 401 instead of an HTML redirect
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const loginUrl = new URL(`/login?next=${encodeURIComponent(pathname)}`, req.url);
     return NextResponse.redirect(loginUrl);
   }
 
-  // ── Security Headers ──────────────────────────────────────────────────────
-  res.headers.set('X-Content-Type-Options', 'nosniff');
-  res.headers.set('X-Frame-Options', 'SAMEORIGIN');
-  res.headers.set('X-XSS-Protection', '1; mode=block');
+  // Security headers are set globally in next.config.ts (headers()).
 
   return res;
 }

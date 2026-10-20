@@ -63,10 +63,14 @@ export async function GET(req: NextRequest) {
     'Logged At',
   ];
 
-  function escapeCsv(val: any): string {
+  function escapeCsv(val: unknown): string {
     if (val === null || val === undefined) return '""';
-    const str = String(val).replace(/"/g, '""');
-    return `"${str}"`;
+    let str = String(val);
+    // Neutralise spreadsheet formula injection (CSV injection) for text cells
+    if (typeof val === 'string' && /^[=+\-@\t\r]/.test(str)) {
+      str = `'${str}`;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
   }
 
   const csvRows = [headers.join(',')];

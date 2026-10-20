@@ -143,7 +143,7 @@ export async function findTmdbByImdbId(
       api_key:         key,
       external_source: 'imdb_id',
     });
-    const res = await fetch(`${TMDB_BASE}/find/${imdbId}?${params}`, { next: { revalidate: 86400 } });
+    const res = await fetch(`${TMDB_BASE}/find/${encodeURIComponent(imdbId)}?${params}`, { next: { revalidate: 86400 } });
     const data = await res.json();
 
     if (data.movie_results?.[0]) {

@@ -10,15 +10,15 @@ interface TopRatedListProps {
 export default function TopRatedList({ data }: TopRatedListProps) {
   if (!data.length) {
     return (
-      <div className="chart-card chart-empty">
-        <p>Add some films to see your top rated.</p>
+      <div className="stat-card stat-card-empty">
+        <p>Rate some films to see your top rated.</p>
       </div>
     );
   }
 
   return (
-    <div className="chart-card">
-      <p className="section-label">Top Rated Films</p>
+    <div className="stat-card">
+      <h3 className="stat-card-label">Top rated</h3>
       <ol className="top-rated-list">
         {data.map((item, i) => (
           <li key={item.id} className={`top-rated-item${i % 2 === 1 ? ' alt' : ''}`}>
@@ -39,7 +39,7 @@ export default function TopRatedList({ data }: TopRatedListProps) {
                 />
               ) : (
                 <div className="top-rated-poster-fallback">
-                  <Film size={16} strokeWidth={1} />
+                  <Film size={16} />
                 </div>
               )}
             </div>

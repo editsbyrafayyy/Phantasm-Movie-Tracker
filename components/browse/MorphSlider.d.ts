@@ -1,4 +1,5 @@
-import { ForwardRefExoticComponent, RefAttributes } from 'react';
+import type React from 'react';
+import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 
 export interface MorphSliderItem {
   image: string;
@@ -30,6 +31,8 @@ export interface MorphSliderProps {
   showControls?: boolean;
   showIndicators?: boolean;
   onSlideChange?: (index: number) => void;
+  /** Same handle as `ref`; use this when the slider is loaded via next/dynamic. */
+  controlRef?: React.Ref<MorphSliderRef>;
   className?: string;
 }
 

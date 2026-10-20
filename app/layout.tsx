@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Bebas_Neue, DM_Sans, Playfair_Display } from 'next/font/google';
+import { Inter, Bebas_Neue, Playfair_Display } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { AuthProvider } from '@/components/layout/AuthProvider';
 import StreamRail     from '@/components/layout/StreamRail';
 import StarField        from '@/components/StarField';
-import KeyboardShortcutsModal from '@/components/layout/KeyboardShortcutsModal';
-import CommandPaletteModal from '@/components/layout/CommandPaletteModal';
+import GlobalShortcuts  from '@/components/layout/GlobalShortcuts';
 import MobileBottomNav  from '@/components/layout/MobileBottomNav';
 
 const inter = Inter({
@@ -20,14 +19,6 @@ const bebasNeue = Bebas_Neue({
   subsets:  ['latin'],
   weight:   ['400'],
   variable: '--font-display-neue',
-  display:  'swap',
-});
-
-const dmSans = DM_Sans({
-  subsets:  ['latin'],
-  weight:   ['300', '400', '500', '600'],
-  style:    ['normal', 'italic'],
-  variable: '--font-dm-sans',
   display:  'swap',
 });
 
@@ -62,12 +53,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${bebasNeue.variable} ${dmSans.variable} ${playfairDisplay.variable}`} suppressHydrationWarning style={{ background: '#080808' }}>
+    <html lang="en" className={`${inter.variable} ${bebasNeue.variable} ${playfairDisplay.variable}`} suppressHydrationWarning style={{ background: '#080808' }}>
       <head>
         {/* PWA / mobile theme — prevents white flash and colours OS chrome */}
         <meta name="theme-color" content="#080808" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#080808" />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#080808" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="background-color" content="#080808" />
@@ -79,8 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <StarField />
           <main>{children}</main>
           <MobileBottomNav />
-          <KeyboardShortcutsModal />
-          <CommandPaletteModal />
+          <GlobalShortcuts />
         </AuthProvider>
       </body>
     </html>

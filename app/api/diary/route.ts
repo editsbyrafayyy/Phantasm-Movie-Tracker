@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 60, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 60, 60_000, 'GET /api/diary')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
   if (yearParam && /^\d{4}$/.test(yearParam)) {
     query = query
       .gte('watched_at', `${yearParam}-01-01`)
-      .lte('watched_at', `${yearParam}-12-31`);
+      .lt('watched_at', `${Number(yearParam) + 1}-01-01`);
   }
 
   const { data, error } = await query;
@@ -95,7 +95,8 @@ export async function GET(req: NextRequest) {
       .select('id, movie_id, created_at')
       .eq('user_id', user.id)
       .gte('created_at', `${yearParam}-01-01`)
-      .lte('created_at', `${yearParam}-12-31`)
+      // created_at is a timestamp — use an exclusive upper bound so Dec 31 is included
+      .lt('created_at', `${Number(yearParam) + 1}-01-01`)
       .order('created_at', { ascending: false });
 
     // Shape vault entries to match the DiaryEntry interface the heatmap expects
@@ -116,8 +117,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 30, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 30, 60_000, 'POST /api/diary')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
@@ -163,8 +164,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 30, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 30, 60_000, 'DELETE /api/diary')) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 

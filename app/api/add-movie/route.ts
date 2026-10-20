@@ -4,8 +4,17 @@ import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/
 import { fetchOmdbById } from '@/lib/omdb';
 import { enrichFromTmdb } from '@/lib/tmdb';
 import { computeTotal, SUBGENRES } from '@/lib/config';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import type { MovieFormData } from '@/lib/types';
+import {
+  escapeLike,
+  insertMovieOrGetExisting,
+  isAcceptableMovieRef,
+  isValidBonus,
+  isValidRecommend,
+  isValidSecondaryTag,
+  sanitizeCustomTags,
+} from '../_lib/entryValidation';
 
 export async function POST(req: NextRequest) {
   // ── Auth ────────────────────────────────────────────────────────────────────
@@ -18,8 +27,8 @@ export async function POST(req: NextRequest) {
 
   const userId = user.id;
 
-  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
-  if (!rateLimit(ip)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 30, 60_000, 'POST /api/add-movie')) {
     return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
   }
 
@@ -45,6 +54,23 @@ export async function POST(req: NextRequest) {
 
   if (!SUBGENRES.includes(subgenre as typeof SUBGENRES[number])) {
     return NextResponse.json({ error: 'Invalid subgenre' }, { status: 400 });
+  }
+
+  if (omdbId && !isAcceptableMovieRef(omdbId)) {
+    return NextResponse.json({ error: 'Invalid IMDb ID' }, { status: 400 });
+  }
+  if (!isValidSecondaryTag(secondaryTag)) {
+    return NextResponse.json({ error: 'Invalid secondary tag' }, { status: 400 });
+  }
+  if (!isValidRecommend(recommend)) {
+    return NextResponse.json({ error: 'Invalid recommendation' }, { status: 400 });
+  }
+  if (!isValidBonus(bonus)) {
+    return NextResponse.json({ error: 'Invalid bonus value' }, { status: 400 });
+  }
+  const cleanTags = sanitizeCustomTags(custom_tags);
+  if (cleanTags === null) {
+    return NextResponse.json({ error: 'Invalid tags (max 20 tags, 40 characters each)' }, { status: 400 });
   }
 
   const SCORE_LIMITS: Record<string, number> = {
@@ -144,18 +170,12 @@ export async function POST(req: NextRequest) {
       }
       movieId = movie.id;
     } else {
-      // Insert new movie
-      const { data: movie, error: movieError } = await serviceClient
-        .from('movies')
-        .insert(moviePayload)
-        .select('id')
-        .single();
-
-      if (movieError || !movie) {
-        console.error('movies insert error', movieError);
+      // Insert new movie (re-selects the existing row if a concurrent insert won)
+      const insertedId = await insertMovieOrGetExisting(serviceClient, { ...moviePayload });
+      if (!insertedId) {
         return NextResponse.json({ error: 'Failed to save movie metadata' }, { status: 500 });
       }
-      movieId = movie.id;
+      movieId = insertedId;
     }
   } else {
     // Manual entry — upsert by normalised title
@@ -163,11 +183,11 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await serviceClient
       .from('movies')
       .select('id')
-      .ilike('title', normalised)
-      .maybeSingle();
+      .ilike('title', escapeLike(normalised))
+      .limit(1);
 
-    if (existing) {
-      movieId = existing.id;
+    if (existing?.[0]) {
+      movieId = existing[0].id;
     } else {
       const insertPayload: MoviePayload = {
         title: normalised,
@@ -213,18 +233,12 @@ export async function POST(req: NextRequest) {
         }
         movieId = movie.id;
       } else {
-        // Insert it
-        const { data: movie, error: movieError } = await serviceClient
-          .from('movies')
-          .insert(insertPayload)
-          .select('id')
-          .single();
-
-        if (movieError || !movie) {
-          console.error('movies insert error', movieError);
+        // Insert it (re-selects the existing row if a concurrent insert won)
+        const insertedId = await insertMovieOrGetExisting(serviceClient, { ...insertPayload });
+        if (!insertedId) {
           return NextResponse.json({ error: 'Failed to save movie' }, { status: 500 });
         }
-        movieId = movie.id;
+        movieId = insertedId;
       }
     }
   }
@@ -254,7 +268,7 @@ export async function POST(req: NextRequest) {
     thrill:     scores.thrill     as number | '',
     sound:      scores.sound      as number | '',
     impact:     scores.impact     as number | '',
-    bonus:      bonus ?? 0,
+    bonus:      Number(bonus ?? 0) as 0 | 1,
   });
 
   // ── Insert entry ──────────────────────────────────────────────────────────
@@ -272,10 +286,10 @@ export async function POST(req: NextRequest) {
     thrill:        scores.thrill     !== '' ? scores.thrill     : null,
     sound:         scores.sound      !== '' ? scores.sound      : null,
     impact:        scores.impact     !== '' ? scores.impact     : null,
-    bonus:         bonus ?? 0,
+    bonus:         Number(bonus ?? 0),
     total,
     notes:         notes ? String(notes).trim().slice(0, 500) : null,
-    custom_tags:   Array.isArray(custom_tags) ? custom_tags : [],
+    custom_tags:   cleanTags,
   };
 
   const { data: entry, error: entryError } = await supabase
@@ -283,6 +297,13 @@ export async function POST(req: NextRequest) {
     .insert(entryPayload)
     .select('id, total')
     .single();
+
+  if (entryError?.code === '23505') {
+    return NextResponse.json(
+      { error: 'You have already logged this movie. Use the update form to edit your rating.' },
+      { status: 409 }
+    );
+  }
 
   if (entryError || !entry) {
     console.error('entries insert error', entryError);

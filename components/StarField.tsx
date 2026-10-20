@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface Star {
   x:       number;
@@ -22,10 +23,15 @@ function generateStars(count: number): Star[] {
   }));
 }
 
-export default function StarField() {
+/** Player pages get no starfield — the video should have the GPU to itself. */
+function isPlayerRoute(pathname: string) {
+  if (pathname.startsWith('/stream/tmdb/')) return true;
+  // /stream/[id] (but not the /stream hub itself)
+  return /^\/stream\/[^/]+\/?$/.test(pathname);
+}
+
+function StarCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const starsRef  = useRef<Star[]>([]);
-  const frameRef  = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,112 +39,96 @@ export default function StarField() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Fewer particles on phones — same look, less work per frame.
+    const stars = generateStars(window.innerWidth < 640 ? 40 : 80);
+
     let width = window.innerWidth;
     let height = window.innerHeight;
+    let frameId = 0;
+    let start: number | null = null;
 
     function resize() {
       if (!canvas || !ctx) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       width = window.innerWidth;
       height = window.innerHeight;
-
       canvas.width  = width * dpr;
       canvas.height = height * dpr;
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
-
       ctx.resetTransform();
       ctx.scale(dpr, dpr);
     }
 
-    resize();
-    starsRef.current = generateStars(80);
-    window.addEventListener('resize', resize);
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    let start: number | null = null;
-    let animationFrameId: number;
-
-    function draw(ts: number) {
-      if (document.hidden) return;
-      if (!canvas || !ctx) return;
-      if (!start) start = ts;
-      const t = prefersReducedMotion ? 0 : (ts - start) / 1000;
-
+    function paint(t: number) {
+      if (!ctx) return;
       ctx.clearRect(0, 0, width, height);
-
-      // Bucket stars by rounded opacity (0.1 steps) to minimize draw calls from 80 to max 10
-      const buckets: Record<string, Star[]> = {};
-      for (const star of starsRef.current) {
+      // Bucket stars by rounded opacity (0.1 steps) → at most 10 fill calls per frame.
+      const buckets = new Map<string, Star[]>();
+      for (const star of stars) {
         const alpha = star.opacity * (0.5 + 0.5 * Math.sin(t * star.speed + star.phase));
-        const alphaKey = (Math.round(alpha * 10) / 10).toFixed(1);
-        if (alphaKey === '0.0') continue; // Skip invisible stars
-        if (!buckets[alphaKey]) buckets[alphaKey] = [];
-        buckets[alphaKey].push(star);
+        const key = (Math.round(alpha * 10) / 10).toFixed(1);
+        if (key === '0.0') continue;
+        const group = buckets.get(key);
+        if (group) group.push(star); else buckets.set(key, [star]);
       }
-
-      for (const [alpha, group] of Object.entries(buckets)) {
+      for (const [alpha, group] of buckets) {
         ctx.beginPath();
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         for (const star of group) {
           ctx.moveTo(star.x * width + star.radius, star.y * height);
-          ctx.arc(
-            star.x * width,
-            star.y * height,
-            star.radius,
-            0,
-            Math.PI * 2
-          );
+          ctx.arc(star.x * width, star.y * height, star.radius, 0, Math.PI * 2);
         }
         ctx.fill();
       }
-
-      if (!prefersReducedMotion) {
-        animationFrameId = requestAnimationFrame(draw);
-        frameRef.current = animationFrameId;
-      }
     }
 
-    if (prefersReducedMotion) {
-      draw(0);
-    } else {
-      animationFrameId = requestAnimationFrame(draw);
-      frameRef.current = animationFrameId;
+    function frame(ts: number) {
+      if (start === null) start = ts;
+      paint((ts - start) / 1000);
+      frameId = requestAnimationFrame(frame);
     }
 
-    const handleVisibilityChange = () => {
-      if (prefersReducedMotion) return;
-      if (!document.hidden) {
+    function stop() {
+      cancelAnimationFrame(frameId);
+      frameId = 0;
+    }
+
+    function sync() {
+      stop();
+      if (reducedMotionQuery.matches) {
+        paint(1.5); // one static frame
+      } else if (!document.hidden) {
         start = null;
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = requestAnimationFrame(draw);
-        frameRef.current = animationFrameId;
-      } else {
-        cancelAnimationFrame(animationFrameId);
+        frameId = requestAnimationFrame(frame);
       }
-    };
+    }
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    function onResize() {
+      resize();
+      if (reducedMotionQuery.matches) paint(1.5);
+    }
+
+    resize();
+    sync();
+    window.addEventListener('resize', onResize);
+    document.addEventListener('visibilitychange', sync);
+    reducedMotionQuery.addEventListener('change', sync);
 
     return () => {
-      window.removeEventListener('resize', resize);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      cancelAnimationFrame(frameRef.current);
+      stop();
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', sync);
+      reducedMotionQuery.removeEventListener('change', sync);
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position:      'fixed',
-        inset:         0,
-        zIndex:        0,
-        pointerEvents: 'none',
-        display:       'block',
-      }}
-      aria-hidden="true"
-    />
-  );
+  return <canvas ref={canvasRef} className="star-field" aria-hidden="true" />;
+}
+
+export default function StarField() {
+  const pathname = usePathname();
+  if (isPlayerRoute(pathname)) return null;
+  return <StarCanvas />;
 }

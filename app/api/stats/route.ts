@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { computeStats } from '@/lib/stats';
 import type { Entry } from '@/lib/types';
 
@@ -12,8 +12,8 @@ const STATS_CACHE = 'private, max-age=30, stale-while-revalidate=300';
  * Returns aggregated statistics for the authenticated user.
  */
 export async function GET(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
-  if (!rateLimit(ip)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 30, 60_000, 'GET /api/stats')) {
     return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
   }
 

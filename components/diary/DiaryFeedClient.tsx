@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Film, RotateCcw, Trash2, Calendar, BookOpen, Search } from 'lucide-react';
+import { BookOpen, Film, Search, Trash2 } from 'lucide-react';
 import Toast, { type ToastType } from '@/components/ui/Toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-
 import { formatRelativeDate, formatFullDate } from '@/lib/dateUtils';
 
-interface DiaryItem {
+export interface DiaryItem {
   id: string;
+  movie_id?: string | null;
   watched_at: string;
   rewatch: boolean;
   quick_note?: string | null;
@@ -24,189 +24,187 @@ interface DiaryItem {
 
 interface DiaryFeedClientProps {
   initialDiary: DiaryItem[];
+  loadError?: boolean;
 }
 
-export default function DiaryFeedClient({ initialDiary }: DiaryFeedClientProps) {
+type Filter = 'all' | 'first' | 'rewatch';
+
+// Relative dates depend on "today", which differs between server and client
+// (and across midnight). Render the absolute date on the server / first paint,
+// then switch to relative once hydrated.
+const noopSubscribe = () => () => {};
+function useHydrated() {
+  return useSyncExternalStore(noopSubscribe, () => true, () => false);
+}
+
+export default function DiaryFeedClient({ initialDiary, loadError = false }: DiaryFeedClientProps) {
+  const hydrated = useHydrated();
   const [diary, setDiary] = useState<DiaryItem[]>(initialDiary);
-  const [filterRewatch, setFilterRewatch] = useState<boolean | null>(null);
+  const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
+  const q = search.trim().toLowerCase();
   const filtered = diary.filter(item => {
-    if (filterRewatch !== null && item.rewatch !== filterRewatch) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      const title = item.movie?.title?.toLowerCase() ?? '';
-      const note = item.quick_note?.toLowerCase() ?? '';
-      return title.includes(q) || note.includes(q);
-    }
-    return true;
+    if (filter === 'first' && item.rewatch) return false;
+    if (filter === 'rewatch' && !item.rewatch) return false;
+    if (!q) return true;
+    const title = item.movie?.title?.toLowerCase() ?? '';
+    const note = item.quick_note?.toLowerCase() ?? '';
+    return title.includes(q) || note.includes(q);
   });
 
-  async function handleDelete() {
-    if (!deletingId) return;
-    try {
-      const res = await fetch(`/api/diary?id=${deletingId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Delete failed');
+  const rewatchCount = diary.filter(d => d.rewatch).length;
+  const filters: { key: Filter; label: string; count: number }[] = [
+    { key: 'all',     label: 'All',            count: diary.length },
+    { key: 'first',   label: 'First watches',  count: diary.length - rewatchCount },
+    { key: 'rewatch', label: 'Rewatches',      count: rewatchCount },
+  ];
 
-      setDiary(prev => prev.filter(d => d.id !== deletingId));
+  async function handleDelete() {
+    const id = deletingId;
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/diary?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      setDiary(prev => prev.filter(d => d.id !== id));
       setToast({ message: 'Watch log removed', type: 'success' });
     } catch {
-      setToast({ message: 'Failed to delete log', type: 'error' });
+      setToast({ message: 'Could not remove that log', type: 'error' });
     } finally {
       setDeletingId(null);
     }
   }
 
+  if (loadError && diary.length === 0) {
+    return (
+      <div className="empty-state" role="alert">
+        <p className="empty-state-title">Could not load your diary</p>
+        <p className="empty-state-body">Something went wrong on our side. Reload the page to try again.</p>
+      </div>
+    );
+  }
+
   if (diary.length === 0) {
     return (
-      <div className="diary-empty-state" style={{ textAlign: 'center', padding: '60px 20px' }}>
-        <BookOpen size={48} style={{ color: 'var(--text-muted)', opacity: 0.4, marginBottom: 16 }} />
-        <h3 style={{ fontSize: 20, color: 'var(--text)', marginBottom: 8 }}>Your Diary is Empty</h3>
-        <p style={{ fontSize: 14, color: 'var(--text-muted)', maxWidth: 400, margin: '0 auto 24px' }}>
-          Start logging your horror movie viewings and rewatches directly from any movie page in your vault.
+      <div className="empty-state">
+        <BookOpen size={40} aria-hidden="true" />
+        <p className="empty-state-title">Your diary is empty</p>
+        <p className="empty-state-body">
+          Log a viewing or rewatch from any film page in your vault and it will show up here.
         </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/vault" className="btn-primary" style={{ display: 'inline-flex', gap: 8 }}>
-            Browse Vault
-          </Link>
-          <Link href="/browse" className="btn-edit" style={{ display: 'inline-flex', gap: 8 }}>
-            Discover Films
-          </Link>
-        </div>
+        <Link href="/vault" className="btn-primary">Open your vault</Link>
       </div>
     );
   }
 
   return (
     <div className="diary-feed-wrapper">
-      {/* Controls / Filter Bar */}
-      <div className="diary-controls" style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+      <div className="list-toolbar">
+        <div className="list-toolbar-search">
+          <label htmlFor="diary-search" className="sr-only">Search diary</label>
+          <Search size={16} className="list-toolbar-search-icon" aria-hidden="true" />
           <input
-            type="text"
-            className="form-input"
-            placeholder="Search diary entries..."
+            id="diary-search"
+            type="search"
+            className="field-input"
+            placeholder="Search titles and notes…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ paddingLeft: 34, height: 38, fontSize: 13 }}
           />
         </div>
 
-        <div className="diary-filter-chips" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <button
-            className={`btn-edit ${filterRewatch === null ? 'active' : ''}`}
-            onClick={() => setFilterRewatch(null)}
-            style={{ height: 38, fontSize: 12 }}
-          >
-            All ({diary.length})
-          </button>
-          <button
-            className={`btn-edit ${filterRewatch === false ? 'active' : ''}`}
-            onClick={() => setFilterRewatch(false)}
-            style={{ height: 38, fontSize: 12 }}
-          >
-            First Watches ({diary.filter(d => !d.rewatch).length})
-          </button>
-          <button
-            className={`btn-edit ${filterRewatch === true ? 'active' : ''}`}
-            onClick={() => setFilterRewatch(true)}
-            style={{ height: 38, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}
-          >
-            <RotateCcw size={12} /> Rewatches ({diary.filter(d => d.rewatch).length})
-          </button>
+        <div className="list-toolbar-chips" role="group" aria-label="Filter diary">
+          {filters.map(f => (
+            <button
+              key={f.key}
+              type="button"
+              className="chip"
+              aria-pressed={filter === f.key}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label} <span className="chip-count">{f.count}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Feed list */}
-      <div className="diary-feed-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filtered.map(item => {
-          const relativeDate = formatRelativeDate(item.watched_at);
-          const fullDate = formatFullDate(item.watched_at);
+      {filtered.length === 0 ? (
+        <div className="empty-state">
+          <p className="empty-state-title">No matches</p>
+          <p className="empty-state-body">Nothing in your diary matches that search or filter.</p>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => { setSearch(''); setFilter('all'); }}
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <ul className="diary-feed-list">
+          {filtered.map(item => {
+            const movieId = item.movie?.id ?? item.movie_id ?? null;
+            const title = item.movie?.title ?? 'Unknown film';
+            const fullDate = formatFullDate(item.watched_at);
+            const dateLabel = hydrated ? formatRelativeDate(item.watched_at) : fullDate;
 
-          return (
-            <div key={item.id} className="diary-item-card" style={{ display: 'flex', gap: 16, padding: '16px 20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, alignItems: 'center' }}>
-              {/* Date */}
-              <div className="diary-item-date" style={{ minWidth: 95, flexShrink: 0 }} title={fullDate}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--red)', display: 'block', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  {relativeDate}
-                </span>
-              </div>
+            return (
+              <li key={item.id} className="diary-item-card">
+                <time className="diary-item-date" dateTime={item.watched_at} title={fullDate}>
+                  {dateLabel}
+                </time>
 
-              {/* Poster */}
-              <div className="diary-item-poster" style={{ width: 44, height: 64, borderRadius: 6, overflow: 'hidden', position: 'relative', flexShrink: 0, background: 'var(--surface-2)' }}>
-                {item.movie?.poster_url ? (
-                  <Image
-                    src={item.movie.poster_url}
-                    alt={item.movie.title}
-                    fill
-                    sizes="44px"
-                    style={{ objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Film size={16} color="var(--text-muted)" />
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="diary-item-info" style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <Link href={`/vault/${item.movie?.id}`} style={{ textDecoration: 'none' }}>
-                    <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
-                      {item.movie?.title ?? 'Unknown Film'}
-                    </h4>
-                  </Link>
-                  {item.movie?.year && (
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>({item.movie.year})</span>
-                  )}
-                  {item.rewatch && (
-                    <span className="diary-rewatch-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 700, color: 'var(--red)', background: 'rgba(230,50,50,0.12)', border: '1px solid rgba(230,50,50,0.3)', padding: '2px 8px', borderRadius: 12, textTransform: 'uppercase' }}>
-                      <RotateCcw size={10} /> Rewatch
-                    </span>
+                <div className="diary-item-poster">
+                  {item.movie?.poster_url ? (
+                    <Image src={item.movie.poster_url} alt="" fill sizes="44px" className="diary-item-poster-img" />
+                  ) : (
+                    <Film size={16} aria-hidden="true" />
                   )}
                 </div>
 
-                {item.quick_note && (
-                  <p style={{ fontSize: 13, color: 'var(--text-dim)', fontStyle: 'italic', margin: '4px 0 0 0', lineHeight: 1.4 }}>
-                    &ldquo;{item.quick_note}&rdquo;
-                  </p>
-                )}
-              </div>
+                <div className="diary-item-info">
+                  <div className="diary-item-title-row">
+                    {movieId ? (
+                      <Link href={`/vault/${movieId}`} className="diary-item-title">{title}</Link>
+                    ) : (
+                      <span className="diary-item-title">{title}</span>
+                    )}
+                    {item.movie?.year && <span className="diary-item-year">{item.movie.year}</span>}
+                    {item.rewatch && <span className="diary-rewatch-badge">Rewatch</span>}
+                  </div>
+                  {item.quick_note && (
+                    <p className="diary-item-note">&ldquo;{item.quick_note}&rdquo;</p>
+                  )}
+                </div>
 
-              {/* Action */}
-              <button
-                onClick={() => setDeletingId(item.id)}
-                className="btn-delete-icon"
-                title="Remove log entry"
-                style={{ opacity: 0.6 }}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          );
-        })}
-      </div>
+                <button
+                  type="button"
+                  onClick={() => setDeletingId(item.id)}
+                  className="icon-btn diary-item-delete"
+                  aria-label={`Remove ${title} watch log`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       {deletingId && (
         <ConfirmDialog
-          title="Delete watch log?"
-          body="Are you sure you want to remove this viewing from your diary?"
-          confirmLabel="Remove Log"
+          title="Remove watch log?"
+          body="This viewing will be removed from your diary."
+          confirmLabel="Remove"
           onConfirm={handleDelete}
           onCancel={() => setDeletingId(null)}
         />
       )}
 
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />
       )}
     </div>
   );

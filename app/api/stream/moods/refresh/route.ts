@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceClient } from '@/lib/supabase/server';
+import { OWNER_ID } from '@/lib/guards';
 import { refreshMoodCache } from '@/lib/moodEngine';
 
 export async function POST(req: NextRequest) {
@@ -11,15 +12,9 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // 2. Owner check
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    const isOwner = profile?.role === 'owner' || user.id === process.env.OWNER_USER_ID;
+    // Owner check: authorize strictly by OWNER_USER_ID (profiles.role is user-editable).
+    // Fails closed when OWNER_USER_ID is not configured.
+    const isOwner = !!OWNER_ID && user.id === OWNER_ID;
 
     if (!isOwner) {
       return NextResponse.json({ error: 'Forbidden. Owner action only.' }, { status: 403 });
@@ -53,8 +48,8 @@ export async function POST(req: NextRequest) {
     const result = await refreshMoodCache();
 
     return NextResponse.json(result);
-  } catch (err: any) {
+  } catch (err) {
     console.error('[POST /api/stream/moods/refresh] Unexpected error:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

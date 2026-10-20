@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/ratelimit';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { isUnrestrictedUser } from '@/lib/guards';
 
@@ -24,14 +24,44 @@ const ALLOWED_MOOD_PARAMS = [
   'without_genres',
 ] as const;
 
+// ── Genre restriction helpers (restricted users / guests) ──────────────────
+const GENRE_LIST_RE = /^\d{1,6}(?:[,|]\d{1,6}){0,19}$/;
+// An AND-list (comma) must include at least one of these
+const TMDB_HORROR_KEYWORD = '315058';
+const RESTRICTED_ANCHOR_GENRES = new Set(['27', '53']); // Horror, Thriller
+// Every alternative of an OR-list (pipe) must be one of these
+const RESTRICTED_OR_GENRES = new Set(['27', '53', '9648']); // Horror, Thriller, Mystery
+const MOVIE_REQUIRED_EXCLUSIONS = ['16', '10751'];
+const TV_REQUIRED_EXCLUSIONS = ['16', '10762', '10751', '10764', '10766', '10767', '10763', '99'];
+
+/** Returns the caller's with_genres only if it stays within horror/thriller; otherwise null. */
+function sanitizeRestrictedGenres(raw: string | null): string | null {
+  if (!raw || !GENRE_LIST_RE.test(raw)) return null;
+  const hasAnd = raw.includes(',');
+  const hasOr = raw.includes('|');
+  if (hasAnd && hasOr) return null;
+  const ids = raw.split(/[,|]/);
+  if (hasOr) return ids.every(id => RESTRICTED_OR_GENRES.has(id)) ? raw : null;
+  return ids.some(id => RESTRICTED_ANCHOR_GENRES.has(id)) ? raw : null;
+}
+
+/** Union of required exclusions and any valid caller-supplied exclusions. */
+function mergeExclusions(required: string[], raw: string | null): string {
+  const ids = new Set(required);
+  if (raw && GENRE_LIST_RE.test(raw)) {
+    raw.split(/[,|]/).forEach(id => ids.add(id));
+  }
+  return Array.from(ids).join(',');
+}
+
 export async function GET(req: NextRequest) {
   if (!TMDB_API_KEY) {
     return NextResponse.json({ error: 'TMDB API Key missing' }, { status: 500 });
   }
 
   // Enforce IP rate limiting (60 requests per minute per IP)
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
-  if (!rateLimit(ip, 60, 60_000)) {
+  const ip = getClientIp(req);
+  if (!rateLimit(ip, 60, 60_000, 'GET /api/tmdb/discover')) {
     return NextResponse.json(
       { error: 'Too many requests. Please slow down.' },
       {
@@ -70,23 +100,26 @@ export async function GET(req: NextRequest) {
     if (incomingGenres) tmdbUrl.searchParams.set('with_genres', incomingGenres);
     if (incomingWithoutGenres) tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres);
   } else {
+    // Restricted users: the requested genre filter must stay inside horror/thriller.
+    const safeGenres = sanitizeRestrictedGenres(incomingGenres);
+    // Required exclusions are always applied; caller exclusions are only added on top.
+    const requiredExclusions = type === 'tv' ? TV_REQUIRED_EXCLUSIONS : MOVIE_REQUIRED_EXCLUSIONS;
+    const withoutGenres = mergeExclusions(requiredExclusions, incomingWithoutGenres);
+
     // Enforce horror/thriller/sci-fi genres and exclude animation/anime/family/etc for TV
     if (type === 'tv') {
-      const tvGenres = incomingGenres
-        ? incomingGenres.replace(/\b27\b/g, '9648|10765|53')
+      const tvGenres = safeGenres
+        ? safeGenres.replace(/\b27\b/g, '9648|10765|53')
         : '9648|10765|53';
       tmdbUrl.searchParams.set('with_genres', tvGenres);
-      tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres || '16,10762,10751,10764,10766,10767,10763,99');
+      // TMDB has no Horror genre for TV — Mystery/Sci-Fi alone surfaces crime procedurals.
+      // Default to the "horror" keyword; caller/mood keywords override this below.
+      tmdbUrl.searchParams.set('with_keywords', TMDB_HORROR_KEYWORD);
     } else {
       // Default to Horror (27). If caller specified a genre combination (e.g. '27,35' for comedy or '27,878' for sci-fi), use it.
-      tmdbUrl.searchParams.set('with_genres', incomingGenres || '27');
-      if (incomingWithoutGenres) {
-        tmdbUrl.searchParams.set('without_genres', incomingWithoutGenres);
-      } else {
-        // Exclude animation (16) and family (10751) to filter out kids/cartoons
-        tmdbUrl.searchParams.set('without_genres', '16,10751');
-      }
+      tmdbUrl.searchParams.set('with_genres', safeGenres || '27');
     }
+    tmdbUrl.searchParams.set('without_genres', withoutGenres);
   }
   tmdbUrl.searchParams.set('page', String(page));
   tmdbUrl.searchParams.set('include_adult', 'false');
@@ -94,6 +127,8 @@ export async function GET(req: NextRequest) {
   if (isMood) {
     // Apply mood-specific params (overrides defaults)
     ALLOWED_MOOD_PARAMS.forEach(param => {
+      // Genre filters were already applied (and sanitized for restricted users) above.
+      if (param === 'with_genres' || param === 'without_genres') return;
       const val = searchParams.get(param);
       if (val) tmdbUrl.searchParams.set(param, val);
     });
@@ -159,9 +194,14 @@ export async function GET(req: NextRequest) {
       data.results = data.results.filter((movie: { poster_path: string | null }) => movie.poster_path);
     }
     
+    // Output varies by user (genre restriction), so only guest responses may be
+    // shared-cached; signed-in users get a private (browser-only) cache.
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': user
+          ? 'private, max-age=300'
+          : 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Vary': 'Cookie',
       },
     });
   } catch (err: unknown) {

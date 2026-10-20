@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { computeStats } from '@/lib/stats';
+import PageHeader      from '@/components/ui/PageHeader';
 import SummaryStrip    from '@/components/stats/SummaryStrip';
 import GenreDonut      from '@/components/stats/GenreDonut';
 import RecommendBars   from '@/components/stats/RecommendBars';
@@ -25,6 +27,13 @@ export const metadata: Metadata = {
   title: 'Profile — Phantasm',
 };
 
+// Only the columns the stats widgets actually read.
+const ENTRY_FIELDS = [
+  'id', 'subgenre', 'recommend', 'total', 'bonus', 'created_at', 'updated_at',
+  'atmosphere', 'story', 'characters', 'pacing', 'visuals', 'thrill', 'sound', 'impact',
+  'movie:movies (id, title, poster_url, runtime_min, year)',
+].join(', ');
+
 export default async function ProfilePage() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -33,30 +42,28 @@ export default async function ProfilePage() {
     redirect('/login');
   }
 
-  // Parallelize profile and entries fetching
   const [profileResult, entriesResult] = await Promise.all([
     supabase
       .from('profiles')
-      .select('*')
+      .select('id, username, display_name, avatar_url, role, created_at')
       .eq('id', user.id)
       .single(),
     supabase
       .from('entries')
-      .select('*, movie:movies (id, title, poster_url, runtime_min, year)')
+      .select(ENTRY_FIELDS)
       .eq('user_id', user.id)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true }),
   ]);
 
   const profile = profileResult.data;
-  const entries = entriesResult.data;
 
   if (profileResult.error || !profile) {
     redirect('/login');
   }
 
   const typedProfile = profile as Profile;
-  const typedEntries = (entries ?? []) as Entry[];
-  
+  const typedEntries = (entriesResult.data ?? []) as unknown as Entry[];
+
   const isOwner = typedProfile.role === 'owner' || user.id === process.env.OWNER_USER_ID;
 
   const memberSince = new Date(typedProfile.created_at).toLocaleDateString('en-GB', {
@@ -66,31 +73,22 @@ export default async function ProfilePage() {
   });
 
   const stats = computeStats(typedEntries);
+  const year  = new Date().getFullYear();
 
   return (
-    <div className="profile-page page-container profile-bg-glow" style={{ maxWidth: 1200, margin: '0 auto' }}>
-      {/* Profile Details Card - centered & constrained to 560px for a clean layout */}
-      <div style={{ maxWidth: 560, margin: '0 auto 48px auto' }}>
-        <header className="form-header">
-          <p className="page-label">Your</p>
-          <h1 className="page-title-serif">Profile.</h1>
-        </header>
+    <div className="profile-page page-container profile-bg-glow">
+      <div className="profile-column">
+        <PageHeader title="Profile" />
 
         <div className="profile-card">
           <div className="profile-user-header">
-            {/* Interactive Avatar Picker */}
             <ProfileAvatar profile={typedProfile} />
 
-            <div className="profile-info" style={{ marginBottom: 0 }}>
-              {/* Edit display name client side form - now acts as the main H2 header */}
+            <div className="profile-info">
               <ProfileEdit profile={typedProfile} />
-
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <p className="profile-username" style={{ fontSize: 14, color: 'var(--text-dim)', fontWeight: 500, margin: 0 }}>
-                  @{typedProfile.username}
-                </p>
-                <p className="profile-meta" style={{ margin: 0 }}>
+              <div className="profile-handle-row">
+                <p className="profile-username">@{typedProfile.username}</p>
+                <p className="profile-meta">
                   Member since {memberSince}
                   {isOwner && <span className="profile-role-badge">Owner</span>}
                 </p>
@@ -98,60 +96,48 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          {/* Admin panel for owner */}
           {isOwner && <AdminPanel />}
         </div>
       </div>
 
-      {/* Embedded Stats Section - expands to 1200px width */}
-      {typedEntries.length > 0 ? (
-        <div className="profile-stats-section" style={{ borderTop: '1px solid var(--border)', paddingTop: 48, marginTop: 16 }}>
-          <header className="form-header" style={{ marginBottom: 32 }}>
-            <p className="page-label">Your Vault</p>
-            <h1 className="page-title-serif" style={{ fontSize: 'clamp(32px, 5vw, 42px)' }}>Statistics.</h1>
-          </header>
+      <section className="profile-stats-section" aria-label="Statistics">
+        <PageHeader as="section" title="Statistics" eyebrow="Your vault" />
 
-          <PhantasmWrapped entries={typedEntries} year={new Date().getFullYear()} />
+        {typedEntries.length > 0 ? (
+          <>
+            <PhantasmWrapped entries={typedEntries} year={year} />
 
-          <SummaryStrip stats={stats} />
+            <SummaryStrip stats={stats} />
 
-          <div className="stats-charts-grid">
-              {/* Row 1: Genre breakdown (left) + Recommendation breakdown (right) */}
+            <div className="stats-charts-grid">
               <GenreDonut    data={stats.bySubgenre} />
               <RecommendBars data={stats.byRecommend} />
 
-              {/* Row 2: Top rated (left) + Score distribution (right) */}
               <TopRatedList data={stats.topRated} />
               <ScoreDistribution entries={typedEntries} />
 
-              {/* Row 3: Rating Drift Chart — full width */}
               <RatingDriftChart entries={typedEntries} />
-
-              {/* Row 4: Personal Taste Fingerprint — full width */}
               <TasteFingerprint entries={typedEntries} />
+              <CalendarHeatmap year={year} />
 
-              {/* Row 5: Calendar Heatmap — full width */}
-              <CalendarHeatmap />
-
-              {/* Row 6: Score histograms full width */}
-              <div className="stats-histograms-full">
-                <ScoreHistograms data={stats.scoresByField} />
-              </div>
+              <ScoreHistograms data={stats.scoresByField} />
             </div>
-        </div>
-      ) : (
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 48, textAlign: 'center', color: 'var(--text-muted)' }}>
-          <p>Rate horror films in your vault to unlock statistics.</p>
-        </div>
-      )}
+          </>
+        ) : (
+          <div className="empty-state">
+            <p className="empty-state-title">No stats yet</p>
+            <p className="empty-state-body">Rate a few films and your statistics will show up here.</p>
+            <Link href="/add" className="btn-primary">Log a film</Link>
+          </div>
+        )}
+      </section>
 
-      {/* Export, Health Check & Profile Settings */}
-      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 40, marginTop: 48, maxWidth: 560, margin: '0 auto' }}>
+      <section className="profile-column profile-settings" aria-label="Account">
         <VaultHealthCheckModal />
         <ExportButton />
         <PasswordReset />
         <SignOutButton />
-      </div>
+      </section>
     </div>
   );
 }

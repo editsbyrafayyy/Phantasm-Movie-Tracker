@@ -63,18 +63,17 @@ export async function PATCH(request: Request) {
       .from('profiles')
       .update(updates)
       .eq('id', user.id)
-      .select('*')
+      .select('id, username, display_name, avatar_url, role, created_at')
       .single();
 
     if (error) {
       console.error('[API /api/profile] Update error:', error);
-      return NextResponse.json({ error: error.message || 'Failed to update profile.' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to update profile.' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, profile: data });
   } catch (err: unknown) {
     console.error('[API /api/profile] Unexpected error:', err);
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

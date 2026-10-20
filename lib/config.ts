@@ -59,28 +59,32 @@ export const SUBGENRE_COLOR_KEY: Record<string, string> = {
   'Thriller (Non-Horror)': 'thriller',
 };
 
-// Hex values matching the CSS vars — used by Recharts which needs concrete colors
+// Dark-theme subgenre palette — muted, mid-luminance hues that read on the
+// #080808 void, sit alongside the crimson accent, and stay distinguishable
+// from each other. Used for chips, the vault makeup bar, card fallbacks and
+// Recharts (which needs concrete colours).
 export const SUBGENRE_HEX: Record<string, string> = {
-  'Psychological Horror':  '#F4CCCC',
-  'Supernatural Horror':   '#FCE5CD',
-  'Folk Horror':           '#D9EAD3',
-  'Religious/Occult Horror': '#D9D2E9',
-  'Creature Feature':      '#CFE2F3',
-  'Slasher':               '#CC0000',
-  'Zombie Horror':         '#B6D7A8',
-  'Survival Horror':       '#0B5394',
-  'Found Footage Horror':  '#7B2FBE',
-  'Sci-Fi Horror':         '#C9DAF8',
-  'Gore/Extreme Horror':   '#E06666',
-  'Horror Comedy':         '#FFF2CC',
-  'Thriller (Non-Horror)': '#1155CC',
+  'Psychological Horror':    '#9b5fb3', // bruised violet
+  'Supernatural Horror':     '#6470c4', // spectral indigo
+  'Folk Horror':             '#4f8a57', // moss
+  'Religious/Occult Horror': '#b8863b', // tarnished brass
+  'Creature Feature':        '#3a9a8a', // swamp teal
+  'Slasher':                 '#c93a3a', // blood
+  'Zombie Horror':           '#9fa03a', // rot olive
+  'Survival Horror':         '#c4682f', // rust
+  'Found Footage Horror':    '#8c7c66', // VHS sepia
+  'Sci-Fi Horror':           '#3596b8', // cold cyan
+  'Gore/Extreme Horror':     '#8e1f33', // deep maroon
+  'Horror Comedy':           '#c95f93', // faded magenta
+  'Thriller (Non-Horror)':   '#5f7389', // steel
 };
 
+/** Verdict ("recommend") colours — gold for Peak, then green / crimson / ash. */
 export const RECOMMEND_COLOR: Record<string, string> = {
-  Yes:     '#4a7c3f',
-  No:      '#CC0000',
-  Peak:    '#ffffff',
-  Garbage: '#595959',
+  Peak:    '#d4a34a',
+  Yes:     '#52b044',
+  No:      '#e63232',
+  Garbage: '#6b6b6b',
 };
 
 // ── TypeScript types ──────────────────────────────────────────────────────────

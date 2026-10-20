@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useReducedMotion } from 'framer-motion';
 
 interface ScoreRevealProps {
   total: number;
@@ -11,11 +11,42 @@ interface ScoreRevealProps {
   onDone: () => void;
 }
 
+interface Particle { id: number; x: number; y: number }
+
+const PARTICLE_COUNT = 12;
+
+function makeParticles(): Particle[] {
+  return Array.from({ length: PARTICLE_COUNT }, (_, i) => {
+    const angle  = (i / PARTICLE_COUNT) * 2 * Math.PI;
+    const radius = 60 + Math.random() * 40;
+    return { id: i, x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+  });
+}
+
+const RECOMMEND_CLASS: Record<string, string> = {
+  Peak:    'is-peak',
+  Yes:     'is-yes',
+  No:      'is-no',
+  Garbage: 'is-garbage',
+};
+
+/** Full-screen score count-up shown after saving a rating. Tap to skip. */
 export default function ScoreReveal({ total, title, recommend, isUpdate, onDone }: ScoreRevealProps) {
+  const reduceMotion = useReducedMotion();
   const [visible, setVisible] = useState(true);
   const [showCheck, setShowCheck] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
-  const [particles, setParticles] = useState<number[]>([]);
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  // Keep the latest callback without restarting the timeline when the parent re-renders
+  const onDoneRef = useRef(onDone);
+  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
+  const doneRef = useRef(false);
+  const finish = () => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    onDoneRef.current();
+  };
 
   const scoreValue = useMotionValue(0);
   const springScore = useSpring(scoreValue, { stiffness: 100, damping: 20 });
@@ -24,42 +55,36 @@ export default function ScoreReveal({ total, title, recommend, isUpdate, onDone 
   useEffect(() => {
     scoreValue.set(total);
 
-    const tParticles = setTimeout(() => setParticles(Array.from({ length: 12 }).map((_, i) => i)), 500);
-    const tCheck = setTimeout(() => setShowCheck(true), 800);
-    const tBadge = setTimeout(() => setShowBadge(true), 1200);
-    const tHide = setTimeout(() => setVisible(false), 1800);
-    const tDone = setTimeout(() => onDone(), 2200);
+    const timers = [
+      reduceMotion ? null : setTimeout(() => setParticles(makeParticles()), 500),
+      setTimeout(() => setShowCheck(true), 800),
+      setTimeout(() => setShowBadge(true), 1200),
+      setTimeout(() => setVisible(false), 1800),
+      setTimeout(() => {
+        if (doneRef.current) return;
+        doneRef.current = true;
+        onDoneRef.current();
+      }, 2200),
+    ];
 
-    return () => {
-      clearTimeout(tParticles);
-      clearTimeout(tCheck);
-      clearTimeout(tBadge);
-      clearTimeout(tHide);
-      clearTimeout(tDone);
-    };
-  }, [total, scoreValue, onDone]);
-
-  const getBadgeStyle = (rec: string) => {
-    switch (rec) {
-      case 'Peak': return { color: '#ffffff', borderColor: 'rgba(255,255,255,0.4)', backgroundColor: 'rgba(255,255,255,0.1)' };
-      case 'Yes': return { color: '#52b044', borderColor: '#52b044', backgroundColor: 'rgba(82,176,68,0.1)' };
-      case 'No': return { color: '#e63232', borderColor: '#e63232', backgroundColor: 'rgba(230,50,50,0.1)' };
-      case 'Garbage': return { color: '#6b6b6b', borderColor: '#6b6b6b', backgroundColor: 'rgba(107,107,107,0.1)' };
-      default: return { display: 'none' };
-    }
-  };
+    return () => { timers.forEach(t => t && clearTimeout(t)); };
+  }, [total, scoreValue, reduceMotion]);
 
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
           className="score-reveal-overlay"
+          role="status"
+          aria-live="polite"
+          aria-label={`${title}: ${total.toFixed(1)} out of 10. ${isUpdate ? 'Updated' : 'Added to vault'}.`}
+          onClick={finish}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.04 }}
+          exit={{ opacity: 0, scale: reduceMotion ? 1 : 1.04 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="score-reveal-content">
+          <div className="score-reveal-content" aria-hidden="true">
             <motion.div
               className="score-reveal-title"
               initial={{ opacity: 0, y: 10 }}
@@ -69,40 +94,27 @@ export default function ScoreReveal({ total, title, recommend, isUpdate, onDone 
               {title}
             </motion.div>
 
-            <div style={{ position: 'relative' }}>
+            <div className="score-reveal-score">
               <motion.div className="score-reveal-number">
                 {displayScore}
               </motion.div>
               <div className="score-reveal-denom">/10</div>
-              
-              {particles.map((i) => {
-                const angle = (i / particles.length) * 2 * Math.PI;
-                const radius = 60 + Math.random() * 40;
-                const x = Math.cos(angle) * radius;
-                const y = Math.sin(angle) * radius;
-                return (
-                  <motion.div
-                    key={i}
-                    className="score-reveal-particle"
-                    initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
-                    animate={{ x, y, opacity: 0, scale: 1.5 }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                    style={{
-                      left: '50%',
-                      top: '50%',
-                      marginLeft: '-2.5px',
-                      marginTop: '-2.5px',
-                    }}
-                  />
-                );
-              })}
+
+              {particles.map(p => (
+                <motion.div
+                  key={p.id}
+                  className="score-reveal-particle"
+                  initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                  animate={{ x: p.x, y: p.y, opacity: 0, scale: 1.5 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                />
+              ))}
             </div>
 
             <AnimatePresence>
-              {showBadge && recommend && (
+              {showBadge && RECOMMEND_CLASS[recommend] && (
                 <motion.div
-                  className="score-reveal-recommend"
-                  style={getBadgeStyle(recommend)}
+                  className={`score-reveal-recommend ${RECOMMEND_CLASS[recommend]}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
@@ -117,9 +129,8 @@ export default function ScoreReveal({ total, title, recommend, isUpdate, onDone 
                   className="score-reveal-success-container"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginTop: '20px' }}
                 >
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#e63232" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="score-reveal-check" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <motion.polyline
                       points="20 6 9 17 4 12"
                       initial={{ pathLength: 0 }}
@@ -128,11 +139,13 @@ export default function ScoreReveal({ total, title, recommend, isUpdate, onDone 
                     />
                   </svg>
                   <div className="score-reveal-success">
-                    {isUpdate ? 'Updated' : 'Added to Vault'}
+                    {isUpdate ? 'Updated' : 'Added to vault'}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            <p className="score-reveal-skip">Tap to continue</p>
           </div>
         </motion.div>
       )}

@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, X, Film } from 'lucide-react';
+import { X, Film } from 'lucide-react';
+import { useAuth } from '@/components/layout/AuthProvider';
 
 interface OnThisDayMatch {
   id: string;
-  movie_id: string;
-  watched_at: string;
   yearsAgo: number;
   movie: {
     id: string;
@@ -18,80 +17,56 @@ interface OnThisDayMatch {
   };
 }
 
+/** "On this day N years ago you watched…" banner, from the signed-in member's diary. */
 export default function OnThisDayWidget() {
-  const [match, setMatch] = useState<OnThisDayMatch | null>(null);
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+  const [match, setMatch] = useState<{ userId: string; data: OnThisDayMatch } | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Use targeted server-side filter — returns at most 1 matching entry
-    fetch('/api/diary?onThisDay=true')
-      .then(r => r.json())
+    if (!userId) return; // diary is members-only — guests would just get a 401
+    const ctrl = new AbortController();
+    fetch('/api/diary?onThisDay=true', { signal: ctrl.signal })
+      .then(r => (r.ok ? r.json() : null))
       .then(data => {
-        const entries = data.diary ?? [];
-        if (!entries.length) return;
-        const entry = entries[0];
-        if (!entry.watched_at || !entry.movie) return;
-        const entryYear = new Date(entry.watched_at).getFullYear();
-        const currentYear = new Date().getFullYear();
-        setMatch({
-          id: entry.id,
-          movie_id: entry.movie_id,
-          watched_at: entry.watched_at,
-          yearsAgo: currentYear - entryYear,
-          movie: entry.movie,
-        });
+        const entry = data?.diary?.[0];
+        if (!entry?.watched_at || !entry.movie) return;
+        const yearsAgo = new Date().getFullYear() - new Date(entry.watched_at).getFullYear();
+        if (yearsAgo < 1) return;
+        setMatch({ userId, data: { id: entry.id, yearsAgo, movie: entry.movie } });
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => { /* aborted or offline */ });
+    return () => ctrl.abort();
+  }, [userId]);
 
-  if (!match || dismissed) return null;
-
-  const poster = match.movie.poster_url;
+  // Ignore a match that belongs to a previous session (e.g. after sign-out).
+  if (!match || match.userId !== userId || dismissed) return null;
+  const { yearsAgo, movie } = match.data;
 
   return (
-    <div
-      className="on-this-day-widget"
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '14px 18px',
-        marginBottom: 24,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ flexShrink: 0, position: 'relative', width: 44, height: 62, borderRadius: 6, overflow: 'hidden', background: '#111' }}>
-          {poster ? (
-            <Image src={poster} alt={match.movie.title} fill sizes="44px" style={{ objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Film size={20} color="rgba(255,255,255,0.3)" />
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', color: 'var(--red)' }}>
-            <Calendar size={12} />
-            <span>On This Day ({match.yearsAgo} Year{match.yearsAgo > 1 ? 's' : ''} Ago)</span>
-          </div>
-          <p style={{ margin: '4px 0 0', fontSize: 14, fontWeight: 600, color: '#fff' }}>
-            You watched <Link href={`/vault/${match.movie_id}`} style={{ color: 'var(--red)', textDecoration: 'underline' }}>{match.movie.title}</Link> {match.movie.year ? `(${match.movie.year})` : ''}
-          </p>
-        </div>
+    <aside className="otd-banner" aria-label="On this day">
+      <div className="otd-banner-poster">
+        {movie.poster_url ? (
+          <Image src={movie.poster_url} alt="" fill sizes="44px" className="otd-banner-poster-img" />
+        ) : (
+          <Film size={16} aria-hidden="true" />
+        )}
       </div>
 
-      <button
-        onClick={() => setDismissed(true)}
-        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}
-        title="Dismiss banner"
-      >
-        <X size={16} />
+      <div className="otd-banner-text">
+        <p className="otd-banner-eyebrow">
+          On this day · {yearsAgo} year{yearsAgo > 1 ? 's' : ''} ago
+        </p>
+        <p className="otd-banner-body">
+          You watched <Link href="/diary" className="otd-banner-link">{movie.title}</Link>
+          {movie.year ? ` (${movie.year})` : ''}
+        </p>
+      </div>
+
+      <button type="button" className="icon-btn" onClick={() => setDismissed(true)} aria-label="Dismiss">
+        <X size={16} aria-hidden="true" />
       </button>
-    </div>
+    </aside>
   );
 }

@@ -1,3 +1,4 @@
+import { RECOMMEND_COLOR } from '@/lib/config';
 import type { Entry } from '@/lib/types';
 
 interface ScoreDistributionProps {
@@ -62,124 +63,79 @@ export default function ScoreDistribution({ entries }: ScoreDistributionProps) {
   const maxDecade = Math.max(...decades.map(d => d.count), 1);
 
   // ── Recommend Split ───────────────────────────────────────────────────
-  const RECOMMEND_COLORS: Record<string, string> = {
-    Peak:    '#ffffff',
-    Yes:     '#52b044',
-    No:      '#e63232',
-    Garbage: '#6b6b6b',
-  };
   const recommendCounts = ['Peak', 'Yes', 'No', 'Garbage'].map(r => ({
     label: r,
     count: entries.filter(e => e.recommend === r).length,
-    color: RECOMMEND_COLORS[r],
+    color: RECOMMEND_COLOR[r],
   })).filter(r => r.count > 0);
   const totalRecommend = recommendCounts.reduce((s, r) => s + r.count, 0);
 
   return (
     <div className="stat-card">
-      <p className="stat-card-label">Score Distribution</p>
-      <div className="score-dist-chart" style={{ display: 'flex', alignItems: 'flex-end', height: 160, gap: 16, marginTop: 24, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        {counts.map(b => {
-          const pct = (b.count / max) * 100;
-          return (
-            <div key={b.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 6 }}>{b.count > 0 ? b.count : ''}</span>
-              <div style={{ width: '100%', background: 'rgba(255,255,255,0.03)', borderRadius: 4, height: '100%', display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: '100%',
-                    height: `${pct}%`,
-                    background: 'var(--red)',
-                    borderRadius: 2,
-                    transition: 'height 0.6s cubic-bezier(0.22,1,0.36,1)',
-                  }}
-                />
-              </div>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8, whiteSpace: 'nowrap' }}>{b.label}</span>
+      <h3 className="stat-card-label">Score distribution</h3>
+      <div className="score-dist-chart" role="img" aria-label="Number of films per score range">
+        {counts.map(b => (
+          <div key={b.label} className="score-dist-col">
+            <span className="score-dist-count">{b.count > 0 ? b.count : ''}</span>
+            <div className="score-dist-bar-wrap">
+              <div className="score-dist-bar-fill" style={{ height: `${(b.count / max) * 100}%` }} />
             </div>
-          );
-        })}
+            <span className="score-dist-label">{b.label}</span>
+          </div>
+        ))}
       </div>
 
-      {/* ── Rating Insights ─────────────────────────────────────────── */}
-      <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 12px' }}>
-          Rating Insights
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-dim)' }}>
-            Median score: <strong style={{ color: 'var(--text)' }}>{median.toFixed(1)}</strong>
-          </span>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-dim)' }}>
-            <strong style={{ color: 'var(--text)' }}>{highSharePct}%</strong> of films rated 8 or higher
-          </span>
-          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-dim)' }}>
-            Most common: <strong style={{ color: 'var(--text)' }}>{dominant.label}</strong> ({dominant.count} film{dominant.count === 1 ? '' : 's'})
-          </span>
+      <div className="stat-subsection">
+        <h4 className="stat-subsection-title">Insights</h4>
+        <ul className="stat-facts">
+          <li>Median score: <strong>{median.toFixed(1)}</strong></li>
+          <li><strong>{highSharePct}%</strong> of films rated 8 or higher</li>
+          <li>Most common: <strong>{dominant.label}</strong> ({dominant.count} film{dominant.count === 1 ? '' : 's'})</li>
           {ratedTotals.length >= 5 && (
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-dim)' }}>
-              Score range: <strong style={{ color: 'var(--text)' }}>{minScore.toFixed(1)} – {maxScore.toFixed(1)}</strong>
-            </span>
+            <li>Score range: <strong>{minScore.toFixed(1)} – {maxScore.toFixed(1)}</strong></li>
           )}
-        </div>
+        </ul>
       </div>
 
-      {/* ── Recommend Split ──────────────────────────────────────────── */}
       {totalRecommend > 0 && (
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 12px' }}>
-            Verdict Split
-          </p>
-          {/* Stacked segment bar */}
-          <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', marginBottom: 12 }}>
+        <div className="stat-subsection">
+          <h4 className="stat-subsection-title">Verdict split</h4>
+          <div className="stat-stack-bar" aria-hidden="true">
             {recommendCounts.map(r => (
-              <div
+              <span
                 key={r.label}
                 title={`${r.label}: ${r.count}`}
-                style={{
-                  width: `${(r.count / totalRecommend) * 100}%`,
-                  background: r.color,
-                  transition: 'width 0.5s ease',
-                }}
+                style={{ width: `${(r.count / totalRecommend) * 100}%`, background: r.color }}
               />
             ))}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>
+          <ul className="stat-legend">
             {recommendCounts.map(r => (
-              <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.color, display: 'inline-block', flexShrink: 0 }} />
-                <span style={{ fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--text-dim)' }}>
-                  {r.label} <strong style={{ color: 'var(--text)' }}>{r.count}</strong>
-                </span>
-              </div>
+              <li key={r.label} className="stat-legend-item">
+                <span className="stat-legend-dot" style={{ background: r.color }} />
+                {r.label} <strong>{r.count}</strong>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
-      {/* ── Decade Breakdown ─────────────────────────────────────────── */}
       {decades.length > 1 && (
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <p style={{ fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 14px' }}>
-            Decade Breakdown
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {decades.map(d => {
-              const pct = Math.round((d.count / maxDecade) * 100);
-              return (
-                <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-muted)', width: 56, flexShrink: 0 }}>{d.label}</span>
-                  <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ width: `${pct}%`, height: '100%', background: 'var(--red)', borderRadius: 3, opacity: 0.75, transition: 'width 0.5s ease' }} />
-                  </div>
-                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: 11, color: 'var(--text-dim)', width: 24, textAlign: 'right' }}>{d.count}</span>
+        <div className="stat-subsection">
+          <h4 className="stat-subsection-title">Decades</h4>
+          <div className="genre-bar-list">
+            {decades.map(d => (
+              <div key={d.label} className="genre-bar-row">
+                <span className="genre-bar-name">{d.label}</span>
+                <div className="genre-bar-track">
+                  <div className="genre-bar-fill" style={{ width: `${Math.round((d.count / maxDecade) * 100)}%` }} />
                 </div>
-              );
-            })}
+                <span className="genre-bar-count">{d.count}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
     </div>
   );
 }
-

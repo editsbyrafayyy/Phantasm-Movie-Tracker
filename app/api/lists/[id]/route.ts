@@ -59,14 +59,18 @@ export async function PATCH(
     const { title, description, is_public, addMovieId, removeMovieId } = body;
 
     // 1. Update metadata if provided
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: Record<string, unknown> = {};
     if (typeof title === 'string' && title.trim()) updatePayload.title = title.trim();
     if (typeof description === 'string') updatePayload.description = description.trim();
     if (typeof is_public === 'boolean') updatePayload.is_public = is_public;
 
     if (Object.keys(updatePayload).length > 0) {
       updatePayload.updated_at = new Date().toISOString();
-      await supabase.from('lists').update(updatePayload).eq('id', id);
+      const { error: updateError } = await supabase.from('lists').update(updatePayload).eq('id', id);
+      if (updateError) {
+        console.error('PATCH /api/lists/[id] update error:', updateError);
+        return NextResponse.json({ error: 'Failed to update list' }, { status: 500 });
+      }
     }
 
     // 2. Add movie to list if requested
@@ -81,26 +85,34 @@ export async function PATCH(
 
       const nextPos = (items?.[0]?.position ?? -1) + 1;
 
-      await supabase.from('list_items').upsert({
+      const { error: addError } = await supabase.from('list_items').upsert({
         list_id: id,
         movie_id: addMovieId,
         position: nextPos,
       }, { onConflict: 'list_id,movie_id' });
+      if (addError) {
+        console.error('PATCH /api/lists/[id] add item error:', addError);
+        return NextResponse.json({ error: 'Failed to update list' }, { status: 500 });
+      }
     }
 
     // 3. Remove movie from list if requested
     if (removeMovieId) {
-      await supabase
+      const { error: removeError } = await supabase
         .from('list_items')
         .delete()
         .eq('list_id', id)
         .eq('movie_id', removeMovieId);
+      if (removeError) {
+        console.error('PATCH /api/lists/[id] remove item error:', removeError);
+        return NextResponse.json({ error: 'Failed to update list' }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error('PATCH /api/lists/[id] error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to update list' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update list' }, { status: 500 });
   }
 }
 
@@ -128,7 +140,11 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  await supabase.from('lists').delete().eq('id', id);
+  const { error: deleteError } = await supabase.from('lists').delete().eq('id', id);
+  if (deleteError) {
+    console.error('DELETE /api/lists/[id] error:', deleteError);
+    return NextResponse.json({ error: 'Failed to delete list' }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true });
 }

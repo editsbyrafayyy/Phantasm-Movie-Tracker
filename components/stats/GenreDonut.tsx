@@ -5,8 +5,8 @@ interface GenreDonutProps {
 export default function GenreDonut({ data }: GenreDonutProps) {
   if (!data.length) {
     return (
-      <div className="stat-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 160 }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No genre data yet.</p>
+      <div className="stat-card stat-card-empty">
+        <p>No genre data yet.</p>
       </div>
     );
   }
@@ -22,7 +22,7 @@ export default function GenreDonut({ data }: GenreDonutProps) {
 
   return (
     <div className="stat-card">
-      <p className="stat-card-label">Top Genres</p>
+      <h3 className="stat-card-label">Top subgenres</h3>
       <div className="genre-bar-list">
         {list.map(item => (
           <div key={item.subgenre} className="genre-bar-row">

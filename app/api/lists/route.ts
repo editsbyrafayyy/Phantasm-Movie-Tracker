@@ -22,6 +22,7 @@ export async function GET() {
     const { data: lists, error } = await query;
     if (error) {
       // If table doesn't exist yet, return empty array gracefully
+      console.error('GET /api/lists error:', error);
       return NextResponse.json({ lists: [] });
     }
 
@@ -75,12 +76,18 @@ export async function POST(req: NextRequest) {
         position: idx,
       }));
 
-      await supabase.from('list_items').insert(itemsToInsert);
+      const { error: itemsError } = await supabase.from('list_items').insert(itemsToInsert);
+      if (itemsError) {
+        console.error('POST /api/lists items insert error:', itemsError);
+        // Roll back the half-created list so the user can retry cleanly
+        await supabase.from('lists').delete().eq('id', list.id);
+        return NextResponse.json({ error: 'Failed to create list' }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ list });
-  } catch (err: any) {
+  } catch (err) {
     console.error('POST /api/lists error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to create list' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to create list' }, { status: 500 });
   }
 }
