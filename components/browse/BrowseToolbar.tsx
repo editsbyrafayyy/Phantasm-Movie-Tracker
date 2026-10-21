@@ -41,7 +41,14 @@ export default function BrowseToolbar({
 
   return (
     <div className="browse-toolbar">
-      <div className="browse-segmented" role="radiogroup" aria-label="Media type" onKeyDown={onSegmentKey}>
+      <div
+        className="browse-segmented"
+        role="radiogroup"
+        aria-label="Media type"
+        onKeyDown={onSegmentKey}
+        style={{ '--seg-index': TYPES.findIndex(t => t.value === mediaType) } as React.CSSProperties}
+      >
+        <span className="browse-segment-pill" aria-hidden="true" />
         {TYPES.map(t => {
           const checked = mediaType === t.value;
           return (

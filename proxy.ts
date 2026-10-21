@@ -63,7 +63,7 @@ export async function proxy(req: NextRequest) {
 
   // Members-only routes. /stream (discovery) and /stream/tmdb/<id> (info page) are
   // public; only the player at /stream/<id> needs an account.
-  const membersOnly = ['/add', '/update', '/profile', '/stats', '/watchlist', '/api/add-movie', '/api/stats'];
+  const membersOnly = ['/add', '/update', '/profile', '/admin', '/stats', '/watchlist', '/api/add-movie', '/api/stats'];
   const isStreamPlayer = pathname.startsWith('/stream/') && !pathname.startsWith('/stream/tmdb/');
   if ((isStreamPlayer || membersOnly.some(p => pathname.startsWith(p))) && !user) {
     // API callers get a JSON 401 instead of an HTML redirect
