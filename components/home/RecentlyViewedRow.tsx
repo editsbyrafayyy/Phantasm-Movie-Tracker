@@ -63,6 +63,8 @@ export default function RecentlyViewedRow({ reserve = false }: { reserve?: boole
   const items = useSyncExternalStore(subscribe, readItems, () => EMPTY);
   const [hydrated, setHydrated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [clearing, setClearing] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
@@ -95,6 +97,32 @@ export default function RecentlyViewedRow({ reserve = false }: { reserve?: boole
     ro.observe(el);
     return () => ro.disconnect();
   }, [items.length]);
+
+  // Fade the row out and fold its height (and margins) away, then clear —
+  // removing it in one frame made everything below jump up.
+  const handleClear = () => {
+    const el = sectionRef.current;
+    if (!el || clearing) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      clearItems();
+      return;
+    }
+    setClearing(true);
+    const cs = getComputedStyle(el);
+    el.style.overflow = 'hidden';
+    const anim = el.animate(
+      [
+        { height: `${el.offsetHeight}px`, marginTop: cs.marginTop, marginBottom: cs.marginBottom, opacity: 1 },
+        { opacity: 0, offset: 0.35 },
+        { height: '0px', marginTop: '0px', marginBottom: '0px', opacity: 0 },
+      ],
+      { duration: 450, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+    );
+    anim.onfinish = () => {
+      clearItems();
+      setClearing(false);
+    };
+  };
 
   const scrollByAmount = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
@@ -130,7 +158,7 @@ export default function RecentlyViewedRow({ reserve = false }: { reserve?: boole
   }
 
   return (
-    <section className="category-section recently-viewed-section" aria-labelledby="recently-viewed-heading">
+    <section ref={sectionRef} className="category-section recently-viewed-section" aria-labelledby="recently-viewed-heading">
       <div className="category-header">
         <div className="category-header-title-group">
           <h2 id="recently-viewed-heading" className="category-heading">Recently viewed</h2>
@@ -138,7 +166,7 @@ export default function RecentlyViewedRow({ reserve = false }: { reserve?: boole
         </div>
 
         <div className="category-header-actions">
-          <button type="button" className="text-btn" onClick={clearItems}>
+          <button type="button" className="text-btn" onClick={handleClear} disabled={clearing}>
             Clear
           </button>
           {items.length > 4 && (

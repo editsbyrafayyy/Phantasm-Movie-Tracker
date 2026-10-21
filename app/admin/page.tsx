@@ -7,6 +7,8 @@ import { selectAll } from '@/lib/selectAll';
 import PageHeader from '@/components/ui/PageHeader';
 import AdminActions from '@/components/admin/AdminActions';
 import ResetPasswordForm from '@/components/admin/ResetPasswordForm';
+import CatalogFixButton from '@/components/admin/CatalogFixButton';
+import { CATALOG_FIELDS, missingArtwork, missingDetails, missingImdb, needsFix, type CatalogMovie } from '@/lib/catalogHealth';
 
 export const metadata: Metadata = {
   title: 'Admin — Phantasm',
@@ -19,15 +21,31 @@ interface EntryRow {
   id: string; user_id: string; movie_id: string; total: number | null; created_at: string;
   movie: { title: string } | null;
 }
-interface MovieRow {
-  id: string; title: string; year: number | null; poster_url: string | null; backdrop_url: string | null;
-  runtime_min: number | null; imdb_rating: number | null;
-}
 
 const shortDate = (ts: string) =>
   new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
 const PREVIEW = 6;
+
+/** Your own entries link to Edit (where "Fix match" re-picks the film); others open read-only. */
+function HealthItem({ movie, entry }: { movie: CatalogMovie; entry?: { id: string; own: boolean } }) {
+  const label = <>{movie.title}{movie.year ? ` (${movie.year})` : ''}</>;
+  return (
+    <li>
+      {entry ? (
+        <Link href={entry.own ? `/update?id=${entry.id}` : `/vault/${entry.id}`} className="health-item">
+          <span className="health-item-title">{label}</span>
+          <span className="health-item-action">{entry.own ? 'Edit' : 'Open'}</span>
+        </Link>
+      ) : (
+        <span className="health-item">
+          <span className="health-item-title">{label}</span>
+          <span className="health-item-note">Not in anyone&rsquo;s vault</span>
+        </span>
+      )}
+    </li>
+  );
+}
 
 export default async function AdminPage() {
   const supabase = await createServerSupabaseClient();
@@ -48,11 +66,11 @@ export default async function AdminPage() {
       .select('id, user_id, movie_id, total, created_at, movie:movies (title)')
       .order('created_at', { ascending: false })
       .range(a, b) as unknown as PromiseLike<{ data: EntryRow[] | null; error: unknown }>),
-    selectAll<MovieRow>((a, b) => service
+    selectAll<CatalogMovie>((a, b) => service
       .from('movies')
-      .select('id, title, year, poster_url, backdrop_url, runtime_min, imdb_rating')
+      .select(CATALOG_FIELDS)
       .order('title')
-      .range(a, b)),
+      .range(a, b) as unknown as PromiseLike<{ data: CatalogMovie[] | null; error: unknown }>),
     selectAll<{ movie_id: string }>((a, b) => service.from('list_items').select('movie_id').order('movie_id').range(a, b)),
     service.from('watchlist').select('id', { count: 'exact', head: true }),
   ]);
@@ -78,17 +96,19 @@ export default async function AdminPage() {
   const nameOf = new Map(members.map(m => [m.id, m.display_name || m.username]));
 
   // ── Catalog health ──────────────────────────────────────────────────────
-  const entryFor = new Map<string, string>();
+  const entryFor = new Map<string, { id: string; own: boolean }>();
   for (const e of entries) {
     // Prefer the owner's entry so "fix" links land on an editable page.
-    if (!entryFor.has(e.movie_id) || e.user_id === OWNER_ID) entryFor.set(e.movie_id, e.id);
+    const own = e.user_id === OWNER_ID;
+    if (!entryFor.has(e.movie_id) || own) entryFor.set(e.movie_id, { id: e.id, own });
   }
   const listed = new Set(listRes.data.map(r => r.movie_id));
   const health = [
-    { title: 'Missing artwork', items: movies.filter(m => !m.poster_url && !m.backdrop_url) },
-    { title: 'Missing year or runtime', items: movies.filter(m => !m.year || !m.runtime_min) },
-    { title: 'No IMDb rating', items: movies.filter(m => !m.imdb_rating) },
+    { title: 'Missing artwork', items: movies.filter(missingArtwork) },
+    { title: 'Missing year or runtime', items: movies.filter(missingDetails) },
+    { title: 'No IMDb rating', items: movies.filter(missingImdb) },
   ];
+  const needsFixCount = movies.filter(needsFix).length;
   const orphanCount = movies.filter(m => !entryFor.has(m.id) && !listed.has(m.id)).length;
 
   const overview = [
@@ -184,30 +204,21 @@ export default async function AdminPage() {
                 <div key={h.title} className="health-group">
                   <h3 className="health-group-title">{h.title} <span className="health-count">{h.items.length}</span></h3>
                   <ul className="health-list">
-                    {h.items.slice(0, PREVIEW).map(m => {
-                      const entryId = entryFor.get(m.id);
-                      const label = <>{m.title}{m.year ? ` (${m.year})` : ''}</>;
-                      return (
-                        <li key={m.id}>
-                          {entryId ? (
-                            <Link href={`/vault/${entryId}`} className="health-item">
-                              <span className="health-item-title">{label}</span>
-                              <span className="health-item-action">Open</span>
-                            </Link>
-                          ) : (
-                            <span className="health-item"><span className="health-item-title">{label}</span></span>
-                          )}
-                        </li>
-                      );
-                    })}
+                    {h.items.slice(0, PREVIEW).map(m => <HealthItem key={m.id} movie={m} entry={entryFor.get(m.id)} />)}
                   </ul>
                   {h.items.length > PREVIEW && (
-                    <p className="health-more">+ {h.items.length - PREVIEW} more</p>
+                    <details className="health-more-toggle">
+                      <summary>Show {h.items.length - PREVIEW} more</summary>
+                      <ul className="health-list">
+                        {h.items.slice(PREVIEW).map(m => <HealthItem key={m.id} movie={m} entry={entryFor.get(m.id)} />)}
+                      </ul>
+                    </details>
                   )}
                 </div>
               ))}
             </div>
           )}
+          {needsFixCount > 0 && <CatalogFixButton total={needsFixCount} />}
         </section>
 
         <section className="stat-card" aria-labelledby="admin-maint">
