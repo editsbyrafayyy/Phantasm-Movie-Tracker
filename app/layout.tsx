@@ -9,9 +9,11 @@ import GlobalShortcuts  from '@/components/layout/GlobalShortcuts';
 import MobileBottomNav  from '@/components/layout/MobileBottomNav';
 import WatchProgressTracker from '@/components/stream/WatchProgressTracker';
 
+// Variable font (no `weight`): Google can serve static Inter weights as
+// `/l/font?kit=…&v=…` URLs, which Turbopack's next/font loader fails to resolve
+// on Vercel ("next/font/google queries have exactly one entry").
 const inter = Inter({
   subsets:  ['latin'],
-  weight:   ['400', '500', '600', '700'],
   variable: '--font-inter',
   display:  'swap',
 });

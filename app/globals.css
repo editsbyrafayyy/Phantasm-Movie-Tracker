@@ -2070,7 +2070,7 @@ select:focus-visible {
 .vdetail-top { grid-area:top;min-width:0; }
 .vdetail-side { grid-area:side;align-self:start;position:sticky;top:80px;padding:20px 20px 4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg); }
 .vdetail-rest { grid-area:rest;min-width:0; }
-.vdetail-plot { max-width:65ch;margin:0 0 28px;font-family:var(--font-sans);font-size:16px;font-weight:300;line-height:1.75;color:var(--text); }
+.vdetail-plot { max-width:65ch;margin:0 0 28px;font-family:var(--font-sans);font-size:16px;font-weight:400;line-height:1.75;color:var(--text); }
 .vdetail-note { margin:0 0 28px; }
 .vdetail-note-text { margin:0;font-family:var(--font-serif);font-style:italic;font-size:19px;line-height:1.55;color:var(--text);white-space:pre-wrap; }
 .vdetail-note-label { margin-top:8px;font-family:var(--font-sans);font-size:12px;color:var(--text-muted); }
@@ -5310,7 +5310,7 @@ select:focus-visible {
 }
 .roulette-score-val {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--red);
   font-family: var(--font-sans);
   line-height: 1;
