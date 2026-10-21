@@ -6,16 +6,16 @@ import Image from 'next/image';
 import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMovieFranchise, FRANCHISE_TOTALS } from '@/lib/config';
 import type { RelatedEntry } from '@/lib/types';
+import { gridPosterUrl } from './posterSrc';
 
 interface FranchiseTrackProps {
   currentId:    string;
   currentTitle: string;
   /** Candidate entries (usually pre-filtered to this franchise on the server). */
   entries:      RelatedEntry[];
-  diaryMap?:    Record<string, number>;
 }
 
-export default function FranchiseTrack({ currentId, currentTitle, entries, diaryMap }: FranchiseTrackProps) {
+export default function FranchiseTrack({ currentId, currentTitle, entries }: FranchiseTrackProps) {
   const franchiseName = useMemo(() => getMovieFranchise(currentTitle), [currentTitle]);
 
   const series = useMemo(() => {
@@ -112,59 +112,47 @@ export default function FranchiseTrack({ currentId, currentTitle, entries, diary
   const pct = Math.min(100, Math.round((series.length / totalFilms) * 100));
 
   return (
-    <section 
-      className={`franchise-track-section${isComplete ? ' is-complete' : ''}`}
-      aria-label={`${franchiseName} Series Track`}
+    <section
+      className={`vdetail-section franchise-track-section${isComplete ? ' is-complete' : ''}`}
+      aria-labelledby="franchise-track-heading"
     >
-      {/* Header */}
       <div className="franchise-track-header">
         <div className="franchise-title-group">
-          <p className="franchise-kicker">Franchise</p>
-          <div className="franchise-main-title">
-            <h2 className="franchise-track-title">{franchiseName}</h2>
-            {isComplete && <span className="franchise-complete-badge">Complete</span>}
+          <h2 id="franchise-track-heading" className="vdetail-h2">{franchiseName}</h2>
+          <div className="franchise-progress" aria-label={`${series.length} of ${totalFilms} films rated`}>
+            <span className="franchise-progress-count">
+              {series.length} of {totalFilms} rated{isComplete ? ' · complete' : ''}
+            </span>
+            <span className="franchise-progress-bar-bg" aria-hidden="true">
+              <span className="franchise-progress-bar-fill" style={{ width: `${pct}%` }} />
+            </span>
           </div>
         </div>
 
-        {/* Progress & Nav Controls */}
-        <div className="franchise-header-controls">
-          <div className="franchise-progress-container">
-            <div className="franchise-progress-labels">
-              <span className="franchise-progress-count">{series.length} of {totalFilms} rated</span>
-              <span className="franchise-progress-pct">{pct}%</span>
-            </div>
-            <div className="franchise-progress-bar-bg">
-              <div 
-                className="franchise-progress-bar-fill" 
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
-
+        {(canScrollLeft || canScrollRight) && (
           <div className="franchise-nav-buttons">
             <button
               type="button"
-              className="franchise-nav-btn"
+              className="icon-btn franchise-nav-btn"
               onClick={() => scrollByAmount('left')}
               disabled={!canScrollLeft}
               aria-label="Scroll left"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
             <button
               type="button"
-              className="franchise-nav-btn"
+              className="icon-btn franchise-nav-btn"
               onClick={() => scrollByAmount('right')}
               disabled={!canScrollRight}
               aria-label="Scroll right"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Carousel Wrapper with Edge Gradient Masks */}
       <div className={`franchise-carousel-wrapper${canScrollLeft ? ' has-left-fade' : ''}${canScrollRight ? ' has-right-fade' : ''}`}>
         <div
           ref={scrollRef}
@@ -177,15 +165,17 @@ export default function FranchiseTrack({ currentId, currentTitle, entries, diary
         >
           {series.map(entry => {
             const isCurrent = entry.id === currentId;
-            const poster = entry.movie?.poster_url;
+            const poster = gridPosterUrl(entry.movie?.poster_url ?? null);
             const title = entry.movie?.title ?? 'Unknown';
             const year = entry.movie?.year;
+            const scored = entry.total !== null && entry.total > 0;
 
             return (
               <Link
                 key={entry.id}
                 href={`/vault/${entry.id}`}
                 aria-current={isCurrent ? 'page' : undefined}
+                aria-label={`${title}${year ? ` (${year})` : ''}${scored ? `, score ${entry.total}` : ''}${isCurrent ? ', this film' : ''}`}
                 className={`franchise-track-card${isCurrent ? ' active' : ''}`}
                 onClick={(e) => {
                   if (hasDragged.current) {
@@ -201,7 +191,7 @@ export default function FranchiseTrack({ currentId, currentTitle, entries, diary
                       src={poster}
                       alt=""
                       fill
-                      sizes="110px"
+                      sizes="106px"
                       className="detail-cover-img"
                       draggable={false}
                     />
@@ -210,29 +200,12 @@ export default function FranchiseTrack({ currentId, currentTitle, entries, diary
                       <Film size={32} aria-hidden="true" />
                     </div>
                   )}
-
-                  {/* Badges without collision: Score on Top-Left, Rewatch on Top-Right */}
-                  {entry.total !== null && entry.total > 0 && (
-                    <span className="franchise-score-badge">{entry.total}</span>
-                  )}
-
-                  {entry.movie?.id && diaryMap && (diaryMap[entry.movie.id] ?? 0) > 1 && (
-                    <span className="franchise-rewatch-badge" title={`${diaryMap[entry.movie.id]} viewings`}>
-                      {diaryMap[entry.movie.id]}×
-                    </span>
-                  )}
-
-                  {/* Active Entry Status */}
-                  {isCurrent && (
-                    <div className="franchise-current-badge">
-                      <span>Viewing</span>
-                    </div>
-                  )}
+                  {scored && <span className="movie-card-score franchise-score-badge" aria-hidden="true">{entry.total}</span>}
                 </div>
 
-                <div className="franchise-card-meta">
+                <div className="franchise-card-meta" aria-hidden="true">
                   <p className="franchise-card-title" title={title}>{title}</p>
-                  {year && <p className="franchise-card-year">{year}</p>}
+                  <p className="franchise-card-year">{isCurrent ? 'This film' : year ?? ''}</p>
                 </div>
               </Link>
             );

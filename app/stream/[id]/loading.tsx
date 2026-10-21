@@ -1,77 +1,73 @@
+/**
+ * Skeleton for the player page. Mirrors VideoPlayerClient's movie layout box for box:
+ * title row, 16:9 player, icon buttons, notice, server grid | poster card, title,
+ * synopsis, genres, trailer and cast in the sidebar.
+ */
 export default function WatchLoading() {
   return (
-    <div className="watch-page">
-      <div className="watch-layout">
-        {/* Left Column: Video Player & Source Selection */}
-        <div className="watch-player-col" style={{ padding: '24px' }}>
-          {/* Header Row */}
-          <div className="watch-back-header" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div className="skeleton" style={{ width: 32, height: 32, borderRadius: 6 }} />
-            <div className="skeleton" style={{ width: 220, height: 20, borderRadius: 4 }} />
+    <div className="watch-page watch-skel" aria-busy="true" aria-label="Loading player">
+      <div className="watch-layout" aria-hidden="true">
+        <div className="watch-player-col watch-skel-col">
+          <div className="watch-skel-header">
+            <div className="skeleton watch-skel-chevron" />
+            <div className="skeleton watch-skel-title" />
           </div>
 
-          {/* 16:9 Video Player Container Skeleton */}
-          <div
-            className="skeleton"
-            style={{
-              width: '100%',
-              aspectRatio: '16/9',
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.06)',
-              marginBottom: 16,
-            }}
-          />
+          <div className="skeleton watch-skel-player" />
 
-          {/* Under player controls row */}
-          <div className="watch-actions-row" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 16 }}>
-            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 8 }} />
-            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 8 }} />
+          <div className="watch-skel-actions">
+            <div className="skeleton watch-skel-icon" />
+            <div className="skeleton watch-skel-icon" />
           </div>
 
-          {/* Warning banner placeholder */}
-          <div className="skeleton" style={{ width: '100%', height: 44, borderRadius: 8, marginBottom: 24 }} />
+          <div className="skeleton watch-skel-notice" />
 
-          {/* Server provider grid skeleton */}
-          <div className="watch-server-grid-container" style={{ marginBottom: 24 }}>
-            <div className="skeleton" style={{ width: 140, height: 16, borderRadius: 4, marginBottom: 12 }} />
-            <div className="watch-server-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="skeleton" style={{ height: 38, borderRadius: 8, animationDelay: `${i * 40}ms` }} />
+          <div className="watch-skel-servers">
+            <div className="skeleton watch-skel-label" />
+            <div className="watch-skel-server-grid">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="skeleton watch-skel-server" />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right Column: Sidebar */}
-        <aside className="watch-sidebar" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', background: '#0a0a0a', padding: '24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Poster & metadata */}
-          <div className="watch-sidebar-poster-card" style={{ display: 'flex', gap: 16 }}>
-            <div className="skeleton" style={{ width: 90, height: 130, borderRadius: 8, flexShrink: 0 }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center', flex: 1 }}>
-              <div className="skeleton" style={{ width: '90%', height: 18, borderRadius: 4 }} />
-              <div className="skeleton" style={{ width: '60%', height: 13, borderRadius: 3 }} />
-              <div className="skeleton" style={{ width: '40%', height: 13, borderRadius: 3 }} />
+        <aside className="watch-skel-sidebar">
+          <div className="watch-skel-poster-card">
+            <div className="skeleton watch-skel-poster" />
+            <div className="watch-skel-facts">
+              <div className="skeleton watch-skel-line is-70" />
+              <div className="skeleton watch-skel-line is-90" />
+              <div className="skeleton watch-skel-line is-60" />
             </div>
           </div>
 
-          {/* Synopsis */}
           <div>
-            <div className="skeleton" style={{ width: 100, height: 14, borderRadius: 3, marginBottom: 8 }} />
-            <div className="skeleton" style={{ width: '100%', height: 12, borderRadius: 3, marginBottom: 4 }} />
-            <div className="skeleton" style={{ width: '90%', height: 12, borderRadius: 3, marginBottom: 4 }} />
-            <div className="skeleton" style={{ width: '65%', height: 12, borderRadius: 3 }} />
+            <div className="skeleton watch-skel-name" />
+            <div className="skeleton watch-skel-line is-20" />
           </div>
 
-          {/* Cast Members */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16 }}>
-            <div className="skeleton" style={{ width: 90, height: 14, borderRadius: 3, marginBottom: 12 }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="skeleton watch-skel-plot" />
+
+          <div className="watch-skel-tags">
+            <div className="skeleton watch-skel-tag" />
+            <div className="skeleton watch-skel-tag" />
+          </div>
+
+          <div className="watch-skel-section">
+            <div className="skeleton watch-skel-label" />
+            <div className="skeleton watch-skel-trailer" />
+          </div>
+
+          <div className="watch-skel-section">
+            <div className="skeleton watch-skel-label" />
+            <div className="watch-skel-cast">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div className="skeleton" style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div className="skeleton" style={{ width: '60%', height: 12, borderRadius: 3, marginBottom: 4 }} />
-                    <div className="skeleton" style={{ width: '40%', height: 10, borderRadius: 3 }} />
+                <div key={i} className="watch-skel-cast-item">
+                  <div className="skeleton watch-skel-avatar" />
+                  <div className="watch-skel-cast-lines">
+                    <div className="skeleton watch-skel-line is-60" />
+                    <div className="skeleton watch-skel-line is-40" />
                   </div>
                 </div>
               ))}

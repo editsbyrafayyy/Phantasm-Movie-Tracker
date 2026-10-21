@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -10,9 +10,45 @@ import type { TmdbDiscoverMovie } from '@/lib/tmdb';
 
 interface Props {
   films: TmdbDiscoverMovie[];
+  /** YYYY-MM-DD, computed on the server. */
+  today: string;
 }
 
-export default function ComingSoonRow({ films }: Props) {
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function utcDate(iso: string): Date {
+  return new Date(`${iso}T00:00:00Z`);
+}
+
+/** "14 Nov" for this calendar year, "Mar 2027" further out. */
+function formatRelease(iso: string, today: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const month = MONTHS[(m || 1) - 1];
+  return iso.slice(0, 4) === today.slice(0, 4) ? `${d} ${month}` : `${month} ${y}`;
+}
+
+// The viewer's local date. The server's (UTC) date is used for SSR/hydration, then
+// React swaps in the local one so "in N days" matches the viewer's calendar.
+const noSubscribe = () => () => {};
+function localToday(): string {
+  const now = new Date();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${mm}-${dd}`;
+}
+
+/** "Today" / "Tomorrow" / "in 6 days" for releases under 30 days out, else null. */
+function countdown(iso: string, today: string): string | null {
+  const days = Math.round((utcDate(iso).getTime() - utcDate(today).getTime()) / DAY_MS);
+  if (days < 0 || days >= 30) return null;
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  return `in ${days} days`;
+}
+
+export default function ComingSoonRow({ films, today: serverToday }: Props) {
+  const today = useSyncExternalStore(noSubscribe, localToday, () => serverToday);
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -118,30 +154,27 @@ export default function ComingSoonRow({ films }: Props) {
           onMouseLeave={handleMouseUpOrLeave}
         >
           {films.map(film => {
-            const posterUrl = film.poster_path
-              ? `https://image.tmdb.org/t/p/w342${film.poster_path}`
-              : null;
+            if (!film.poster_path) return null;
+            const posterUrl = `https://image.tmdb.org/t/p/w342${film.poster_path}`;
             const title = film.title ?? film.name ?? 'Unknown';
-            const date = film.release_date ?? film.first_air_date ?? '';
-            const year = date.slice(0, 4);
-            const month = date.length >= 7
-              ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' })
-              : null;
-
-            if (!posterUrl) return null;
+            const date = film.release_date ?? '';
+            const when = date ? formatRelease(date, today) : null;
+            const soon = date ? countdown(date, today) : null;
+            const href = `/stream/tmdb/${film.id}?type=movie&from=${encodeURIComponent(pathname)}`;
 
             return (
               <motion.div
                 key={film.id}
-                className="stream-card"
+                className="stream-card coming-soon-card"
                 whileHover={{ scale: 1.03, y: -4 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                onMouseEnter={() => router.prefetch(`/stream/tmdb/${film.id}`)}
+                onMouseEnter={() => router.prefetch(href)}
               >
                 <Link
-                  href={`/stream/tmdb/${film.id}?type=movie&from=${encodeURIComponent(pathname)}`}
+                  href={href}
                   className="stream-card-link"
+                  aria-label={`${title}${when ? `, releases ${when}` : ''}`}
                   onClick={(e) => {
                     if (hasDragged.current) {
                       e.preventDefault();
@@ -155,16 +188,19 @@ export default function ComingSoonRow({ films }: Props) {
                       src={posterUrl}
                       alt=""
                       fill
-                      sizes="(max-width: 640px) 33vw, 160px"
+                      sizes="160px"
+                      loading="lazy"
                       className="stream-card-poster-img"
                       draggable={false}
                     />
                     <div className="stream-card-overlay" />
-                    
                   </div>
                   <p className="stream-card-title category-card-title">{title}</p>
-                  {month && year && (
-                    <p className="stream-card-year category-card-meta">{month} {year}</p>
+                  {when && (
+                    <p className="coming-soon-date">
+                      <time dateTime={date}>{when}</time>
+                      {soon && <span className="coming-soon-countdown">{soon}</span>}
+                    </p>
                   )}
                 </Link>
               </motion.div>

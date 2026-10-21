@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { cookies } from 'next/headers';
 import Link    from 'next/link';
 import HeroBackground from '@/components/HeroBackground';
 import HeroCarousel   from '@/components/browse/HeroCarousel';
@@ -6,9 +7,8 @@ import CategoryRow from '@/components/browse/CategoryRow';
 import VaultFilter    from '@/components/home/VaultFilter';
 import ComingSoonWidget from '@/components/home/ComingSoonWidget';
 import RouletteTrigger from '@/components/home/RouletteTrigger';
-import ActivityFeed    from '@/components/home/ActivityFeed';
-import OnThisDayWidget from '@/components/home/OnThisDayWidget';
-import RecentlyViewedRow from '@/components/home/RecentlyViewedRow';
+import ActivityFeed, { ActivityFeedSkeleton } from '@/components/home/ActivityFeed';
+import RecentlyViewedRow, { RECENT_HINT_COOKIE } from '@/components/home/RecentlyViewedRow';
 import PageHeader from '@/components/ui/PageHeader';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getOwnerEntries } from '@/lib/data';
@@ -32,7 +32,7 @@ const SUBGENRE_ORDER = [
 
 export const metadata = {
   title: 'Phantasm — Horror Film Tracker',
-  description: 'A curated collection of horror films, scored across 8 criteria.',
+  description: 'Horror films rated across 8 criteria, with a stream page for finding the next one.',
 };
 
 export default async function HomePage() {
@@ -56,6 +56,8 @@ export default async function HomePage() {
   }
 
   const ownerName = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
+  // Set by RecentlyViewedRow when this browser has history: reserve the row's space.
+  const hasRecent = (await cookies()).get(RECENT_HINT_COOKIE)?.value === '1';
 
   // Filter entries
   const mustWatchEntries = entries.filter(e => e.must_watch === true);
@@ -89,13 +91,7 @@ export default async function HomePage() {
         </div>
       )}
 
-      {user && (
-        <div className="home-on-this-day-wrapper">
-          <OnThisDayWidget />
-        </div>
-      )}
-
-      <RecentlyViewedRow />
+      <RecentlyViewedRow reserve={hasRecent} />
 
       {mustWatchEntries.length > 0 && (
         <CategoryRow label="Must watch" entries={mustWatchEntries} />
@@ -105,7 +101,7 @@ export default async function HomePage() {
         <ComingSoonWidget />
       </Suspense>
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<ActivityFeedSkeleton />}>
         <ActivityFeed />
       </Suspense>
 

@@ -69,3 +69,30 @@ export default async function ActivityFeed() {
 
   return <ActivityFeedClient items={items} />;
 }
+
+/** Streaming fallback: header + five fixed-height rows, matching ActivityFeedClient. */
+export function ActivityFeedSkeleton() {
+  return (
+    <section className="activity-section" aria-hidden="true">
+      <div className="page-header page-header-section">
+        <div className="page-header-text">
+          <div className="skeleton skel-page-eyebrow" />
+          <div className="skeleton skel-section-title" />
+        </div>
+      </div>
+      <div className="activity-feed">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="activity-item is-static">
+            <div className="skeleton activity-avatar" />
+            <div className="skeleton activity-poster" />
+            <div className="activity-text">
+              <div className="skeleton skel-activity-line" />
+              <div className="skeleton skel-activity-badges" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="activity-show-more-placeholder" />
+    </section>
+  );
+}

@@ -16,7 +16,7 @@ function normalizeTag(raw: string): string {
   return raw.trim().replace(/^#+/, '').replace(/[^\w\s-]/g, '').trim().toLowerCase();
 }
 
-/** Personal hashtag chips. Owners edit inline; saves are serialized (latest wins). */
+/** Personal tag chips. Owners edit inline; saves are serialized (latest wins). */
 export default function EntryTags({ entryId, initialTags, editable, onError }: EntryTagsProps) {
   const [tags, setTags]       = useState<string[]>(initialTags);
   const [input, setInput]     = useState('');
@@ -73,13 +73,13 @@ export default function EntryTags({ entryId, initialTags, editable, onError }: E
   return (
     <div className="custom-tags-panel">
       <div className="custom-tags-header">
-        <span className="custom-tags-label" id={`tags-${entryId}`}>Tags</span>
+        <span className="custom-tags-label" id={`tags-${entryId}`}>Your tags</span>
         {saving && <span className="custom-tags-saving" role="status">Saving…</span>}
       </div>
       <ul className="custom-tags-chips" aria-labelledby={`tags-${entryId}`}>
         {tags.map(tag => (
           <li key={tag} className="custom-tag-chip">
-            #{tag}
+            {tag}
             {editable && (
               <button
                 type="button"

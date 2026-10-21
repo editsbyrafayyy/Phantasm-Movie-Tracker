@@ -65,7 +65,6 @@ export default function GlobalShortcuts() {
         const dest: Record<string, string | undefined> = {
           h: '/',
           v: '/vault',
-          d: user ? '/diary' : undefined,
           s: user ? '/profile' : undefined,
         };
         lastKey = '';

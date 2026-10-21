@@ -1,23 +1,20 @@
-'use client';
-
-import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
-
-interface DiaryEntry {
-  id: string;
-  watched_at: string; // 'YYYY-MM-DD'
-}
-
 const DAYS = ['Mon', '', 'Wed', '', 'Fri', '', ''];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function buildHeatmapGrid(entries: DiaryEntry[], year: number) {
-  // Count watches per date
+/** YYYY-MM-DD calendar day of a timestamp (rendered on the server, so server time zone). */
+function localIso(ts: string): string | null {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function buildHeatmapGrid(dates: string[], year: number) {
+  // Count ratings per day
   const countByDate: Record<string, number> = {};
-  for (const e of entries) {
-    const d = e.watched_at?.slice(0, 10);
+  for (const ts of dates) {
+    const d = localIso(ts);
     if (!d) continue;
-    countByDate[d] = (countByDate[d] ?? 0) + 1;
+    if (d.startsWith(String(year))) countByDate[d] = (countByDate[d] ?? 0) + 1;
   }
 
   // Build 53-week grid starting from the first Monday on/before Jan 1
@@ -61,10 +58,10 @@ function buildHeatmapGrid(entries: DiaryEntry[], year: number) {
   }
 
   const maxCount = Math.max(...Object.values(countByDate), 1);
-  const totalWatches = Object.values(countByDate).reduce((s, v) => s + v, 0);
-  const activeDays = Object.keys(countByDate).filter(d => d.startsWith(String(year))).length;
+  const totalRated = Object.values(countByDate).reduce((sum, v) => sum + v, 0);
+  const activeDays = Object.keys(countByDate).length;
 
-  return { weeks, monthLabels, maxCount, totalWatches, activeDays };
+  return { weeks, monthLabels, maxCount, totalRated, activeDays };
 }
 
 function cellColor(count: number, max: number): string {
@@ -77,49 +74,25 @@ function cellColor(count: number, max: number): string {
 
 const LEGEND_STEPS = [0, 0.25, 0.5, 0.75, 1];
 
-export default function CalendarHeatmap({ year }: { year: number }) {
-  const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; entries: DiaryEntry[] }>({
-    status: 'loading',
-    entries: [],
-  });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`/api/diary?year=${year}`, { signal: controller.signal })
-      .then(async r => {
-        if (!r.ok) throw new Error(String(r.status));
-        const data = await r.json();
-        setState({ status: 'ready', entries: Array.isArray(data?.diary) ? data.diary : [] });
-      })
-      .catch(err => {
-        if ((err as Error)?.name !== 'AbortError') setState({ status: 'error', entries: [] });
-      });
-    return () => controller.abort();
-  }, [year]);
-
-  const { weeks, monthLabels, maxCount, totalWatches, activeDays } = useMemo(
-    () => buildHeatmapGrid(state.entries, year),
-    [state.entries, year],
-  );
+/**
+ * Rating activity for one year, built from the vault entries' created_at dates
+ * (the profile page already has them, so nothing is fetched here).
+ */
+export default function CalendarHeatmap({ dates, year }: { dates: string[]; year: number }) {
+  const { weeks, monthLabels, maxCount, totalRated, activeDays } = buildHeatmapGrid(dates, year);
 
   return (
     <div className="stat-card stat-card-wide heatmap-card">
       <div className="heatmap-head">
         <div>
-          <h3 className="stat-card-label">Watch activity — {year}</h3>
-          {state.status === 'ready' && totalWatches > 0 && (
-            <p className="stat-card-desc">
-              <strong>{totalWatches}</strong> watches across <strong>{activeDays}</strong> days this year.
-            </p>
-          )}
-          {state.status === 'ready' && totalWatches === 0 && (
-            <p className="stat-card-desc">
-              No watches logged yet. Log a viewing from any film page, or <Link href="/diary">open your diary</Link>.
-            </p>
-          )}
-          {state.status === 'error' && (
-            <p className="stat-card-desc">Could not load watch activity.</p>
-          )}
+          <h3 className="stat-card-label">Rating activity — {year}</h3>
+          <p className="stat-card-desc">
+            {totalRated > 0 ? (
+              <><strong>{totalRated}</strong> film{totalRated !== 1 ? 's' : ''} rated across <strong>{activeDays}</strong> day{activeDays !== 1 ? 's' : ''} this year.</>
+            ) : (
+              <>Nothing rated in {year} yet.</>
+            )}
+          </p>
         </div>
         <div className="heatmap-legend" aria-hidden="true">
           <span>Less</span>
@@ -134,41 +107,37 @@ export default function CalendarHeatmap({ year }: { year: number }) {
         </div>
       </div>
 
-      {state.status === 'loading' ? (
-        <div className="heatmap-loading" role="status">Loading…</div>
-      ) : state.status === 'ready' ? (
-        <div className="heatmap-scroll">
-          <div className="heatmap-grid" role="img" aria-label={`Watch activity calendar for ${year}`}>
-            <div className="heatmap-months">
-              {weeks.map((_, wi) => {
-                const label = monthLabels.find(ml => ml.weekIdx === wi);
+      <div className="heatmap-scroll">
+        <div className="heatmap-grid" role="img" aria-label={`Rating activity calendar for ${year}`}>
+          <div className="heatmap-months">
+            {weeks.map((_, wi) => {
+              const label = monthLabels.find(ml => ml.weekIdx === wi);
+              return (
+                <span key={wi} className="heatmap-week-slot">
+                  {label ? MONTHS[label.month] : ''}
+                </span>
+              );
+            })}
+          </div>
+
+          {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => (
+            <div key={dayIdx} className="heatmap-row">
+              <span className="heatmap-day">{DAYS[dayIdx]}</span>
+              {weeks.map((week, wi) => {
+                const cell = week[dayIdx];
                 return (
-                  <span key={wi} className="heatmap-week-slot">
-                    {label ? MONTHS[label.month] : ''}
-                  </span>
+                  <span
+                    key={wi}
+                    className="heatmap-cell"
+                    title={cell.count > 0 ? `${cell.iso}: ${cell.count} rated` : cell.iso}
+                    style={{ background: cellColor(cell.count, maxCount) }}
+                  />
                 );
               })}
             </div>
-
-            {[0, 1, 2, 3, 4, 5, 6].map(dayIdx => (
-              <div key={dayIdx} className="heatmap-row">
-                <span className="heatmap-day">{DAYS[dayIdx]}</span>
-                {weeks.map((week, wi) => {
-                  const cell = week[dayIdx];
-                  return (
-                    <span
-                      key={wi}
-                      className="heatmap-cell"
-                      title={cell.count > 0 ? `${cell.iso}: ${cell.count} watch${cell.count !== 1 ? 'es' : ''}` : cell.iso}
-                      style={{ background: cellColor(cell.count, maxCount) }}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }

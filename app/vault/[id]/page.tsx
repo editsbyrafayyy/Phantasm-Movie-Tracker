@@ -83,18 +83,19 @@ export default async function VaultEntryPage({ params }: Props) {
 
   const current = entry;
   const currentTotal = current.total ?? 0;
+
+  const franchiseName = getMovieFranchise(current.movie?.title ?? '');
+  const inFranchise = (r: RelatedRow) => !!franchiseName && getMovieFranchise(r.movie.title ?? '') === franchiseName;
+  const franchiseEntries: RelatedEntry[] = franchiseName
+    ? related.filter(inFranchise).map(({ id: rid, total, movie }) => ({ id: rid, total, movie }))
+    : [];
+
+  // Similar: same subgenre, closest score — franchise siblings already have their own track.
   const similar: RelatedEntry[] = related
-    .filter(r => r.id !== current.id && r.subgenre === current.subgenre)
+    .filter(r => r.id !== current.id && r.subgenre === current.subgenre && !inFranchise(r))
     .sort((a, b) => Math.abs((a.total ?? 0) - currentTotal) - Math.abs((b.total ?? 0) - currentTotal))
     .slice(0, 10)
     .map(({ id: rid, total, movie }) => ({ id: rid, total, movie }));
-
-  const franchiseName = getMovieFranchise(current.movie?.title ?? '');
-  const franchiseEntries: RelatedEntry[] = franchiseName
-    ? related
-        .filter(r => getMovieFranchise(r.movie.title ?? '') === franchiseName)
-        .map(({ id: rid, total, movie }) => ({ id: rid, total, movie }))
-    : [];
 
   return (
     <MovieDetailV3

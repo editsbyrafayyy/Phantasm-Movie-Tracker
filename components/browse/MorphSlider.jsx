@@ -108,8 +108,12 @@ void main() {
   vec2 uvC = uv;
   vec2 uvN = uv;
   float m = smoothstep(0.0, 1.0, p);
+  // At rest (p == 0) every distortion below is multiplied away, but melt's two
+  // fbm calls still cost ~40 hashes per pixel per frame. Branch on the uniform
+  // so idle frames skip them entirely — the output is identical.
+  bool moving = p > 0.0005;
 
-  if (uReduce < 0.5) {
+  if (uReduce < 0.5 && moving) {
     if (uMode == 3) {
       vec2 c = uv - 0.5;
       float r = length(c);
@@ -151,18 +155,23 @@ void main() {
 
   float ca = uReduce < 0.5 ? uAberration * env * 0.03 : 0.0;
 
-  vec3 colC = vec3(
-    texture2D(tCurrent, sC + vec2(ca, 0.0)).r,
-    texture2D(tCurrent, sC).g,
-    texture2D(tCurrent, sC - vec2(ca, 0.0)).b
-  );
-  vec3 colN = vec3(
-    texture2D(tNext, sN + vec2(ca, 0.0)).r,
-    texture2D(tNext, sN).g,
-    texture2D(tNext, sN - vec2(ca, 0.0)).b
-  );
-
-  vec3 col = mix(colC, colN, m);
+  vec3 col;
+  if (moving) {
+    vec3 colC = vec3(
+      texture2D(tCurrent, sC + vec2(ca, 0.0)).r,
+      texture2D(tCurrent, sC).g,
+      texture2D(tCurrent, sC - vec2(ca, 0.0)).b
+    );
+    vec3 colN = vec3(
+      texture2D(tNext, sN + vec2(ca, 0.0)).r,
+      texture2D(tNext, sN).g,
+      texture2D(tNext, sN - vec2(ca, 0.0)).b
+    );
+    col = mix(colC, colN, m);
+  } else {
+    // No aberration at rest (env == 0), so one sample of the current slide suffices.
+    col = texture2D(tCurrent, sC).rgb;
+  }
 
   float vig = smoothstep(1.25, 0.25, length(uv - 0.5));
   col = mix(col, uOverlay, (1.0 - vig) * 0.28);
@@ -204,7 +213,8 @@ class MorphEngine {
     this.shownIndex = startIndex;
     this.tween = null;
 
-    this.renderer = new Renderer({ alpha: false, antialias: true, dpr: Math.min(window.devicePixelRatio || 1, dprCap) });
+    // Single full-screen quad: MSAA has no geometry edges to smooth, so it is pure cost.
+    this.renderer = new Renderer({ alpha: false, antialias: false, dpr: Math.min(window.devicePixelRatio || 1, dprCap) });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0.05, 0.05, 0.06, 1);
     this.canvas = this.gl.canvas;
@@ -324,6 +334,14 @@ class MorphEngine {
 
   loop(t) {
     if (!this.running) return;
+    // Between transitions only the slow drift moves — 30fps is indistinguishable
+    // there and halves GPU/main-thread work while the hero idles.
+    const idle = !this.dragging && !this.animating;
+    if (idle && t - (this.lastFrame || 0) < 32) {
+      this.raf = requestAnimationFrame(this.boundLoop);
+      return;
+    }
+    this.lastFrame = t;
     this.program.uniforms.uTime.value = t * 0.001;
     if (!this.dragging && !this.animating) this.syncOptions();
     this.renderer.render({ scene: this.mesh });
@@ -494,7 +512,9 @@ const MorphSlider = forwardRef(function MorphSlider({
       items,
       startIndex,
       reducedMotion,
-      dprCap: 2,
+      // A blurred, drifting backdrop gains nothing visible above 1.5x, and the
+      // pixel cost of a full-bleed 2x canvas dominated desktop scroll frames.
+      dprCap: 1.5,
       getOptions: () => optsRef.current,
       onIndexChange: (i) => {
         setIndex(i);

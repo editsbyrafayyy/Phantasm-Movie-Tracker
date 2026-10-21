@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, Copy, Layers, Link2, Pencil, Pin, Play, Plus, Trash2 } from 'lucide-react';
+import { Copy, Layers, Link2, Pencil, Pin, Play, Plus, Trash2 } from 'lucide-react';
 import type { Entry } from '@/lib/types';
 
 interface DetailActionsProps {
@@ -12,7 +12,6 @@ interface DetailActionsProps {
   mustWatch:         boolean;
   togglingMustWatch: boolean;
   onToggleMustWatch: () => void;
-  onLogWatch:        () => void;
   onSaveToStack:     () => void;
   onCopySummary:     () => void;
   onCopyLink:        () => void;
@@ -22,7 +21,7 @@ interface DetailActionsProps {
 /** Primary (watch) + secondary actions for a vault entry. */
 export default function DetailActions({
   entry, canStream, isOwner, isSiteOwner, mustWatch, togglingMustWatch,
-  onToggleMustWatch, onLogWatch, onSaveToStack, onCopySummary, onCopyLink, onDelete,
+  onToggleMustWatch, onSaveToStack, onCopySummary, onCopyLink, onDelete,
 }: DetailActionsProps) {
   const { movie } = entry;
   const title = movie.title ?? 'Unknown';
@@ -36,7 +35,7 @@ export default function DetailActions({
   return (
     <>
       {streamId && (
-        <Link href={canStream ? `/stream/${streamId}` : '/login'} className="btn-primary detail-watch-btn">
+        <Link href={canStream ? `/stream/${streamId}` : '/login'} className="btn-primary vdetail-watch-btn">
           <Play size={16} fill="currentColor" aria-hidden="true" />
           Watch now
         </Link>
@@ -45,15 +44,11 @@ export default function DetailActions({
       {canStream && (
         <>
           {!isOwner && (
-            <Link href={addHref} className="btn-secondary is-active" title="Rate this film in your own vault">
+            <Link href={addHref} className="btn-secondary">
               <Plus size={16} aria-hidden="true" />
               Add to my vault
             </Link>
           )}
-          <button type="button" onClick={onLogWatch} className="btn-secondary">
-            <BookOpen size={16} aria-hidden="true" />
-            Log watch
-          </button>
           <button type="button" onClick={onSaveToStack} className="btn-secondary">
             <Layers size={16} aria-hidden="true" />
             Save to stack
@@ -82,16 +77,16 @@ export default function DetailActions({
       )}
 
       {canStream && (
-        <span className="detail-icon-actions">
-          <button type="button" onClick={onCopySummary} className="icon-btn" aria-label="Copy summary" title="Copy summary">
-            <Copy size={16} />
+        <span className="vdetail-icon-actions">
+          <button type="button" onClick={onCopySummary} className="icon-btn" aria-label="Copy summary" data-tip="Copy summary">
+            <Copy size={16} aria-hidden="true" />
           </button>
-          <button type="button" onClick={onCopyLink} className="icon-btn" aria-label="Copy link" title="Copy link">
-            <Link2 size={16} />
+          <button type="button" onClick={onCopyLink} className="icon-btn" aria-label="Copy link" data-tip="Copy link">
+            <Link2 size={16} aria-hidden="true" />
           </button>
           {isOwner && (
-            <button type="button" onClick={onDelete} className="icon-btn detail-delete-btn" aria-label="Delete entry" title="Delete entry">
-              <Trash2 size={16} />
+            <button type="button" onClick={onDelete} className="icon-btn vdetail-delete-btn" aria-label="Delete entry" data-tip="Delete entry">
+              <Trash2 size={16} aria-hidden="true" />
             </button>
           )}
         </span>

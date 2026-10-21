@@ -12,7 +12,9 @@ export function BrowseGridSkeleton({ count = 18 }: { count?: number }) {
   );
 }
 
-/** Route-level skeleton for /browse and /stream — mirrors BrowseGrid's layout. */
+const CHIP_WIDTHS = [52, 84, 118, 190, 150];
+
+/** Route-level skeleton for /stream — mirrors BrowseGrid's layout box for box. */
 export default function BrowseSkeleton() {
   return (
     <div className="browse-layout" aria-busy="true" aria-label="Loading">
@@ -31,6 +33,13 @@ export default function BrowseSkeleton() {
             <div className="skeleton browse-skel-title" />
             <div className="skeleton browse-skel-sub" />
           </div>
+        </div>
+
+        {/* Phones only (the rail replaces it on desktop) */}
+        <div className="browse-genre-chips" aria-hidden="true">
+          {CHIP_WIDTHS.map((w, i) => (
+            <div key={i} className="skeleton browse-skel-chip" style={{ width: w }} />
+          ))}
         </div>
 
         <div className="browse-toolbar" aria-hidden="true">

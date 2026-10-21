@@ -3,7 +3,7 @@
  */
 
 /**
- * Parses a date. Plain 'YYYY-MM-DD' values (e.g. diary watched_at) are read as
+ * Parses a date. Plain 'YYYY-MM-DD' values are read as
  * a local calendar date, not UTC midnight, so they never shift a day west of UTC
  * and render identically on server and client.
  */

@@ -191,7 +191,7 @@ class Media {
   
 
   
-  update(scroll: any, direction: string) {
+  update(scroll: any, direction: string, frames = 1) {
     this.plane.position.x = this.x - scroll.current - this.extra;
 
     const x = this.plane.position.x;
@@ -216,7 +216,7 @@ class Media {
     }
 
     this.speed = scroll.current - scroll.last;
-    if (!this.reducedMotion) this.program.uniforms.uTime.value += 0.04;
+    if (!this.reducedMotion) this.program.uniforms.uTime.value += 0.04 * frames;
     this.program.uniforms.uSpeed.value = this.speed;
 
     const planeOffset = this.plane.scale.x / 2;
@@ -261,6 +261,7 @@ class App {
   isVisible = true;
   running = false;
   intersectionObserver?: IntersectionObserver;
+  lastFrame = 0;
   boundVisibility!: () => void;
   renderer!: any;
   gl!: any;
@@ -322,8 +323,9 @@ class App {
   createRenderer() {
     this.renderer = new Renderer({
       alpha: true,
-      antialias: true,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
+      // Edges are smoothed in the fragment shader, so MSAA only cost fill-rate.
+      antialias: false,
+      dpr: Math.min(window.devicePixelRatio || 1, 1.5)
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0, 0, 0, 0);
@@ -444,12 +446,21 @@ class App {
     }
   }
   
-  update() {
+  update(t: number = 0) {
     if (!this.running) return;
+    // At rest only the slow wave moves — ~30fps is indistinguishable and halves GPU work.
+    const settled = Math.abs(this.scroll.target - this.scroll.current) < 0.01;
+    if (settled && t - this.lastFrame < 32) {
+      this.raf = window.requestAnimationFrame(this.boundUpdate);
+      return;
+    }
+    // Advance the wave by real elapsed time (in 60fps frames) so its speed is unchanged.
+    const frames = this.lastFrame ? Math.min((t - this.lastFrame) / 16.67, 4) : 1;
+    this.lastFrame = t;
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
     const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
     if (this.medias) {
-      this.medias.forEach(media => media.update(this.scroll, direction));
+      this.medias.forEach(media => media.update(this.scroll, direction, frames));
     }
     this.renderer.render({ scene: this.scene, camera: this.camera });
     this.scroll.last = this.scroll.current;

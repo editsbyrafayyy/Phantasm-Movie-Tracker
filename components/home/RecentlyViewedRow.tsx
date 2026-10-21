@@ -15,7 +15,10 @@ interface RecentlyViewedItem {
 }
 
 const STORAGE_KEY = 'vault_recently_viewed';
+/** Cookie hint read by app/page.tsx so the server can reserve this row's height. */
+export const RECENT_HINT_COOKIE = 'ph_recent';
 const EMPTY: RecentlyViewedItem[] = [];
+const PLACEHOLDER_CARDS = 8;
 
 // ── localStorage-backed store (cached by raw string so snapshots are stable) ──
 let cachedRaw: string | null = null;
@@ -51,8 +54,14 @@ function clearItems() {
   localListeners.forEach(l => l());
 }
 
-export default function RecentlyViewedRow() {
+/**
+ * localStorage-backed, so it can only render on the client. When the server knows
+ * (via the cookie hint) that this browser has history, it renders a same-height
+ * placeholder instead of nothing, so the rows below don't jump after hydration.
+ */
+export default function RecentlyViewedRow({ reserve = false }: { reserve?: boolean }) {
   const items = useSyncExternalStore(subscribe, readItems, () => EMPTY);
+  const [hydrated, setHydrated] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -63,6 +72,17 @@ export default function RecentlyViewedRow() {
     setCanScrollLeft(el.scrollLeft > 4);
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   };
+
+  // Keep the server hint in sync with what's actually stored.
+  useEffect(() => {
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- one-time post-hydration flag */
+    setHydrated(true);
+    try {
+      document.cookie = items.length
+        ? `${RECENT_HINT_COOKIE}=1; path=/; max-age=31536000; samesite=lax`
+        : `${RECENT_HINT_COOKIE}=; path=/; max-age=0; samesite=lax`;
+    } catch { /* cookies blocked */ }
+  }, [items.length]);
 
   // ResizeObserver fires once on observe and again on any size change.
   useEffect(() => {
@@ -83,7 +103,31 @@ export default function RecentlyViewedRow() {
     el.scrollBy({ left: direction === 'left' ? -distance : distance, behavior: 'smooth' });
   };
 
-  if (!items.length) return null;
+  if (!items.length) {
+    if (!reserve || hydrated) return null;
+    return (
+      <section className="category-section recently-viewed-section is-placeholder" aria-hidden="true">
+        <div className="category-header">
+          <div className="category-header-title-group">
+            <h2 className="category-heading">Recently viewed</h2>
+            <span className="category-count">0 films</span>
+          </div>
+          <div className="category-header-actions">
+            <span className="text-btn">Clear</span>
+          </div>
+        </div>
+        <div className="recently-viewed-row">
+          {Array.from({ length: PLACEHOLDER_CARDS }).map((_, i) => (
+            <div key={i} className="recently-viewed-card">
+              <div className="skeleton recently-viewed-poster" />
+              <p className="recently-viewed-title">&nbsp;</p>
+              <p className="recently-viewed-year">&nbsp;</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="category-section recently-viewed-section" aria-labelledby="recently-viewed-heading">

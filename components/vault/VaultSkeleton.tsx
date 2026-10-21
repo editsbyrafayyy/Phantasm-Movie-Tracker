@@ -1,4 +1,4 @@
-/** Mirrors the vault layout: header, makeup bar, toolbar, poster grid. */
+/** Mirrors the vault layout: header, makeup bar + legend, toolbar, poster grid. */
 export function VaultSkeleton({ count = 15 }: { count?: number }) {
   return (
     <div className="vault-skeleton" aria-busy="true" aria-label="Loading vault">
@@ -9,14 +9,21 @@ export function VaultSkeleton({ count = 15 }: { count?: number }) {
         </div>
       </div>
       <div className="vault-content">
-        <div className="skeleton vault-skel-makeup" />
+        <div className="subgenre-makeup">
+          <div className="skeleton vault-skel-makeup" />
+          <div className="vault-skel-legend">
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton" />)}
+          </div>
+        </div>
         <div className="vault-skel-toolbar">
           <div className="skeleton vault-skel-search" />
           <div className="vault-skel-controls">
             <div className="skeleton vault-skel-sort" />
             <div className="skeleton vault-skel-filters" />
-            <div className="skeleton vault-skel-icon" />
-            <div className="skeleton vault-skel-icon" />
+            <div className="vault-skel-toggles">
+              <div className="skeleton vault-skel-icon" />
+              <div className="skeleton vault-skel-icon" />
+            </div>
           </div>
         </div>
         <div className="movie-grid vault-movie-grid">

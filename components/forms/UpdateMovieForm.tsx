@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Toast, { type ToastType } from '@/components/ui/Toast';
-import Spinner        from '@/components/ui/Spinner';
+import { FormFieldsSkeleton } from '@/components/forms/FormSkeleton';
 import ScoreReveal    from '@/components/ui/ScoreReveal';
 import RatingFormFields, {
   FormSubmitBar, validateRatingForm, type RatingForm, type RatingErrors,
@@ -180,7 +180,11 @@ function UpdateMovieFormInner({ entryId }: { entryId: string }) {
   }
 
   if (status === 'loading') {
-    return <div className="form-loading" role="status"><Spinner size={24} /> Loading entry…</div>;
+    return (
+      <div role="status" aria-label="Loading entry">
+        <FormFieldsSkeleton />
+      </div>
+    );
   }
 
   if (status !== 'ready' || !form) {

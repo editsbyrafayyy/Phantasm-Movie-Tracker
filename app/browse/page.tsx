@@ -1,12 +1,6 @@
-import BrowseGrid from '@/components/browse/BrowseGrid';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { isUnrestrictedUser } from '@/lib/guards';
+import { permanentRedirect } from 'next/navigation';
 
-export default async function BrowsePage() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const isUnrestricted = isUnrestrictedUser(user);
-
-  return <BrowseGrid canSave={!!user} isUnrestricted={isUnrestricted} variant="browse" />;
+// Browse and Stream were the same page — /stream is the single discovery page now.
+export default function BrowsePage(): never {
+  permanentRedirect('/stream');
 }

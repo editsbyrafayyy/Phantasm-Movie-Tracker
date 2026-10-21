@@ -147,7 +147,7 @@ export default function WatchlistClient({ items, loadError = false }: WatchlistC
           <p className="empty-state-body">
             Hit the bookmark on any film or show to save it here for later.
           </p>
-          <Link href="/browse" className="btn-primary">Browse films</Link>
+          <Link href="/stream" className="btn-primary">Open Stream</Link>
         </div>
       </>
     );

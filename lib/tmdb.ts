@@ -260,6 +260,8 @@ export interface TmdbDiscoverMovie {
   release_date?: string;
   first_air_date?: string;
   overview:      string;
+  popularity?:   number;
+  original_language?: string;
 }
 
 // TMDB genre IDs: Horror = 27, Thriller = 53
@@ -328,35 +330,91 @@ export async function getHiddenGemsHorror(): Promise<TmdbDiscoverMovie[]> {
   } catch { return []; }
 }
 
+// ── Coming soon ──────────────────────────────────────────────────────────────
+
+const COMING_SOON_LIMIT = 20;
+const COMING_SOON_MIN_POPULARITY = 2;
+
+/** True when a title is mostly Latin script (drops untranslated non-Latin listings). */
+function isLatinTitle(title: string): boolean {
+  const letters = title.replace(/[^\p{L}]/gu, '');
+  if (!letters) return true;
+  const latin = letters.replace(/[^\p{Script=Latin}]/gu, '');
+  return latin.length / letters.length >= 0.8;
+}
+
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+async function discoverPage(params: string, page: number): Promise<TmdbDiscoverMovie[]> {
+  try {
+    const res = await fetch(
+      `${TMDB_BASE}/discover/movie?api_key=${getKey()}&${params}&page=${page}`,
+      { next: { revalidate: 21600 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.results) ? (data.results as TmdbDiscoverMovie[]) : [];
+  } catch { return []; }
+}
+
 /**
- * Returns upcoming horror/thriller films releasing between today and Dec 31, 2026.
- * Sorted by popularity descending, limited to 12. Cached for 6 hours.
+ * Horror films releasing in the next 12 months, ordered by release date.
+ *
+ * Two sources, merged:
+ *  - US theatrical / limited-theatrical releases (release_date is the US date) —
+ *    this is what keeps the list to films people have actually heard of.
+ *  - The global primary-release calendar, but only notable entries (backdrop + higher
+ *    popularity) so big international releases still show up.
+ * The 20 most popular survivors are then sorted by date so the row reads as a calendar.
+ * Cached for 6 hours.
  */
 export async function getComingSoonHorror(): Promise<TmdbDiscoverMovie[]> {
   try {
-    const key   = getKey();
     const now   = new Date();
-    const today = now.toISOString().split('T')[0];
-    const end   = `${now.getFullYear() + 1}-12-31`;
+    const today = isoDate(now);
+    const until = new Date(now);
+    until.setMonth(until.getMonth() + 12);
+    const end = isoDate(until);
 
-    const url = `${TMDB_BASE}/discover/movie?api_key=${key}`
-      + `&with_genres=27,53`
-      + `&primary_release_date.gte=${today}`
-      + `&primary_release_date.lte=${end}`
-      + `&sort_by=popularity.desc`
-      + `&vote_count.gte=0`
-      + `&language=en-US`
-      + `&page=1`;
+    const common = 'with_genres=27&without_genres=16,10751&include_adult=false'
+      + '&sort_by=popularity.desc&language=en-US';
+    const usParams = `${common}&region=US&with_release_type=2%7C3`
+      + `&release_date.gte=${today}&release_date.lte=${end}`;
+    const globalParams = `${common}&primary_release_date.gte=${today}&primary_release_date.lte=${end}`;
 
-    const res = await fetch(url, { next: { revalidate: 21600 } });
-    if (!res.ok) return [];
-    const data = await res.json();
+    const [us1, us2, us3, global1] = await Promise.all([
+      discoverPage(usParams, 1),
+      discoverPage(usParams, 2),
+      discoverPage(usParams, 3),
+      discoverPage(globalParams, 1),
+    ]);
 
-    const results: TmdbDiscoverMovie[] = (data.results ?? [])
-      .filter((m: TmdbDiscoverMovie) => m.poster_path)
-      .slice(0, 12);
+    const byId = new Map<number, TmdbDiscoverMovie>();
+    const accept = (m: TmdbDiscoverMovie, notableOnly: boolean) => {
+      if (byId.has(m.id)) return;
+      const title = m.title ?? m.name ?? '';
+      const date  = m.release_date ?? '';
+      const pop   = m.popularity ?? 0;
+      if (!m.poster_path || !title || !date) return;
+      if (date < today || date > end) return; // re-releases of old films carry their original date
+      if (pop < COMING_SOON_MIN_POPULARITY) return;
+      if (!isLatinTitle(title)) return;
+      if (notableOnly) {
+        const isEnglish = m.original_language === 'en';
+        if (!m.backdrop_path || pop < (isEnglish ? 3 : 5)) return;
+      }
+      byId.set(m.id, m);
+    };
 
-    return results;
+    for (const m of [...us1, ...us2, ...us3]) accept(m, false);
+    for (const m of global1) accept(m, true);
+
+    return [...byId.values()]
+      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
+      .slice(0, COMING_SOON_LIMIT)
+      .sort((a, b) => (a.release_date ?? '').localeCompare(b.release_date ?? ''));
   } catch { return []; }
 }
 

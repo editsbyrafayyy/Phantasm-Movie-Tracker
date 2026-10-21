@@ -29,6 +29,23 @@ export const staggerItem: Variants = {
   animate:  { opacity: 1, y: 0, transition: { duration: 0.46, ease: [0.22, 1, 0.36, 1] } },
 };
 
+/**
+ * Mount animation for item `index` of a long list: the same rise as `staggerItem`, but only the
+ * first `limit` items animate (the first screen). Later items mount already in place, so a
+ * 276-film grid doesn't queue 12 seconds of staggered entrances or keep cards invisible.
+ */
+export function staggerEnter(index: number, limit = 20) {
+  if (index >= limit) return { initial: false as const };
+  return {
+    initial: { opacity: 0, y: 26 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.46, ease: [0.22, 1, 0.36, 1] as const, delay: 0.05 + index * 0.035 },
+    },
+  };
+}
+
 // ── Cards ─────────────────────────────────────────────────────────────────────
 
 /** Spring hover + tap for movie cards (stiffness 280 / damping 22 per design system) */

@@ -76,7 +76,7 @@ export default async function ProfilePage() {
   const year  = new Date().getFullYear();
 
   return (
-    <div className="profile-page page-container profile-bg-glow">
+    <div className="profile-page page-container">
       <div className="profile-column">
         <PageHeader title="Profile" />
 
@@ -118,7 +118,7 @@ export default async function ProfilePage() {
 
               <RatingDriftChart entries={typedEntries} />
               <TasteFingerprint entries={typedEntries} />
-              <CalendarHeatmap year={year} />
+              <CalendarHeatmap year={year} dates={typedEntries.map(e => e.created_at)} />
 
               <ScoreHistograms data={stats.scoresByField} />
             </div>

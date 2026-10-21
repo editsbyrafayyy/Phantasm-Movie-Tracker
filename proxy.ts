@@ -2,6 +2,14 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function proxy(req: NextRequest) {
+  // Browse merged into Stream. Redirect here (a real 308) rather than only in the
+  // page, where the root loading boundary would turn it into a meta refresh.
+  if (req.nextUrl.pathname === '/browse' || req.nextUrl.pathname.startsWith('/browse/')) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/stream';
+    return NextResponse.redirect(url, 308);
+  }
+
   let res = NextResponse.next({
     request: {
       headers: req.headers,
@@ -53,14 +61,17 @@ export async function proxy(req: NextRequest) {
     return res;
   }
 
-  // Members only routes: /add, /update, /profile, /stream, /stats, /diary, /watchlist, /api/add-movie, /api/stats
-  const membersOnly = ['/add', '/update', '/profile', '/stream', '/stats', '/diary', '/watchlist', '/api/add-movie', '/api/stats'];
-  if (membersOnly.some(p => pathname.startsWith(p)) && !user) {
+  // Members-only routes. /stream (discovery) and /stream/tmdb/<id> (info page) are
+  // public; only the player at /stream/<id> needs an account.
+  const membersOnly = ['/add', '/update', '/profile', '/stats', '/watchlist', '/api/add-movie', '/api/stats'];
+  const isStreamPlayer = pathname.startsWith('/stream/') && !pathname.startsWith('/stream/tmdb/');
+  if ((isStreamPlayer || membersOnly.some(p => pathname.startsWith(p))) && !user) {
     // API callers get a JSON 401 instead of an HTML redirect
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const loginUrl = new URL(`/login?next=${encodeURIComponent(pathname)}`, req.url);
+    // Keep the query (e.g. ?type=tv&s=2&e=3 on player links) so login returns to the same view
+    const loginUrl = new URL(`/login?next=${encodeURIComponent(pathname + req.nextUrl.search)}`, req.url);
     return NextResponse.redirect(loginUrl);
   }
 

@@ -13,7 +13,6 @@ export const SHORTCUTS: Shortcut[] = [
   { keys: ['R'],         description: 'Film roulette' },
   { keys: ['G', 'H'],    description: 'Go to Home' },
   { keys: ['G', 'V'],    description: 'Go to Vault' },
-  { keys: ['G', 'D'],    description: 'Go to Diary', membersOnly: true },
   { keys: ['G', 'S'],    description: 'Go to Profile & stats', membersOnly: true },
   { keys: ['N'],         description: 'Log a film', membersOnly: true },
   { keys: ['?'],         description: 'Show this list' },

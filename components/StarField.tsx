@@ -61,9 +61,18 @@ function StarCanvas() {
       ctx.scale(dpr, dpr);
     }
 
-    function paint(t: number) {
+    function paint(t: number, full = false) {
       if (!ctx) return;
-      ctx.clearRect(0, 0, width, height);
+      if (full) {
+        ctx.clearRect(0, 0, width, height);
+      } else {
+        // Only the stars change, so clear just their boxes — rasterising a full
+        // viewport every frame was the dominant main-thread cost on phones.
+        for (const star of stars) {
+          const r = star.radius + 1;
+          ctx.clearRect(star.x * width - r, star.y * height - r, r * 2, r * 2);
+        }
+      }
       // Bucket stars by rounded opacity (0.1 steps) → at most 10 fill calls per frame.
       const buckets = new Map<string, Star[]>();
       for (const star of stars) {
@@ -84,9 +93,15 @@ function StarCanvas() {
       }
     }
 
+    // The twinkle cycles over seconds, so ~30fps looks identical to 60 and
+    // halves the full-viewport repaints competing with scrolling.
+    let lastPaint = 0;
     function frame(ts: number) {
       if (start === null) start = ts;
-      paint((ts - start) / 1000);
+      if (ts - lastPaint >= 32) {
+        lastPaint = ts;
+        paint((ts - start) / 1000);
+      }
       frameId = requestAnimationFrame(frame);
     }
 

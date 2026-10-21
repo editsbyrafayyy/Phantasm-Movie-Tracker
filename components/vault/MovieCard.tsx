@@ -7,14 +7,18 @@ import { usePathname } from 'next/navigation';
 import { Check, Film } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SUBGENRE_HEX } from '@/lib/config';
-import { staggerItem, cardSpring } from '@/lib/motion';
+import { staggerEnter, cardSpring } from '@/lib/motion';
 import type { VaultGridEntry } from '@/lib/types';
 import { useAuth } from '@/components/layout/AuthProvider';
 import WatchlistButton from '@/components/watchlist/WatchlistButton';
 import { VERDICT_LABEL, VERDICT_SHORT, verdictColor } from './verdict';
+import { formatRuntime } from './format';
 
 interface MovieCardProps {
   entry:            VaultGridEntry;
+  /** Position in the rendered list — drives the first-screen stagger and image priority. */
+  index:            number;
+  /** Eager-load + high fetch priority (first row only). */
   priority?:        boolean;
   selectMode?:      boolean;
   selected?:        boolean;
@@ -24,14 +28,7 @@ interface MovieCardProps {
 
 const BLUR = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN88f8fAAXBAvwf/q4+AAAAAElRU5ErkJggg==';
 
-function formatRuntime(min: number | null): string | null {
-  if (!min) return null;
-  if (min < 60) return `${min}m`;
-  const m = min % 60;
-  return `${Math.floor(min / 60)}h${m ? ` ${m}m` : ''}`;
-}
-
-function MovieCard({ entry, priority = false, selectMode = false, selected = false, onToggleSelect, onSubgenreClick }: MovieCardProps) {
+function MovieCard({ entry, index, priority = false, selectMode = false, selected = false, onToggleSelect, onSubgenreClick }: MovieCardProps) {
   const { user } = useAuth();
   const pathname = usePathname();
   const { movie, total, recommend, subgenre } = entry;
@@ -59,10 +56,11 @@ function MovieCard({ entry, priority = false, selectMode = false, selected = fal
           src={imgSrc}
           alt=""
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 240px"
           className="movie-card-img"
-          priority={priority}
-          loading={priority ? undefined : 'lazy'}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          decoding="async"
           placeholder="blur"
           blurDataURL={BLUR}
         />
@@ -108,7 +106,7 @@ function MovieCard({ entry, priority = false, selectMode = false, selected = fal
   return (
     <motion.li
       className={`movie-card-item${selected ? ' is-selected' : ''}`}
-      variants={staggerItem}
+      {...staggerEnter(index)}
       whileHover={cardSpring.whileHover}
       whileTap={cardSpring.whileTap}
     >

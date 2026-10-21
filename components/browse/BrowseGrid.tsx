@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useId, useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import PageHeader from '@/components/ui/PageHeader';
 import WatchHistoryRow from '@/components/stream/WatchHistoryRow';
@@ -14,11 +15,9 @@ import { useBrowseFeed } from './useBrowseFeed';
 interface BrowseGridProps {
   canSave?:        boolean;
   isUnrestricted?: boolean;
-  /** 'browse' = public Discover page, 'stream' = members' streaming catalogue. */
-  variant?:        'browse' | 'stream';
 }
 
-export default function BrowseGrid({ canSave = false, isUnrestricted = false, variant = 'browse' }: BrowseGridProps) {
+export default function BrowseGrid({ canSave = false, isUnrestricted = false }: BrowseGridProps) {
   const pathname = usePathname();
   const genres = getGenreConfig(isUnrestricted);
   const feed = useBrowseFeed(genres.filterMap);
@@ -26,13 +25,13 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false, va
   const moodPanelId = useId();
   const closeMood = useCallback(() => setMoodOpen(false), []);
 
+  // canSave doubles as "signed in": guests can browse but the player is members-only.
+  // Always one line, so the route skeleton can reserve it.
   const subtitle = feed.genre
     ? genres.descriptions[feed.genre]
-    : variant === 'stream'
-      ? 'Pick something, press play. Your unfinished titles wait up top.'
-      : isUnrestricted
-        ? 'Films and series across every genre, studio and decade.'
-        : 'Explore the deepest corners of the horror catalogue.';
+    : canSave
+      ? genres.descriptions.All
+      : <><Link href="/login?next=/stream" className="browse-signin-link">Sign in</Link> to play anything here.</>;
 
   const trimmedSearch = feed.searchQuery.trim();
 
@@ -48,13 +47,12 @@ export default function BrowseGrid({ canSave = false, isUnrestricted = false, va
 
       <div className="browse-container browse-container--inset">
         <PageHeader
-          title={variant === 'stream' ? 'Stream' : 'Discover'}
-          accent={variant === 'stream' ? undefined : isUnrestricted ? undefined : 'horror'}
+          title="Stream"
           eyebrow={feed.genre ?? undefined}
           subtitle={subtitle}
         />
 
-        <WatchHistoryRow />
+        {canSave && <WatchHistoryRow />}
 
         <GenreChips
           items={genres.items}

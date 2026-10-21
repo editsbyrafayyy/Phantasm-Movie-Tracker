@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Film, BookOpen, BarChart2, Bookmark, Compass, Plus, Shuffle, House, type LucideIcon } from 'lucide-react';
+import { Search, Film, BarChart2, Bookmark, Play, Plus, Shuffle, House, type LucideIcon } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { useAuth } from '@/components/layout/AuthProvider';
 import type { Entry } from '@/lib/types';
@@ -68,10 +68,9 @@ export default function CommandPaletteModal({ onClose, onShuffle }: CommandPalet
     const nav: PaletteItem[] = [
       { key: 'home',      label: 'Home',              icon: House,     run: go('/') },
       { key: 'vault',     label: user ? 'My Vault' : 'Vault', icon: Film, run: go('/vault') },
-      { key: 'browse',    label: 'Browse horror',     icon: Compass,   run: go('/browse') },
+      { key: 'stream',    label: 'Stream',            icon: Play,      run: go('/stream') },
       ...(user ? [
         { key: 'watchlist', label: 'Watch Later',     icon: Bookmark,  run: go('/watchlist') },
-        { key: 'diary',     label: 'Diary',           icon: BookOpen,  run: go('/diary') },
         { key: 'profile',   label: 'Profile & stats', icon: BarChart2, run: go('/profile') },
         { key: 'add',       label: 'Log a film',      icon: Plus,      run: go('/add') },
       ] : []),

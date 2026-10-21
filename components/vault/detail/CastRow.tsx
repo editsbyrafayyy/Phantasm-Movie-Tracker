@@ -14,33 +14,30 @@ function parseCast(item: CastItem): { name: string; character: string | null; pr
 
 /** Horizontal cast strip (cached TMDB cast on the movie row). */
 export default function CastRow({ cast }: { cast: Movie['cast_list'] }) {
+  if (!cast || cast.length === 0) return null;
   return (
-    <section className="detail-subsection" aria-labelledby="detail-cast-heading">
-      <h2 id="detail-cast-heading" className="detail-subsection-title">Cast</h2>
-      {cast && cast.length > 0 ? (
-        <ul className="cast-row">
-          {cast.map((item, i) => {
-            const { name, character, profilePath } = parseCast(item as CastItem);
-            return (
-              <li key={`${name}-${i}`} className="cast-card">
-                <div className="cast-avatar">
-                  {profilePath ? (
-                    <Image src={profilePath} alt="" fill className="detail-cover-img" sizes="64px" />
-                  ) : (
-                    <span aria-hidden="true">{name.charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
-                <div className="cast-info">
-                  <p className="cast-name">{name}</p>
-                  {character && <p className="cast-character">{character}</p>}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <p className="cast-empty">No cast information yet.</p>
-      )}
+    <section className="vdetail-section" aria-labelledby="detail-cast-heading">
+      <h2 id="detail-cast-heading" className="vdetail-h2">Cast</h2>
+      <ul className="cast-row">
+        {cast.map((item, i) => {
+          const { name, character, profilePath } = parseCast(item as CastItem);
+          return (
+            <li key={`${name}-${i}`} className="cast-card">
+              <div className="cast-avatar">
+                {profilePath ? (
+                  <Image src={profilePath} alt="" fill className="detail-cover-img" sizes="64px" />
+                ) : (
+                  <span aria-hidden="true">{name.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <div className="cast-info">
+                <p className="cast-name">{name}</p>
+                {character && <p className="cast-character">{character}</p>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

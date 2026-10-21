@@ -1,4 +1,4 @@
-// Genre taxonomy for the Browse / Stream discovery feed.
+// Genre taxonomy for the /stream discovery feed.
 // Restricted users see horror subgenres; unrestricted users see every genre.
 
 // Horror sub-genre labels
@@ -147,40 +147,40 @@ export const ALL_GENRES_FILTER_MAP: Record<string, GenreFilterConfig> = {
 };
 
 export const GENRE_DESCRIPTIONS: Record<string, string> = {
-  'All': 'Explore the deepest corners of the horror catalog, from modern acclaimed blockbusters to underground cult gems.',
-  'Slasher': 'Masked killers, sharp blades, rising body counts, and classic final girl confrontations.',
-  'Psychological': 'Mind games, fractured realities, overwhelming paranoia, and psychological dread.',
-  'Supernatural & Ghosts': 'Haunted spirits, eerie apparitions, poltergeists, and otherworldly spectral dread.',
-  'Occult & Demonic': 'Sinister cults, dark rituals, demonic possessions, exorcisms, and ancient evil.',
-  'Folk Horror': 'Pagan rituals, ancient folklore, and insidious terror rooted in isolated rural communities.',
-  'Creature Feature': 'Monstrous beasts, giant predators, biological anomalies, and extraterrestrial horrors.',
-  'Zombie': 'Viral outbreaks, flesh-eating undead swarms, and harrowing post-apocalyptic survival.',
-  'Vampire': 'Gothic bloodsuckers, immortal aristocratic predators, and nocturnal dread.',
-  'Found Footage': 'Recovered camcorder tapes, handheld POV immersion, and terrifying mockumentaries.',
-  'Body Horror': 'Grotesque physical mutations, biological decay, visceral infections, and bodily terror.',
-  'Gothic Horror': 'Victorian dread, crumbling ancestral castles, gloomy atmosphere, and dark romance.',
-  'Survival Horror': 'Claustrophobic death traps, wilderness isolation, and the desperate instinct to stay alive.',
-  'Sci-Fi Horror': 'Deep space isolation, lethal xenomorphs, and chilling technological nightmares.',
-  'Horror Comedy': 'Campy bloodshed, pitch-black humor, and hilarious macabre chaos.',
-  'Gore & Extreme': 'Uncompromising violence, intense visceral splatter, and relentless shock horror.',
-  'Haunted House': 'Creaking floorboards, malevolent dwellings, and sinister domestic spaces.',
-  'Cult Classic': 'Midnight movie favorites, grindhouse gems, and enduring B-movie masterpieces.',
+  'All': 'Popular horror and thriller titles, newest and most-watched first.',
+  'Slasher': 'Masked killers, body counts and final girls.',
+  'Psychological': 'Paranoia, unreliable narrators and minds coming apart.',
+  'Supernatural & Ghosts': 'Hauntings, apparitions and poltergeists.',
+  'Occult & Demonic': 'Cults, rituals, possessions and exorcisms.',
+  'Folk Horror': 'Pagan rites and isolated rural communities.',
+  'Creature Feature': 'Monsters, predators and things from elsewhere.',
+  'Zombie': 'Outbreaks, the undead and what is left after.',
+  'Vampire': 'Bloodsuckers, old and new.',
+  'Found Footage': 'Recovered tapes, handheld POV and mockumentaries.',
+  'Body Horror': 'Mutation, infection and decay.',
+  'Gothic Horror': 'Old houses, family curses and period dread.',
+  'Survival Horror': 'Traps, wilderness and staying alive.',
+  'Sci-Fi Horror': 'Space, aliens and technology gone wrong.',
+  'Horror Comedy': 'Horror played for laughs.',
+  'Gore & Extreme': 'Splatter and shock. Not for everyone.',
+  'Haunted House': 'Houses that do not want you there.',
+  'Cult Classic': 'Midnight movies, grindhouse and B-movies.',
 };
 
 export const ALL_GENRE_DESCRIPTIONS: Record<string, string> = {
   ...GENRE_DESCRIPTIONS,
-  'All': 'Explore the complete world cinema and television catalog across every genre, studio, and decade.',
-  'Action': 'High-octane adrenaline, explosive stunts, martial arts spectacles, and heroic battles.',
-  'Adventure': 'Epic journeys, daring quests, uncharted wilderness, and breathtaking expeditions.',
-  'Animation & Anime': 'Stunning animated features, Japanese anime series, visual masterpieces, and imaginative worlds.',
-  'Comedy': 'Laugh-out-loud humor, witty satires, romantic comedies, and classic slapstick.',
-  'Crime': 'Gritty underworld sagas, heist masterminds, detectives, and suspenseful police procedurals.',
-  'Documentary': 'Real-world exposés, historical deep dives, human stories, and nature chronicles.',
-  'Drama': 'Emotionally powerful narratives, complex characters, acclaimed prestige cinema, and heartfelt stories.',
-  'Fantasy': 'Mythical realms, magic spells, legendary creatures, and enchanting epics.',
-  'Sci-Fi': 'Futuristic visions, deep space odyssey, AI dilemmas, time travel, and mind-bending concepts.',
-  'Romance': 'Passionate love stories, timeless romantic dramas, emotional connections, and heartwarming journeys.',
-  'Thriller': 'Edge-of-your-seat tension, gripping conspiracies, nail-biting suspense, and unexpected twists.',
+  'All': 'Popular films and series across every genre.',
+  'Action': 'Stunts, fights and chases.',
+  'Adventure': 'Quests, journeys and expeditions.',
+  'Animation & Anime': 'Animated features and anime series.',
+  'Comedy': 'Satire, rom-coms and slapstick.',
+  'Crime': 'Heists, detectives and the underworld.',
+  'Documentary': 'True stories, history and nature.',
+  'Drama': 'Character-driven stories.',
+  'Fantasy': 'Magic, myths and other worlds.',
+  'Sci-Fi': 'Space, time travel and the future.',
+  'Romance': 'Love stories.',
+  'Thriller': 'Conspiracies, suspense and twists.',
 };
 
 export interface GenreConfig {

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export const metadata = {
   title: 'Stream — Phantasm',
-  description: 'Stream horror films from the vault collection',
+  description: 'Popular and new horror films and series, filtered by subgenre or mood.',
 };
 
 export default function StreamLayout({ children }: { children: ReactNode }) {

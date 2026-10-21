@@ -6,10 +6,8 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast, { type ToastType } from '@/components/ui/Toast';
 import FranchiseTrack from '@/components/vault/FranchiseTrack';
 import ListManagerModal from '@/components/vault/ListManagerModal';
-import DiaryLogModal from '@/components/vault/DiaryLogModal';
 import DetailHero from '@/components/vault/detail/DetailHero';
 import DetailActions from '@/components/vault/detail/DetailActions';
-import ScoreBreakdown from '@/components/vault/detail/ScoreBreakdown';
 import EntryTags from '@/components/vault/detail/EntryTags';
 import CastRow from '@/components/vault/detail/CastRow';
 import SimilarRow from '@/components/vault/detail/SimilarRow';
@@ -52,20 +50,7 @@ export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwne
   const [mustWatch, setMustWatch]     = useState(!!entry.must_watch);
   const [togglingMustWatch, setTogglingMustWatch] = useState(false);
   const [stackOpen, setStackOpen]     = useState(false);
-  const [diaryOpen, setDiaryOpen]     = useState(false);
-  const [watchCount, setWatchCount]   = useState(0);
   const [ambientColor, setAmbientColor] = useState<string | null>(null);
-
-  // Diary count — fetched once here and handed to the log modal.
-  useEffect(() => {
-    if (!canStream || !movie?.id) return;
-    const ctrl = new AbortController();
-    fetch(`/api/diary?movie_id=${movie.id}&count=true`, { signal: ctrl.signal })
-      .then(r => (r.ok ? r.json() : null))
-      .then((d: { count?: number } | null) => { if (d) setWatchCount(d.count ?? 0); })
-      .catch(() => { /* aborted or offline — keep 0 */ });
-    return () => ctrl.abort();
-  }, [canStream, movie?.id]);
 
   useEffect(() => {
     let alive = true;
@@ -173,12 +158,9 @@ export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwne
   }
 
   return (
-    <div
-      className="detail-v3-page vault-detail"
-      style={ambientColor ? ({ '--film-ambient': ambientColor } as React.CSSProperties) : undefined}
-    >
+    <div className="vdetail">
       <div
-        className={`detail-ambient-glow${ambientColor ? ' is-lit' : ''}`}
+        className={`vdetail-ambient${ambientColor ? ' is-lit' : ''}`}
         style={{ '--glow-color': boostColor(ambientColor) } as React.CSSProperties}
         aria-hidden="true"
       />
@@ -196,7 +178,6 @@ export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwne
             mustWatch={mustWatch}
             togglingMustWatch={togglingMustWatch}
             onToggleMustWatch={toggleMustWatch}
-            onLogWatch={() => setDiaryOpen(true)}
             onSaveToStack={() => setStackOpen(true)}
             onCopySummary={copySummary}
             onCopyLink={copyLink}
@@ -205,15 +186,15 @@ export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwne
         }
       />
 
-      <div className="detail-overview-grid">
-        <div className="detail-overview-main">
-          {movie.plot && <p className="detail-plot-v3">{movie.plot}</p>}
+      <div className="vdetail-body">
+        <div className="vdetail-top">
+          {movie.plot && <p className="vdetail-plot">{movie.plot}</p>}
 
           {entry.notes && (
-            <blockquote className="entry-notes-block">
-              <span className="entry-notes-label">Personal note</span>
-              <p className="entry-notes-text">{entry.notes}</p>
-            </blockquote>
+            <figure className="vdetail-note">
+              <blockquote className="vdetail-note-text">{entry.notes}</blockquote>
+              <figcaption className="vdetail-note-label">Personal note</figcaption>
+            </figure>
           )}
 
           <EntryTags
@@ -222,22 +203,15 @@ export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwne
             editable={isOwner}
             onError={message => setToast({ message, type: 'error' })}
           />
-
-          <ScoreBreakdown entry={entry} />
-
-          <FranchiseTrack currentId={entry.id} currentTitle={title} entries={franchiseEntries} />
-
-          <CastRow cast={movie.cast_list} />
-
-          <SimilarRow entries={similar} />
         </div>
 
-        <DetailSidebar
-          entry={entry}
-          watchCount={watchCount}
-          canLog={canStream}
-          onLogWatch={() => setDiaryOpen(true)}
-        />
+        <DetailSidebar entry={entry} />
+
+        <div className="vdetail-rest">
+          <FranchiseTrack currentId={entry.id} currentTitle={title} entries={franchiseEntries} />
+          <CastRow cast={movie.cast_list} />
+          <SimilarRow entries={similar} />
+        </div>
       </div>
 
       {isOwner && confirming && (
@@ -256,19 +230,6 @@ export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwne
           movieTitle={title}
           onClose={() => setStackOpen(false)}
           onNotify={(message, type) => setToast({ message, type })}
-        />
-      )}
-
-      {diaryOpen && (
-        <DiaryLogModal
-          movieId={movie.id}
-          movieTitle={title}
-          watchCount={watchCount}
-          onClose={() => setDiaryOpen(false)}
-          onSuccess={() => {
-            setWatchCount(c => c + 1);
-            setToast({ message: 'Watch logged in your diary', type: 'success' });
-          }}
         />
       )}
 

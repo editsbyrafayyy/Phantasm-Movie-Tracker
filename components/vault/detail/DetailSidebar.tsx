@@ -1,63 +1,34 @@
-import { RotateCcw } from 'lucide-react';
 import type { Entry } from '@/lib/types';
-import { VERDICT_LABEL, verdictColor } from '../verdict';
+import ScoreBreakdown from './ScoreBreakdown';
+import { formatRuntime } from '../format';
 
-interface DetailSidebarProps {
-  entry:      Entry;
-  watchCount: number;
-  canLog:     boolean;
-  onLogWatch: () => void;
-}
+const ADDED_FMT = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-/** Score card + film facts. */
-export default function DetailSidebar({ entry, watchCount, canLog, onLogWatch }: DetailSidebarProps) {
+/** Score breakdown + film facts. One panel; rows with no data are left out. */
+export default function DetailSidebar({ entry }: { entry: Entry }) {
   const { movie } = entry;
-  const hasScore = entry.total !== null && entry.total > 0;
-  const recColor = verdictColor(entry.recommend);
-  const watchText = watchCount > 0 ? `${watchCount} ${watchCount === 1 ? 'watch' : 'watches'}` : 'Not logged';
+  const added = entry.created_at ? ADDED_FMT.format(new Date(entry.created_at)) : null;
+  const facts: [string, string][] = [
+    ['Released', movie.year ? String(movie.year) : null],
+    ['Runtime', formatRuntime(movie.runtime_min)],
+    ['Director', movie.director ?? null],
+    ['IMDb', movie.imdb_rating ? `${movie.imdb_rating} / 10` : null],
+    ['Added', added],
+  ].filter((f): f is [string, string] => !!f[1]);
 
   return (
-    <aside className="detail-overview-side">
-      <div className="vault-score-card">
-        <span className="vault-score-label">Vault score</span>
-        {hasScore ? (
-          <div className="vault-score-figure">
-            <span className="vault-score-value">{entry.total}</span>
-            <span className="vault-score-denom">/10</span>
-          </div>
-        ) : (
-          <p className="vault-score-empty">Not scored yet</p>
-        )}
-        {entry.recommend && recColor && (
-          <span className="verdict-badge" style={{ '--verdict': recColor } as React.CSSProperties}>
-            <span className="vault-dot" aria-hidden="true" />
-            {VERDICT_LABEL[entry.recommend] ?? entry.recommend}
-          </span>
-        )}
-      </div>
-
-      <dl className="vault-meta-card">
-        <div className="vault-meta-row"><dt>Year</dt><dd>{movie.year ?? '—'}</dd></div>
-        <div className="vault-meta-row"><dt>Runtime</dt><dd>{movie.runtime_min ? `${movie.runtime_min} min` : '—'}</dd></div>
-        <div className="vault-meta-row"><dt>Director</dt><dd>{movie.director ?? '—'}</dd></div>
-        <div className="vault-meta-row"><dt>IMDb</dt><dd>{movie.imdb_rating ?? '—'}</dd></div>
-        {canLog && (
-          <div className="vault-meta-row">
-            <dt>Watch log</dt>
-            <dd>
-              <button
-                type="button"
-                className={`vault-meta-log${watchCount > 1 ? ' is-rewatched' : ''}`}
-                onClick={onLogWatch}
-                title="Log a watch"
-              >
-                {watchCount > 1 && <RotateCcw size={14} aria-hidden="true" />}
-                {watchText}
-              </button>
-            </dd>
-          </div>
-        )}
-      </dl>
+    <aside className="vdetail-side" aria-label="Score and details">
+      <ScoreBreakdown entry={entry} />
+      {facts.length > 0 && (
+        <dl className="vdetail-facts">
+          {facts.map(([k, v]) => (
+            <div key={k} className="vdetail-fact">
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </aside>
   );
 }

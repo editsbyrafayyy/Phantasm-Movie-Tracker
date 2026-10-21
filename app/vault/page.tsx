@@ -5,6 +5,7 @@ import { getOwnerEntries } from '@/lib/data';
 import MovieGrid from '@/components/vault/MovieGrid';
 import { VaultSkeleton } from '@/components/vault/VaultSkeleton';
 import PageHeader from '@/components/ui/PageHeader';
+import { gridPosterUrl } from '@/components/vault/posterSrc';
 import type { VaultGridEntry } from '@/lib/types';
 
 export const metadata: Metadata = {
@@ -27,9 +28,23 @@ interface GridRow {
   movie: (Omit<VaultGridEntry['movie'], 'cast_names'> & { cast_list?: CastItem[] | null }) | null;
 }
 
+/** cast_list items are stored either as objects or as JSON-encoded strings. */
+function castName(c: CastItem): string {
+  if (!c) return '';
+  if (typeof c !== 'string') return c.name ?? '';
+  if (!c.startsWith('{')) return c;
+  try {
+    const parsed = JSON.parse(c) as { name?: unknown };
+    return typeof parsed.name === 'string' ? parsed.name : '';
+  } catch {
+    return '';
+  }
+}
+
 /** Project a full or partial row down to what the client needs (keeps the RSC payload small). */
 function toGridEntry(row: GridRow): VaultGridEntry {
   const m = row.movie;
+  const poster = gridPosterUrl(m?.poster_url ?? null);
   return {
     id: row.id,
     subgenre: row.subgenre,
@@ -41,14 +56,12 @@ function toGridEntry(row: GridRow): VaultGridEntry {
       title: m?.title ?? 'Unknown',
       year: m?.year ?? null,
       runtime_min: m?.runtime_min ?? null,
-      poster_url: m?.poster_url ?? null,
-      backdrop_url: m?.backdrop_url ?? null,
+      poster_url: poster,
+      // The backdrop is only a fallback image for posterless films — don't ship it otherwise.
+      backdrop_url: poster ? null : (m?.backdrop_url ?? null),
       director: m?.director ?? null,
       tmdb_id: m?.tmdb_id ?? null,
-      cast_names: (m?.cast_list ?? [])
-        .map(c => (typeof c === 'string' ? c : c?.name ?? ''))
-        .filter(Boolean)
-        .slice(0, 12),
+      cast_names: (m?.cast_list ?? []).map(castName).filter(Boolean).slice(0, 12),
     },
   };
 }

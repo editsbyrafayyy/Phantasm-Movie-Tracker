@@ -15,14 +15,14 @@ interface Mood {
 }
 
 const MOODS: Mood[] = [
-  { id: 'terrifying',    label: 'Terrify Me',          description: 'Critically acclaimed, highly rated horror masterpieces that deliver maximum scares.' },
-  { id: 'psychological', label: 'Mess With My Head',   description: 'Psychological horror and mind-benders that will keep you guessing and questioning reality.' },
-  { id: 'quick',         label: 'Quick Watch',         description: 'Fast-paced, high-intensity horror flicks clocking in under 95 minutes for a quick thrill.' },
-  { id: 'classic',       label: 'Old School',          description: 'Nostalgic classics and vintage horror masterpieces released in 1999 or earlier.' },
-  { id: 'recent',        label: 'Fresh Nightmare',     description: 'The latest chilling releases and modern nightmares from the last two years.' },
-  { id: 'hidden',        label: 'Hidden Gem',          description: 'Underrated sleeper hits and lesser-known horror movies rated 6.5 to 7.5.' },
-  { id: 'popular',       label: "Everyone's Watching", description: 'Highly rated horror movies with a massive following and high popularity ratings.' },
-  { id: 'extreme',       label: 'Stomach of Steel',    description: 'Visceral gore, body horror, and intense films that will test the limits of your stomach.' },
+  { id: 'terrifying',    label: 'Terrify Me',          description: 'Highly rated horror with the strongest reviews.' },
+  { id: 'psychological', label: 'Mess With My Head',   description: 'Psychological horror and mind-benders.' },
+  { id: 'quick',         label: 'Quick Watch',         description: 'Horror under 95 minutes.' },
+  { id: 'classic',       label: 'Old School',          description: 'Horror released in 1999 or earlier.' },
+  { id: 'recent',        label: 'Fresh Nightmare',     description: 'Horror from the last two years.' },
+  { id: 'hidden',        label: 'Hidden Gem',          description: 'Lesser-known horror rated 6.5 to 7.5.' },
+  { id: 'popular',       label: "Everyone's Watching", description: 'Well-rated horror with the biggest audiences right now.' },
+  { id: 'extreme',       label: 'Stomach of Steel',    description: 'Gore, body horror and the hardest films to sit through.' },
 ];
 
 type MoodData = Record<string, TmdbDiscoverMovie[]>;

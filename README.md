@@ -36,8 +36,8 @@ Key application highlights:
   - Emotional Impact (0 to 1)
 - Optional bonus points and categorical verdicts (Peak, Yes, No, Garbage).
 
-### Browse and Mood Engine
-- Browse trending and popular titles using live TMDB integration.
+### Stream and Mood Engine
+- One discovery page (`/stream`) for trending and popular titles via TMDB. Guests can browse; playback is members-only.
 - Mood-based filtering engine matching emotional tones and themes to catalog entries.
 - Media roulette for randomized selection from watchlists or unwatched recommendations.
 
@@ -59,7 +59,7 @@ Key application highlights:
 - **Language:** TypeScript
 - **Database & Auth:** Supabase (PostgreSQL with Row Level Security)
 - **APIs:** The Movie Database (TMDB), Open Movie Database (OMDB)
-- **Styling:** Tailwind CSS, custom CSS animations, Framer Motion
+- **Styling:** Vanilla CSS (app/globals.css), Framer Motion
 - **Data Visualization:** Custom SVG and canvas chart components
 
 ---
@@ -69,10 +69,9 @@ Key application highlights:
 ```text
 ├── app/                  # Next.js App Router (pages, layouts, API routes)
 │   ├── api/              # Backend endpoints (search, movies, lists, stats)
-│   ├── browse/           # TMDB discovery and mood exploration views
-│   ├── diary/            # Chronological viewing logs
+│   ├── browse/           # Redirects to /stream
 │   ├── stats/            # Analytics and visual charts
-│   ├── stream/           # Media player and detail views
+│   ├── stream/           # Discovery page, media player and detail views
 │   └── vault/            # Core catalog and title details
 ├── components/           # Modular React UI components
 │   ├── browse/           # Carousels, mood pickers, and category rows

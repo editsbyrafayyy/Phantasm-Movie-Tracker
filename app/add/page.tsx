@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import AddMovieForm from '@/components/forms/AddMovieForm';
 import PageHeader from '@/components/ui/PageHeader';
-import Spinner from '@/components/ui/Spinner';
+import { FormFieldsSkeleton } from '@/components/forms/FormSkeleton';
 
 export const metadata: Metadata = {
   title: 'Log a Film — Phantasm',
@@ -14,10 +14,10 @@ export default function AddMoviePage() {
       <PageHeader
         title="Log"
         accent="a film"
-        subtitle="Only the title and subgenre are required — everything else is optional."
+        subtitle="Only the title and subgenre are required."
       />
 
-      <Suspense fallback={<div className="form-loading"><Spinner size={24} /> Loading form…</div>}>
+      <Suspense fallback={<FormFieldsSkeleton />}>
         <AddMovieForm />
       </Suspense>
     </div>

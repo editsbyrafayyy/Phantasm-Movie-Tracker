@@ -66,7 +66,6 @@ function LoginForm() {
       <div className="login-container">
         {/* Headline */}
         <PageHeader
-          eyebrow="Welcome back"
           title="Sign in"
           subtitle="Phantasm is invite-only. Use the account the owner set up for you."
           className="login-header"
@@ -132,10 +131,6 @@ function LoginForm() {
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-
-        <p className="login-invite-note">
-          No account? Ask the owner for an invite.
-        </p>
       </div>
     </section>
   );

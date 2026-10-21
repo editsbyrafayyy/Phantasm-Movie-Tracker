@@ -1,15 +1,17 @@
-import { redirect } from 'next/navigation';
 import BrowseGrid from '@/components/browse/BrowseGrid';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { isUnrestrictedUser } from '@/lib/guards';
 
+// Public discovery page. Guests can browse and open info pages; the player
+// itself (/stream/<id>) stays members-only (enforced in proxy.ts).
 export default async function StreamPage() {
-  // Auth check — streaming catalog is members only
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login?next=/stream');
+  let user = null;
+  try {
+    const supabase = await createServerSupabaseClient();
+    user = (await supabase.auth.getUser()).data.user;
+  } catch {
+    // Supabase unreachable — render the guest view.
+  }
 
-  const isUnrestricted = isUnrestrictedUser(user);
-
-  return <BrowseGrid canSave isUnrestricted={isUnrestricted} variant="stream" />;
+  return <BrowseGrid canSave={!!user} isUnrestricted={isUnrestrictedUser(user)} />;
 }

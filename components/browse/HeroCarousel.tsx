@@ -130,6 +130,8 @@ export default function HeroCarousel({
     return (
       <div className="hero-carousel">
         <div className="hero-placeholder">
+          {/* phones: stands in for the centred gallery poster until WebGL mounts */}
+          <div className="skeleton hero-placeholder-poster" aria-hidden="true" />
           <div className="hero-content">
             <HeroText entry={entry} eyebrow={eyebrow} canStream={canStream} />
           </div>

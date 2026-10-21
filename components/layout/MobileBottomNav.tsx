@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
-import { House, Film, Play, Plus, LogIn, Bookmark, Compass, type LucideIcon } from 'lucide-react';
+import { House, Film, Play, Plus, LogIn, Bookmark, type LucideIcon } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 const SESSION_HINT_KEY = 'vault_has_session';
 
 interface Tab { href: string; label: string; icon: LucideIcon; primary?: boolean }
 
-// Max 5 tabs. Diary/Browse/Profile for members live in the avatar menu (StreamRail).
+// Max 5 tabs. Profile lives in the avatar menu (StreamRail).
 const MEMBER_TABS: Tab[] = [
   { href: '/',          label: 'Home',        icon: House },
   { href: '/vault',     label: 'My Vault',    icon: Film },
@@ -22,7 +22,7 @@ const MEMBER_TABS: Tab[] = [
 const GUEST_TABS: Tab[] = [
   { href: '/',       label: 'Home',    icon: House },
   { href: '/vault',  label: 'Vault',   icon: Film },
-  { href: '/browse', label: 'Browse',  icon: Compass },
+  { href: '/stream', label: 'Stream',  icon: Play },
   { href: '/login',  label: 'Sign in', icon: LogIn },
 ];
 

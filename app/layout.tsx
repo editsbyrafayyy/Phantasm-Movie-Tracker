@@ -7,6 +7,7 @@ import StreamRail     from '@/components/layout/StreamRail';
 import StarField        from '@/components/StarField';
 import GlobalShortcuts  from '@/components/layout/GlobalShortcuts';
 import MobileBottomNav  from '@/components/layout/MobileBottomNav';
+import WatchProgressTracker from '@/components/stream/WatchProgressTracker';
 
 const inter = Inter({
   subsets:  ['latin'],
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <MobileBottomNav />
           <GlobalShortcuts />
+          <WatchProgressTracker />
         </AuthProvider>
       </body>
     </html>

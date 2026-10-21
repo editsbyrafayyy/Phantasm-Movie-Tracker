@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, LogOut, ChevronDown, BookOpen, Compass } from 'lucide-react';
+import { User, LogOut, ChevronDown } from 'lucide-react';
 import ToastHistoryModal from '@/components/ui/ToastHistoryModal';
 import { useAuth } from '@/components/layout/AuthProvider';
 
@@ -13,7 +13,7 @@ interface NavItem { href: string; label: string }
 const GUEST_LINKS: NavItem[] = [
   { href: '/',       label: 'Home' },
   { href: '/vault',  label: 'Vault' },
-  { href: '/browse', label: 'Browse' },
+  { href: '/stream', label: 'Stream' },
 ];
 
 const MEMBER_LINKS: NavItem[] = [
@@ -21,8 +21,6 @@ const MEMBER_LINKS: NavItem[] = [
   { href: '/vault',     label: 'My Vault' },
   { href: '/stream',    label: 'Stream' },
   { href: '/watchlist', label: 'Watch Later' },
-  { href: '/diary',     label: 'Diary' },
-  { href: '/browse',    label: 'Browse' },
   { href: '/add',       label: 'Log Film' },
 ];
 
@@ -137,15 +135,6 @@ export default function StreamRail() {
                     <Link href="/profile" className="navbar-dropdown-item" role="menuitem" onClick={closeMenu}>
                       <User size={16} aria-hidden="true" />
                       Profile
-                    </Link>
-                    {/* Diary and Browse aren't in the 5-tab mobile bar — reachable here */}
-                    <Link href="/diary" className="navbar-dropdown-item navbar-dropdown-mobile-only" role="menuitem" onClick={closeMenu}>
-                      <BookOpen size={16} aria-hidden="true" />
-                      Diary
-                    </Link>
-                    <Link href="/browse" className="navbar-dropdown-item navbar-dropdown-mobile-only" role="menuitem" onClick={closeMenu}>
-                      <Compass size={16} aria-hidden="true" />
-                      Browse
                     </Link>
                     <button
                       type="button"

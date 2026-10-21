@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import UpdateMovieForm from '@/components/forms/UpdateMovieForm';
 import PageHeader from '@/components/ui/PageHeader';
-import Spinner from '@/components/ui/Spinner';
+import { FormFieldsSkeleton } from '@/components/forms/FormSkeleton';
 
 export const metadata: Metadata = {
   title: 'Edit Rating — Phantasm',
@@ -13,7 +13,7 @@ export default function UpdatePage() {
     <div className="page-container form-page">
       <PageHeader title="Edit" accent="rating" />
 
-      <Suspense fallback={<div className="form-loading"><Spinner size={24} /> Loading entry…</div>}>
+      <Suspense fallback={<FormFieldsSkeleton />}>
         <UpdateMovieForm />
       </Suspense>
     </div>

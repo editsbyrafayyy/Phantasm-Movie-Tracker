@@ -298,6 +298,16 @@ export default function VaultFilters({ filters, onChange, onClearAll, resultCoun
             onChange={e => onChange({ search: e.target.value })}
             aria-label="Search your vault"
           />
+          {filters.search && (
+            <button
+              type="button"
+              className="vault-search-clear"
+              onClick={() => onChange({ search: '' })}
+              aria-label="Clear search"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
         </div>
 
         <div className="vault-toolbar-controls">
@@ -318,11 +328,12 @@ export default function VaultFilters({ filters, onChange, onClearAll, resultCoun
               className={`btn-secondary vault-filters-trigger${filterCount > 0 ? ' is-active' : ''}`}
               aria-expanded={panelOpen}
               aria-haspopup="dialog"
+              aria-label={filterCount > 0 ? `Filters, ${filterCount} active` : 'Filters'}
               onClick={() => setPanelOpen(o => !o)}
             >
               <SlidersHorizontal size={16} aria-hidden="true" />
               <span>Filters</span>
-              {filterCount > 0 && <span className="vault-filters-count">{filterCount}</span>}
+              {filterCount > 0 && <span className="vault-filters-count" aria-hidden="true">{filterCount}</span>}
             </button>
 
             {panelOpen && !isPhone && (
@@ -345,7 +356,7 @@ export default function VaultFilters({ filters, onChange, onClearAll, resultCoun
       {(chips.length > 0 || hasAnyFilter) && (
         <div className="vault-active-row" aria-live="polite">
           <span className="vault-result-count">
-            {resultCount} of {totalCount} film{totalCount === 1 ? '' : 's'}
+            {resultCount} of {totalCount}
           </span>
           {chips.map(c => (
             <button
