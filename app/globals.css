@@ -2816,10 +2816,9 @@ select:focus-visible {
 }
 
 /* ── Recently Viewed Row (Home Page) ─────────────────────────────────────── */
-/* Header reuses .category-header / .category-heading / .category-count */
-.recently-viewed-section {
-  margin-top: 32px;
-}
+/* Header reuses .category-header / .category-heading / .category-count.
+   No top margin of its own: the gap under the hero lives on .hero-carousel, so it
+   stays put when this row is cleared or absent. */
 /* Small inline text button (Clear, Clear search) */
 .text-btn {
   display: inline-flex;
@@ -4488,6 +4487,9 @@ select:focus-visible {
 
 /* ── Header Navbar Buttons ────────────────────────────────────────────────── */
 
+/* Gap between the home hero and the first row. The guest banner brings its own margins. */
+.home-page > .hero-carousel:not(:has(+ .guest-notice-banner)) { margin-bottom: 32px; }
+
 /* ── Guest Notice Banner ──────────────────────────────────────────────────── */
 .guest-notice-banner {
   display: flex;
@@ -4982,7 +4984,9 @@ select:focus-visible {
     max-height: none !important;
     border-radius: 0 !important; /* Full width touches viewport edges */
     width: 100% !important;
-    margin: 0 auto !important;
+    /* horizontal only — the bottom gap to the first row is set on .home-page > .hero-carousel */
+    margin-left: auto !important;
+    margin-right: auto !important;
     border-left: none !important;
     border-right: none !important;
   }
