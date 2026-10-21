@@ -1,0 +1,45 @@
+# Fast checks on every push and PR. Vercel does the real build and deploy;
+# this catches type errors, broken imports and lint errors within ~1 minute,
+# without needing any API keys or Supabase secrets.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+# A newer push to the same branch cancels the run still in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck & lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # Route types (.next/types) are generated, not committed; tsc checks against them.
+      - name: Generate route types
+        run: npx next typegen
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # VideoPlayerClient.tsx is off-limits (CLAUDE.md §2.1) and has known lint errors,
+      # so it is excluded rather than fixed. Warnings are reported but don't fail the run.
+      - name: Lint
+        run: npx eslint app components lib proxy.ts --ignore-pattern components/stream/VideoPlayerClient.tsx
