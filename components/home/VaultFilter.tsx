@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useTransition } from 'react';
 import Image from 'next/image';
+import { gridPosterUrl } from '@/components/vault/posterSrc';
 import Link from 'next/link';
 import { Search, X, Film, Plus } from 'lucide-react';
 import CategoryRow from '@/components/browse/CategoryRow';
@@ -188,7 +189,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
 
               <div className="home-search-grid">
                 {searchedEntries.map(entry => {
-                  const poster = entry.movie?.poster_url;
+                  const poster = gridPosterUrl(entry.movie?.poster_url ?? null);
                   const title = entry.movie?.title ?? 'Unknown';
                   const year = entry.movie?.year;
                   const director = entry.movie?.director;
@@ -291,7 +292,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
 
           {filteredEntries.length === 0 && (
             <div className="empty-state">
-              <p className="empty-state-title">Nothing matches</p>
+              <p className="empty-state-title">Nothing stirs here</p>
               <p className="empty-state-body">No films match the selected verdict and genre.</p>
             </div>
           )}

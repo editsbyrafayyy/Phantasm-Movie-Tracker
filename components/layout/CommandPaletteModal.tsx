@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Film, BarChart2, Bookmark, Play, Plus, Shuffle, House, type LucideIcon } from 'lucide-react';
+import { Search, Film, BarChart2, Plus } from 'lucide-react';
+import { HauntedHouse, Coffin, WatchingEye, Gravestone, Planchette, type IconComponent } from '@/components/ui/HorrorIcons';
 import Modal from '@/components/ui/Modal';
 import { useAuth } from '@/components/layout/AuthProvider';
 import type { Entry } from '@/lib/types';
@@ -16,7 +17,7 @@ interface PaletteItem {
   key:      string;
   label:    string;
   meta?:    string;
-  icon:     LucideIcon;
+  icon:     IconComponent;
   run:      () => void;
 }
 
@@ -66,15 +67,15 @@ export default function CommandPaletteModal({ onClose, onShuffle }: CommandPalet
       : [];
 
     const nav: PaletteItem[] = [
-      { key: 'home',      label: 'Home',              icon: House,     run: go('/') },
-      { key: 'vault',     label: user ? 'My Vault' : 'Vault', icon: Film, run: go('/vault') },
-      { key: 'stream',    label: 'Stream',            icon: Play,      run: go('/stream') },
+      { key: 'home',      label: 'Home',              icon: HauntedHouse, run: go('/') },
+      { key: 'vault',     label: user ? 'My Vault' : 'Vault', icon: Coffin, run: go('/vault') },
+      { key: 'stream',    label: 'Stream',            icon: WatchingEye, run: go('/stream') },
       ...(user ? [
-        { key: 'watchlist', label: 'Watch Later',     icon: Bookmark,  run: go('/watchlist') },
+        { key: 'watchlist', label: 'Watch Later',     icon: Gravestone, run: go('/watchlist') },
         { key: 'profile',   label: 'Profile & stats', icon: BarChart2, run: go('/profile') },
         { key: 'add',       label: 'Log a film',      icon: Plus,      run: go('/add') },
       ] : []),
-      { key: 'shuffle',   label: 'Film roulette',     icon: Shuffle,   run: () => { onClose(); onShuffle(); } },
+      { key: 'shuffle',   label: 'Film roulette',     icon: Planchette, run: () => { onClose(); onShuffle(); } },
     ].filter(item => !q || item.label.toLowerCase().includes(q));
 
     return [...films, ...nav];

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ListChecks } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import type { Entry } from '@/lib/types';
 
@@ -100,7 +99,6 @@ export default function VaultHealthCheckModal() {
   return (
     <>
       <button type="button" onClick={() => setIsOpen(true)} className="btn-secondary settings-row-btn">
-        <ListChecks size={16} aria-hidden="true" />
         Check vault for gaps
       </button>
 

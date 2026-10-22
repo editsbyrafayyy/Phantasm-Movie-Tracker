@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Wand2 } from 'lucide-react';
 
 /**
  * Calls the refresh route batch by batch until every film with gaps has been
@@ -44,7 +43,6 @@ export default function CatalogFixButton({ total }: { total: number }) {
   return (
     <div className="catalog-fix">
       <button type="button" className="btn-secondary" onClick={run} disabled={state.running || total === 0}>
-        <Wand2 size={16} aria-hidden="true" />
         {state.running ? `Checking… ${state.checked}/${total}` : 'Fill in missing details'}
       </button>
       <p className="admin-job-desc" role="status">

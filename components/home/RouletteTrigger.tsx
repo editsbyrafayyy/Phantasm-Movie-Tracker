@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Shuffle } from 'lucide-react';
+
 import type { Entry } from '@/lib/types';
+import { Planchette } from '@/components/ui/HorrorIcons';
 
 // Lazy-load the modal so it doesn't affect initial page load
 const RouletteModal = dynamic(() => import('./RouletteModal'), { ssr: false });
@@ -53,7 +54,7 @@ export default function RouletteTrigger({ entries, canStream }: RouletteTriggerP
         data-action="roulette"
         onClick={() => setOpen(true)}
       >
-        <Shuffle size={16} aria-hidden="true" />
+        <Planchette size={16} aria-hidden="true" />
         Roulette
       </button>
 
@@ -65,7 +66,7 @@ export default function RouletteTrigger({ entries, canStream }: RouletteTriggerP
         tabIndex={pastHero ? 0 : -1}
         aria-hidden={pastHero ? undefined : true}
       >
-        <Shuffle size={20} aria-hidden="true" />
+        <Planchette size={20} aria-hidden="true" />
       </button>
 
       {isOpen && (

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
+import { gridPosterUrl } from '@/components/vault/posterSrc';
 import Link from 'next/link';
 import { Film, ChevronDown, ChevronUp } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
@@ -108,7 +109,7 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
               <div className="activity-poster">
                 {item.movie.poster_url ? (
                   <Image
-                    src={item.movie.poster_url}
+                    src={gridPosterUrl(item.movie.poster_url)!}
                     alt=""
                     fill
                     sizes="44px"

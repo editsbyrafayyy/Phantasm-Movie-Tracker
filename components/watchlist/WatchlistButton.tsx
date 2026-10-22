@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { Bookmark, BookmarkCheck } from 'lucide-react';
+import { Gravestone, GravestoneSaved } from '@/components/ui/HorrorIcons';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 interface WatchlistButtonProps {
@@ -152,8 +152,8 @@ export default function WatchlistButton({
       disabled={busy}
     >
       {saved
-        ? <BookmarkCheck size={16} className="watchlist-icon" aria-hidden="true" />
-        : <Bookmark size={16} className="watchlist-icon" aria-hidden="true" />}
+        ? <GravestoneSaved size={16} className="watchlist-icon" aria-hidden="true" />
+        : <Gravestone size={16} className="watchlist-icon" aria-hidden="true" />}
       {showLabel && <span>{saved ? 'Saved' : 'Watch Later'}</span>}
     </button>
   );

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 import Toast from '@/components/ui/Toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
@@ -37,7 +36,6 @@ export default function AdminActions({ orphanCount }: { orphanCount: number }) {
   const jobs = [
     {
       id: 'cache' as const,
-      icon: RefreshCw,
       title: 'Refresh site data',
       desc: 'Home, Vault and Stream cache your vault for 5 minutes. Clear it to show changes now.',
       label: 'Refresh now',
@@ -48,7 +46,6 @@ export default function AdminActions({ orphanCount }: { orphanCount: number }) {
     },
     {
       id: 'moods' as const,
-      icon: Sparkles,
       title: 'Rebuild mood picks',
       desc: 'Recompute the “Pick by mood” pools on Stream from your vault and TMDB.',
       label: 'Rebuild',
@@ -59,7 +56,6 @@ export default function AdminActions({ orphanCount }: { orphanCount: number }) {
     },
     {
       id: 'orphans' as const,
-      icon: Trash2,
       title: 'Remove unused films',
       desc: orphanCount
         ? `${orphanCount} catalog film${orphanCount === 1 ? ' is' : 's are'} not rated by anyone or saved to a list.`
@@ -75,7 +71,6 @@ export default function AdminActions({ orphanCount }: { orphanCount: number }) {
       <ul className="admin-jobs">
         {jobs.map(j => (
           <li key={j.id} className="admin-job">
-            <j.icon size={18} className="admin-job-icon" aria-hidden="true" />
             <div className="admin-job-text">
               <p className="admin-job-title">{j.title}</p>
               <p className="admin-job-desc">{j.desc}</p>

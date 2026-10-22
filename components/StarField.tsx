@@ -23,7 +23,7 @@ function generateStars(count: number): Star[] {
   }));
 }
 
-/** Player pages get no starfield — the video should have the GPU to itself. */
+/** Player pages get no starfield or grain — the video should have the GPU to itself. */
 function isPlayerRoute(pathname: string) {
   if (pathname.startsWith('/stream/tmdb/')) return true;
   // /stream/[id] (but not the /stream hub itself)
@@ -145,5 +145,11 @@ function StarCanvas() {
 export default function StarField() {
   const pathname = usePathname();
   if (isPlayerRoute(pathname)) return null;
-  return <StarCanvas />;
+  return (
+    <>
+      <StarCanvas />
+      {/* Film grain overlay (desktop only, styled in globals.css) */}
+      <div className="film-grain" aria-hidden="true" />
+    </>
+  );
 }

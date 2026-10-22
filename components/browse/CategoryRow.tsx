@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { gridPosterUrl } from '@/components/vault/posterSrc';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -125,7 +126,7 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
         >
           {entries.map(entry => {
             const { movie } = entry;
-            const img      = movie.poster_url ?? movie.backdrop_url ?? null;
+            const img      = gridPosterUrl(movie.poster_url ?? null) ?? movie.backdrop_url ?? null;
             const genreHex = SUBGENRE_HEX[entry.subgenre] ?? '#333333';
 
             return (

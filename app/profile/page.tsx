@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ShieldCheck } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { OWNER_ID } from '@/lib/guards';
 import { RECOMMEND_COLOR } from '@/lib/config';
@@ -96,7 +95,6 @@ export default async function ProfilePage() {
           </div>
           {isOwner && (
             <Link href="/admin" className="btn-secondary profile-admin-link">
-              <ShieldCheck size={16} aria-hidden="true" />
               Admin
             </Link>
           )}
@@ -151,7 +149,7 @@ export default async function ProfilePage() {
         </section>
       ) : (
         <div className="empty-state">
-          <p className="empty-state-title">No stats yet</p>
+          <p className="empty-state-title">The vault is silent</p>
           <p className="empty-state-body">Rate a few films and your statistics will show up here.</p>
           <Link href="/add" className="btn-primary">Log a film</Link>
         </div>

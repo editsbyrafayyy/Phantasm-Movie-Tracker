@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { gridPosterUrl } from '@/components/vault/posterSrc';
 import { Play, Trash2, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 import { createClient } from '@/lib/supabase/client';
@@ -260,7 +261,7 @@ export default function WatchHistoryRow() {
               >
                 <div className="watch-history-poster">
                   {item.poster_url ? (
-                    <Image src={item.poster_url} alt="" fill className="browse-card-img" sizes="120px" />
+                    <Image src={gridPosterUrl(item.poster_url)!} alt="" fill className="browse-card-img" sizes="120px" />
                   ) : (
                     <div className="watch-history-poster-fallback" aria-hidden="true">
                       {item.title.charAt(0).toUpperCase()}

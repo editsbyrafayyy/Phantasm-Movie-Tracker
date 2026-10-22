@@ -3,27 +3,28 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
-import { House, Film, Play, Plus, LogIn, Bookmark, type LucideIcon } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { HauntedHouse, Coffin, WatchingEye, Gravestone, SkeletonKey, type IconComponent } from '@/components/ui/HorrorIcons';
 import { useAuth } from '@/components/layout/AuthProvider';
 
 const SESSION_HINT_KEY = 'vault_has_session';
 
-interface Tab { href: string; label: string; icon: LucideIcon; primary?: boolean }
+interface Tab { href: string; label: string; icon: IconComponent; primary?: boolean }
 
 // Max 5 tabs. Profile lives in the avatar menu (StreamRail).
 const MEMBER_TABS: Tab[] = [
-  { href: '/',          label: 'Home',        icon: House },
-  { href: '/vault',     label: 'My Vault',    icon: Film },
+  { href: '/',          label: 'Home',        icon: HauntedHouse },
+  { href: '/vault',     label: 'My Vault',    icon: Coffin },
   { href: '/add',       label: 'Log Film',    icon: Plus, primary: true },
-  { href: '/watchlist', label: 'Watch Later', icon: Bookmark },
-  { href: '/stream',    label: 'Stream',      icon: Play },
+  { href: '/watchlist', label: 'Watch Later', icon: Gravestone },
+  { href: '/stream',    label: 'Stream',      icon: WatchingEye },
 ];
 
 const GUEST_TABS: Tab[] = [
-  { href: '/',       label: 'Home',    icon: House },
-  { href: '/vault',  label: 'Vault',   icon: Film },
-  { href: '/stream', label: 'Stream',  icon: Play },
-  { href: '/login',  label: 'Sign in', icon: LogIn },
+  { href: '/',       label: 'Home',    icon: HauntedHouse },
+  { href: '/vault',  label: 'Vault',   icon: Coffin },
+  { href: '/stream', label: 'Stream',  icon: WatchingEye },
+  { href: '/login',  label: 'Sign in', icon: SkeletonKey },
 ];
 
 // Cached "was signed in last visit" hint so the right tab set shows before auth resolves.

@@ -192,7 +192,7 @@ export default function MovieGrid({ entries }: MovieGridProps) {
           </div>
         ) : (
           <div className="empty-state">
-            <p className="empty-state-title">No films match</p>
+            <p className="empty-state-title">Nothing lurking here</p>
             <p className="empty-state-body">Try a different search or loosen your filters.</p>
             <button type="button" className="btn-secondary" onClick={clearAll}>Clear filters</button>
           </div>

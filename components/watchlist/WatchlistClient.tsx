@@ -2,8 +2,10 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
+import { gridPosterUrl } from '@/components/vault/posterSrc';
 import Link from 'next/link';
-import { Bookmark, ChevronDown, ChevronUp, Film, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, Film, Search } from 'lucide-react';
+import { Gravestone } from '@/components/ui/HorrorIcons';
 import PageHeader from '@/components/ui/PageHeader';
 import WatchlistRemoveButton from '@/components/watchlist/WatchlistRemoveButton';
 
@@ -142,8 +144,8 @@ export default function WatchlistClient({ items, loadError = false }: WatchlistC
       <>
         {header}
         <div className="empty-state">
-          <Bookmark size={40} aria-hidden="true" />
-          <p className="empty-state-title">Nothing saved yet</p>
+          <Gravestone size={40} aria-hidden="true" />
+          <p className="empty-state-title">Nothing buried here yet</p>
           <p className="empty-state-body">
             Hit the bookmark on any film or show to save it here for later.
           </p>
@@ -221,7 +223,7 @@ export default function WatchlistClient({ items, loadError = false }: WatchlistC
                   <div className="watchlist-card-poster">
                     {item.poster_url ? (
                       <Image
-                        src={item.poster_url}
+                        src={gridPosterUrl(item.poster_url)!}
                         alt=""
                         fill
                         sizes="(max-width: 640px) 45vw, 160px"

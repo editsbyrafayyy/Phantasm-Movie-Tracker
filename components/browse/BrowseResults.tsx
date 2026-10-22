@@ -52,7 +52,7 @@ export default function BrowseResults({ sentinelRef, ...p }: BrowseResultsProps)
   if (p.isEmpty) {
     return (
       <div className="empty-state">
-        <p className="empty-state-title">Nothing found</p>
+        <p className="empty-state-title">Nothing lurking under that name</p>
         <p className="empty-state-body">
           No titles match{p.filterLabel ? ` “${p.filterLabel}”` : ''}. Try a different search or genre.
         </p>

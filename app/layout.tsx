@@ -8,6 +8,7 @@ import StarField        from '@/components/StarField';
 import GlobalShortcuts  from '@/components/layout/GlobalShortcuts';
 import MobileBottomNav  from '@/components/layout/MobileBottomNav';
 import WatchProgressTracker from '@/components/stream/WatchProgressTracker';
+import TabAwayTitle     from '@/components/layout/TabAwayTitle';
 
 // Variable font (no `weight`): Google can serve static Inter weights as
 // `/l/font?kit=…&v=…` URLs, which Turbopack's next/font loader fails to resolve
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <MobileBottomNav />
           <GlobalShortcuts />
           <WatchProgressTracker />
+          <TabAwayTitle />
         </AuthProvider>
       </body>
     </html>

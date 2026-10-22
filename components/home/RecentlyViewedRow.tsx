@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { gridPosterUrl } from '@/components/vault/posterSrc';
 import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface RecentlyViewedItem {
@@ -200,7 +201,7 @@ export default function RecentlyViewedRow({ reserve = false }: { reserve?: boole
             <div className="recently-viewed-poster">
               {item.poster_url ? (
                 <Image
-                  src={item.poster_url}
+                  src={gridPosterUrl(item.poster_url)!}
                   alt=""
                   fill
                   className="recently-viewed-poster-img"

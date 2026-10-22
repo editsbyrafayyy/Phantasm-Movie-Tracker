@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, useId } from 'react';
 import Image from 'next/image';
 import Link  from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shuffle, Play, RotateCcw, Film } from 'lucide-react';
+import { X, Play, RotateCcw, Film } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import type { Entry } from '@/lib/types';
 import { SUBGENRES } from '@/lib/config';
+import { Planchette } from '@/components/ui/HorrorIcons';
 
 interface RouletteModalProps {
   entries:   Entry[];
@@ -311,7 +312,7 @@ export default function RouletteModal({ entries, canStream, onClose }: RouletteM
             {result && !spinning ? (
               <><RotateCcw size={16} aria-hidden="true" /> Spin again</>
             ) : (
-              <><Shuffle size={16} aria-hidden="true" /> {spinning ? 'Spinning…' : 'Spin'}</>
+              <><Planchette size={16} aria-hidden="true" /> {spinning ? 'Spinning…' : 'Spin'}</>
             )}
           </button>
     </Modal>
