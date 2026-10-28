@@ -76,8 +76,8 @@ export function ActivityFeedSkeleton() {
     <section className="activity-section" aria-hidden="true">
       <div className="page-header page-header-section">
         <div className="page-header-text">
-          <div className="skeleton skel-page-eyebrow" />
           <div className="skeleton skel-section-title" />
+          <div className="skeleton skel-page-sub" />
         </div>
       </div>
       <div className="activity-feed">

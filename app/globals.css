@@ -1671,7 +1671,7 @@ button.subgenre-makeup-item[aria-pressed="true"] .subgenre-makeup-pct { color:va
 .pstat-foot { font-size:12px; color:var(--text-muted); margin-top:12px; }
 
 /* Top films row */
-.pstat-top-row { list-style:none; display:grid; grid-auto-flow:column; grid-auto-columns:minmax(112px, 1fr); gap:14px; overflow-x:auto; scroll-snap-type:x proximity; scroll-padding-inline:24px; margin:0 -24px; padding:4px 24px 8px; scrollbar-width:thin; }
+.pstat-top-row { list-style:none; display:grid; grid-auto-flow:column; grid-auto-columns:minmax(112px, calc((100% - 126px) / 10)); justify-content:start; gap:14px; overflow-x:auto; scroll-snap-type:x proximity; scroll-padding-inline:24px; margin:0 -24px; padding:4px 24px 8px; scrollbar-width:thin; }
 .pstat-top-row > li { scroll-snap-align:start; min-width:0; }
 .pstat-top-item { position:relative; display:flex; flex-direction:column; gap:8px; text-decoration:none; color:var(--text); }
 .pstat-top-poster { position:relative; display:flex; align-items:center; justify-content:center; aspect-ratio:2 / 3; border-radius:var(--radius); overflow:hidden; background:var(--surface-2); border:1px solid var(--border); color:var(--text-muted); transition:border-color var(--dur-fast), transform var(--dur) var(--ease-out); }
@@ -3732,7 +3732,7 @@ select:focus-visible {
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-dim);
   margin-bottom: 10px;
 }
 
@@ -4201,7 +4201,8 @@ select:focus-visible {
 @media (max-width: 640px) {
   .home-section-head { padding: 0 24px; }
   /* Touch: rows are swiped, so section-head arrows would only add a stray line */
-  .home-section-head .category-nav-btns { display: none; }
+  .home-section-head .category-nav-btns,
+  .coming-soon-nav { display: none; }
 }
 
 .home-vault-section {

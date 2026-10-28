@@ -79,7 +79,7 @@ export default function ActivityFeedClient({ items }: { items: ActivityItem[] })
 
   return (
     <section className="activity-section" ref={sectionRef}>
-      <PageHeader as="section" eyebrow="From members" title="Recent activity" />
+      <PageHeader as="section" title="Recent" accent="activity" subtitle="What my friends and I have been logging lately." />
 
       <div className="activity-feed">
         {displayItems.map(item => {
