@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export interface PendingDare { tmdb_id: number; title: string; year: number | null; poster_path: string | null; votes: number }
 
-/** Accept (adds to your Watch Later) or dismiss visitors' dares. */
+/** Accept (adds to your Watch Later) or dismiss visitors' suggestions. */
 export default function AdminDares({ dares }: { dares: PendingDare[] }) {
   const [items, setItems] = useState(dares);
   const [busy, setBusy] = useState<number | null>(null);
@@ -34,7 +34,7 @@ export default function AdminDares({ dares }: { dares: PendingDare[] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tmdbId: d.tmdb_id, status }),
       });
-      if (!res.ok) throw new Error('Could not update the dare.');
+      if (!res.ok) throw new Error('Could not update the suggestion.');
       setItems(list => list.filter(x => x.tmdb_id !== d.tmdb_id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -43,7 +43,7 @@ export default function AdminDares({ dares }: { dares: PendingDare[] }) {
     }
   }
 
-  if (!items.length) return <p className="settings-desc">No open dares.</p>;
+  if (!items.length) return <p className="settings-desc">No open suggestions.</p>;
 
   return (
     <>
@@ -57,7 +57,7 @@ export default function AdminDares({ dares }: { dares: PendingDare[] }) {
             <span className="dare-result-title">
               {d.title}
               {d.year && <span className="dare-result-year"> {d.year}</span>}
-              <span className="dare-top-votes"> · {d.votes} dare{d.votes === 1 ? '' : 's'}</span>
+              <span className="dare-top-votes"> · {d.votes} {d.votes === 1 ? 'request' : 'requests'}</span>
             </span>
             <span className="admin-dare-actions">
               <button type="button" className="btn-secondary dare-btn" disabled={busy === d.tmdb_id} onClick={() => resolve(d, 'accepted')}>Accept</button>

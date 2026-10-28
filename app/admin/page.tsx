@@ -225,8 +225,8 @@ export default async function AdminPage() {
         </section>
 
         <section className="stat-card" aria-labelledby="admin-dares">
-          <h2 id="admin-dares" className="stat-card-label">Dares {dares.length > 0 && <span className="health-count">{dares.length}</span>}</h2>
-          <p className="stat-card-desc">Films visitors dared you to watch. Accept adds it to Watch Later.</p>
+          <h2 id="admin-dares" className="stat-card-label">Suggestions {dares.length > 0 && <span className="health-count">{dares.length}</span>}</h2>
+          <p className="stat-card-desc">Films visitors think you should watch. Accept adds it to Watch Later.</p>
           <AdminDares dares={dares} />
         </section>
 

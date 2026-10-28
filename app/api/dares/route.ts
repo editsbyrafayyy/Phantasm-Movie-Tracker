@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = getClientIp(req);
-  if (!rateLimit(ip, 5, 60_000, 'POST /api/dares')) return fail('Too many dares. Slow down.', 429);
+  if (!rateLimit(ip, 5, 60_000, 'POST /api/dares')) return fail('Too many at once. Slow down a little.', 429);
 
   const text = await req.text();
   if (text.length > 512) return fail('Payload too large', 413);
@@ -49,33 +49,33 @@ export async function POST(req: NextRequest) {
     service.from('dare_events').select('id', { count: 'exact', head: true }).gte('created_at', dayAgo),
     service.from('dares').select('status').eq('tmdb_id', tmdbId).maybeSingle(),
   ]);
-  if (hour.error || day.error || site.error || existing.error) return fail('Dares are closed right now.', 503);
+  if (hour.error || day.error || site.error || existing.error) return fail('Suggestions are closed right now.', 503);
   if ((hour.count ?? 0) >= DARE_LIMITS.perHour || (day.count ?? 0) >= DARE_LIMITS.perDay) {
-    return fail('You’ve dared enough for now. Try again later.', 429);
+    return fail('That’s enough suggestions for now. Try again later.', 429);
   }
-  if ((site.count ?? 0) >= DARE_LIMITS.globalPerDay) return fail('The dare box is full for today.', 429);
+  if ((site.count ?? 0) >= DARE_LIMITS.globalPerDay) return fail('I’ve had enough suggestions for today. Try again tomorrow.', 429);
 
   const status = (existing.data as { status: string } | null)?.status;
   if (status === 'dismissed') return fail('I already passed on this one.', 409);
   if (status === 'accepted') return fail('Already on my list. I’ll get to it.', 409);
   if (!status) {
     const { count: pending } = await service.from('dares').select('tmdb_id', { count: 'exact', head: true }).eq('status', 'pending');
-    if ((pending ?? 0) >= DARE_LIMITS.maxPending) return fail('The dare box is full. Check back soon.', 429);
+    if ((pending ?? 0) >= DARE_LIMITS.maxPending) return fail('My list is full right now. Check back soon.', 429);
   }
 
   if ((await ownerRatedTmdbIds([tmdbId])).has(tmdbId)) return fail('I’ve already rated that one. It’s in the vault.', 409);
 
   const film = await screenFilm(tmdbId);
-  if (!film) return fail('That one can’t be dared. It has to be a horror, thriller or sci-fi film that’s already out.', 422);
+  if (!film) return fail('I can only take horror, thriller or sci-fi films that are already out.', 422);
 
   const { error: eventError } = await service.from('dare_events').insert({ ip_hash: ipHash, tmdb_id: tmdbId });
-  if (eventError?.code === '23505') return fail('You’ve already dared this one.', 409);
-  if (eventError) return fail('Dares are closed right now.', 503);
+  if (eventError?.code === '23505') return fail('You’ve already suggested this one.', 409);
+  if (eventError) return fail('Suggestions are closed right now.', 503);
 
   const { error } = await service.rpc('bump_dare', {
     p_tmdb_id: film.id, p_title: film.title, p_year: film.year, p_poster: film.poster_path, p_genres: film.genres,
   });
-  if (error) return fail('Could not save that dare.', 500);
+  if (error) return fail('Couldn’t send that one. Try again.', 500);
 
   // Keep the event log small: occasionally drop rows older than 30 days.
   if (Math.random() < 0.02) {

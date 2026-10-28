@@ -54,19 +54,19 @@ export default function DareBox({ top }: { top: TopDare[] }) {
         body: JSON.stringify({ tmdbId: film.id, token: tokenRef.current, website: honeypotRef.current?.value ?? '' }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(data.error || 'Could not send that dare.');
+      if (!res.ok) throw new Error(data.error || 'Couldn’t send that one. Try again.');
       setSent(s => ({ ...s, [film.id]: 'sent' }));
-      setMessage({ text: `Dare sent. I’ll see “${film.title}” next time I check.`, ok: true });
+      setMessage({ text: `Sent. “${film.title}” is on my list now.`, ok: true });
     } catch (err) {
       setSent(s => { const next = { ...s }; delete next[film.id]; return next; });
-      setMessage({ text: err instanceof Error ? err.message : 'Could not send that dare.', ok: false });
+      setMessage({ text: err instanceof Error ? err.message : 'Couldn’t send that one. Try again.', ok: false });
     }
   }
 
   return (
     <div className="dare-body">
       <div className="dare-main">
-        <label htmlFor="dare-search" className="sr-only">Search for a film to dare</label>
+        <label htmlFor="dare-search" className="sr-only">Search for a film to suggest</label>
         <div className="dare-input-wrap">
           <Search size={18} className="dare-input-icon" aria-hidden="true" />
           <input
@@ -101,10 +101,10 @@ export default function DareBox({ top }: { top: TopDare[] }) {
                   {film.rated ? (
                     <span className="dare-result-note">Already rated</span>
                   ) : state === 'sent' ? (
-                    <span className="dare-result-note is-sent"><Check size={14} aria-hidden="true" /> Dared</span>
+                    <span className="dare-result-note is-sent"><Check size={14} aria-hidden="true" /> Sent</span>
                   ) : (
                     <button type="button" className="btn-secondary dare-btn" disabled={state === 'sending'} onClick={() => dare(film)}>
-                      {state === 'sending' ? 'Daring…' : 'Dare'}
+                      {state === 'sending' ? 'Sending…' : 'Suggest'}
                     </button>
                   )}
                 </li>
@@ -112,20 +112,20 @@ export default function DareBox({ top }: { top: TopDare[] }) {
             })}
           </ul>
         ) : (
-          <p className="dare-empty">Nothing that fits. It has to be a horror, thriller or sci-fi film that&rsquo;s already out.</p>
+          <p className="dare-empty">Nothing that fits. I can only take horror, thriller or sci-fi films that are already out.</p>
         ))}
       </div>
 
       <aside className="dare-top" aria-labelledby="dare-top-label">
-        <h3 id="dare-top-label" className="dare-top-label">Most dared</h3>
+        <h3 id="dare-top-label" className="dare-top-label">Most suggested</h3>
         {top.length === 0 ? (
-          <p className="dare-top-empty">No dares yet. Be the first.</p>
+          <p className="dare-top-empty">Nothing suggested yet.</p>
         ) : (
           <ol className="dare-top-list">
             {top.map(d => (
               <li key={d.tmdb_id}>
                 <span className="dare-top-title">{d.title}{d.year ? <span className="dare-result-year"> {d.year}</span> : null}</span>
-                <span className="dare-top-votes">{d.votes} dare{d.votes === 1 ? '' : 's'}</span>
+                <span className="dare-top-votes">{d.votes} {d.votes === 1 ? 'request' : 'requests'}</span>
               </li>
             ))}
           </ol>

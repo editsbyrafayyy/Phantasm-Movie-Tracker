@@ -102,7 +102,7 @@ export default async function HomePage() {
       {!user && (
         <div className="guest-notice-banner">
           <p className="guest-notice-text">
-            You&apos;re looking at my horror collection. My friends get accounts to stream and keep their own vaults. Everyone else, feel free to look around and disagree with my ratings.
+            You&apos;re looking at my horror collection. Every film I&apos;ve watched, and exactly how I scored it.
           </p>
           <Link href="/taste" className="btn-secondary guest-notice-link">
             See {ownerName}&rsquo;s taste
