@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Check } from 'lucide-react';
+import { Check, Search } from 'lucide-react';
 
 export interface TopDare { tmdb_id: number; title: string; year: number | null; votes: number }
 interface Result { id: number; title: string; year: number | null; poster: string | null; rated: boolean }
@@ -67,17 +67,20 @@ export default function DareBox({ owner, top }: { owner: string; top: TopDare[] 
     <div className="dare-body">
       <div className="dare-main">
         <label htmlFor="dare-search" className="sr-only">Search for a film to dare</label>
-        <input
-          id="dare-search"
-          type="search"
-          className="field-input dare-input"
-          placeholder="Search a horror, thriller or sci-fi film…"
-          maxLength={60}
-          autoComplete="off"
-          value={query}
-          onFocus={ensureToken}
-          onChange={e => { ensureToken(); setQuery(e.target.value); }}
-        />
+        <div className="dare-input-wrap">
+          <Search size={18} className="dare-input-icon" aria-hidden="true" />
+          <input
+            id="dare-search"
+            type="search"
+            className="field-input dare-input"
+            placeholder="Search horror, thriller, sci-fi…"
+            maxLength={60}
+            autoComplete="off"
+            value={query}
+            onFocus={ensureToken}
+            onChange={e => { ensureToken(); setQuery(e.target.value); }}
+          />
+        </div>
         <input ref={honeypotRef} type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="dare-hp" />
 
         {message && <p className={`dare-message${message.ok ? ' is-ok' : ' is-error'}`} role="status">{message.text}</p>}
@@ -113,9 +116,11 @@ export default function DareBox({ owner, top }: { owner: string; top: TopDare[] 
         ))}
       </div>
 
-      {top.length > 0 && (
-        <aside className="dare-top" aria-labelledby="dare-top-label">
-          <h3 id="dare-top-label" className="stat-card-label">Most dared</h3>
+      <aside className="dare-top" aria-labelledby="dare-top-label">
+        <h3 id="dare-top-label" className="dare-top-label">Most dared</h3>
+        {top.length === 0 ? (
+          <p className="dare-top-empty">No dares yet. Be the first.</p>
+        ) : (
           <ol className="dare-top-list">
             {top.map(d => (
               <li key={d.tmdb_id}>
@@ -124,8 +129,8 @@ export default function DareBox({ owner, top }: { owner: string; top: TopDare[] 
               </li>
             ))}
           </ol>
-        </aside>
-      )}
+        )}
+      </aside>
     </div>
   );
 }

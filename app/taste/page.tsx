@@ -29,7 +29,7 @@ export default async function TastePage() {
   const stats = computeProfileStats(entries);
 
   const headline = [
-    { label: 'Films rated',   value: stats.rated },
+    { label: 'Films in the vault', value: stats.logged },
     { label: 'Average score', value: stats.rated ? stats.avgScore.toFixed(1) : '—' },
     { label: 'Hours watched', value: stats.hoursWatched.toLocaleString('en-GB') },
     { label: 'Rated Peak',    value: stats.peakCount },

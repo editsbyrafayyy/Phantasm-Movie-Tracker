@@ -66,6 +66,9 @@ function HeroText({ entry, eyebrow, canStream }: { entry: Entry; eyebrow: string
   );
 }
 
+/** Matches the desktop MorphSlider's autoplayDelay. */
+const MOBILE_AUTOPLAY_MS = 6000;
+
 export default function HeroCarousel({
   slides,
   canStream,
@@ -91,6 +94,22 @@ export default function HeroCarousel({
     });
     return () => { stale = true; };
   }, [isMobile, glowSrc, glowCache]);
+
+  // Phones: the gallery has no autoplay of its own, so advance it here on the same
+  // rhythm as the desktop slider. A swipe changes `current`, which restarts the wait;
+  // a finger on the gallery holds it; hidden tabs and an offscreen hero just wait.
+  const mobileWrapRef = useRef<HTMLDivElement>(null);
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (!isMobile || held || slides.length < 2) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => {
+      const el = mobileWrapRef.current;
+      if (document.hidden || !el || el.getBoundingClientRect().bottom <= 0) return;
+      setCurrent(c => (c + 1) % slides.length);
+    }, MOBILE_AUTOPLAY_MS);
+    return () => clearInterval(id);
+  }, [isMobile, held, current, slides.length]);
 
   const goTo = useCallback((idx: number) => {
     morphRef.current?.goTo(idx);
@@ -171,10 +190,15 @@ export default function HeroCarousel({
           {dots}
         </div>
       ) : (
-        <div className="hero-mobile-wrap">
+        <div className="hero-mobile-wrap" ref={mobileWrapRef}>
           <div className="hero-mobile-glow" style={{ background: glowColor }} />
 
-          <div className="hero-mobile-gallery-container">
+          <div
+            className="hero-mobile-gallery-container"
+            onPointerDown={() => setHeld(true)}
+            onPointerUp={() => setHeld(false)}
+            onPointerCancel={() => setHeld(false)}
+          >
             <CircularGallery
               items={galleryItems}
               bend={2}

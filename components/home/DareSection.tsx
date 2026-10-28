@@ -19,16 +19,18 @@ export default async function DareSection() {
   } catch { /* table not created yet — the box still renders */ }
 
   return (
-    <section className="category-section home-section dare-section" aria-label="Dare me to watch">
-      <div className="home-section-head">
+    <section className="dare-section" aria-label="Dare me to watch">
+      <div className="dare-panel">
         <PageHeader
           as="section"
+          eyebrow="Your move"
           title="Dare me"
           accent="to watch"
           subtitle={`Think something belongs in the vault? Pick a horror, thriller or sci-fi film and dare ${OWNER} to watch it.`}
+          className="dare-header"
         />
+        <DareBox owner={OWNER} top={top} />
       </div>
-      <DareBox owner={OWNER} top={top} />
     </section>
   );
 }

@@ -104,10 +104,9 @@ export default async function HomePage() {
           <p className="guest-notice-text">
             You&apos;re viewing {ownerName}&apos;s horror collection. Members can stream and keep their own vault.
           </p>
-          <span className="guest-notice-actions">
-            <Link href="/taste" className="btn-ghost guest-notice-link">{ownerName}&rsquo;s taste</Link>
-            <Link href="/login" className="btn-secondary guest-notice-link">Sign in</Link>
-          </span>
+          <Link href="/taste" className="btn-secondary guest-notice-link">
+            See {ownerName}&rsquo;s taste
+          </Link>
         </div>
       )}
 
@@ -125,6 +124,8 @@ export default async function HomePage() {
       ) : mustWatchEntries.length > 0 && (
         <CategoryRow label="Must watch" entries={mustWatchEntries} />
       )}
+
+      {user?.id !== process.env.OWNER_USER_ID && <DareSection />}
 
       <Suspense fallback={null}>
         <ComingSoonWidget linkable={!!user} />
@@ -171,7 +172,6 @@ export default async function HomePage() {
         />
       </section>
 
-      {user?.id !== process.env.OWNER_USER_ID && <DareSection />}
     </div>
   );
 }
