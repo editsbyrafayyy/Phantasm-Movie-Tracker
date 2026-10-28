@@ -1903,6 +1903,8 @@ select:focus-visible {
 .vdetail-actions .btn-secondary:hover:not(:disabled) { background:rgba(36,36,36,.9); }
 .vdetail-actions .btn-secondary.is-active { background:var(--red-dim);border-color:rgba(230,50,50,.5); }
 .vdetail-watch-btn { width:auto;min-height:44px;padding:0 24px; }
+/* A member's own rating of the owner's film */
+.vdetail-your-score strong { font-family:var(--font-display);font-size:20px;font-weight:400;line-height:1;color:var(--red);margin-left:2px; }
 .vdetail-icon-actions { display:inline-flex;gap:4px; }
 .vdetail-icon-actions .icon-btn { width:44px;height:44px;border-color:var(--border-mid);background:rgba(8,8,8,.55); }
 .vdetail-icon-actions .icon-btn:hover { background:rgba(36,36,36,.9);border-color:var(--border-strong); }
@@ -3070,25 +3072,81 @@ select:focus-visible {
 }
 
 /* Mobile genre chips (replace the rail on phones) */
-.browse-genre-chips { display: none; }
+.genre-dial { display: none; }
 
 @media (max-width: 768px) {
   .browse-layout { grid-template-columns: minmax(0, 1fr); }
   .browse-genre-rail { display: none; }
   .browse-container--inset { padding: 24px 16px 96px; }
 
-  .browse-genre-chips {
+  /* Genre tuning dial (mobile) */
+  .genre-dial { display: block; margin: 0 -16px 18px; }
+  .genre-dial-label {
     display: flex;
+    align-items: baseline;
     gap: 8px;
-    overflow-x: auto;
-    margin: 0 -16px 16px;
-    padding: 4px 16px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
+    margin: 0 16px 6px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
   }
-  .browse-genre-chips::-webkit-scrollbar { display: none; }
-  .browse-genre-chips .chip { height: var(--control-h); flex-shrink: 0; scroll-snap-align: start; }
+  .genre-dial-current {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-dim);
+  }
+  .genre-dial-window {
+    position: relative;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  }
+  .genre-dial-track {
+    display: flex;
+    align-items: flex-end;
+    gap: 26px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 6px 50% 16px;
+    scrollbar-width: none;
+    /* Tick marks ride along with the genres, like a radio dial's scale */
+    background:
+      repeating-linear-gradient(90deg, rgba(242,242,242,0.16) 0 1px, transparent 1px 12px) left bottom / 100% 6px no-repeat local,
+      linear-gradient(rgba(242,242,242,0.08), rgba(242,242,242,0.08)) left bottom / 100% 1px no-repeat local;
+  }
+  .genre-dial-track::-webkit-scrollbar { display: none; }
+  .genre-dial-item {
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 1.1;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    color: rgba(242, 242, 242, 0.38);
+    transform-origin: 50% 100%;
+    transition: color var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .genre-dial-item[aria-pressed="true"] { color: var(--red); transform: scale(1.18); }
+  .genre-dial-item:focus-visible { outline: 1px solid var(--red-glow); outline-offset: 4px; border-radius: 2px; }
+  .genre-dial-needle {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 2px;
+    height: 14px;
+    margin-left: -1px;
+    background: var(--red);
+    border-radius: 1px;
+    pointer-events: none;
+  }
 }
 
 /* Toolbar: media-type segmented control + search + mood trigger */
@@ -3319,7 +3377,9 @@ select:focus-visible {
 .browse-skel-segmented { width: 162px; height: var(--control-h); border-radius: var(--radius); }
 .browse-skel-search { flex: 1 1 260px; max-width: 420px; height: var(--control-h); border-radius: var(--radius); }
 .browse-skel-button { width: 166px; height: var(--control-h); border-radius: var(--radius); }
-.browse-skel-chip { height: var(--control-h); flex-shrink: 0; border-radius: var(--radius-pill); }
+.browse-skel-dial-label { width: 96px; height: 10px; margin: 0 16px 10px; border-radius: 2px; }
+.browse-skel-dial-item { height: 22px; flex-shrink: 0; border-radius: 2px; }
+.genre-dial--skeleton .genre-dial-track { overflow: hidden; }
 @media (max-width: 640px) {
   .browse-skel-search { order: -1; flex-basis: 100%; max-width: none; }
   .browse-skel-segmented { flex: 1; }
@@ -5935,3 +5995,64 @@ html { scrollbar-color: #2a2a2a transparent; scrollbar-width: thin; }
   .film-grain { animation: none; }
 }
 
+
+/* ── Member corner (home, signed-in friends) ─────────────────────────────── */
+.member-corner { margin-bottom: 8px; }
+.member-corner-continue { padding: 0 48px; }
+.member-corner-continue:empty { display: none; }
+.member-corner-empty {
+  margin: 0 48px 36px;
+  font-size: 14px;
+  font-weight: 300;
+  color: var(--text-dim);
+}
+.member-corner-empty a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--red); }
+@media (max-width: 640px) {
+  .member-corner-continue { padding: 0 24px; }
+  .member-corner-empty { margin: 0 24px 28px; }
+}
+
+/* ── Empty vault onboarding ──────────────────────────────────────────────── */
+.vault-onboard {
+  list-style: none;
+  margin: 8px 0 48px;
+  padding: 0;
+  max-width: 720px;
+  border-top: 1px solid var(--border);
+}
+.vault-onboard li { border-bottom: 1px solid var(--border); }
+.vault-onboard-step {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 4px;
+  padding: 20px 8px;
+  color: var(--text);
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.vault-onboard-num {
+  grid-row: 1 / span 2;
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--red);
+}
+.vault-onboard-title { font-size: 16px; font-weight: 500; }
+.vault-onboard-body { grid-column: 2; font-size: 14px; font-weight: 300; color: var(--text-dim); }
+.vault-onboard-arrow {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  .vault-onboard-step:hover { background: var(--surface); }
+  .vault-onboard-step:hover .vault-onboard-arrow { color: var(--red); transform: translateX(3px); }
+}
+.vault-onboard-step:active { background: var(--surface); }
+@media (max-width: 640px) {
+  .vault-onboard-step { grid-template-columns: 40px 1fr auto; padding: 16px 4px; column-gap: 12px; }
+  .vault-onboard-num { font-size: 30px; }
+}

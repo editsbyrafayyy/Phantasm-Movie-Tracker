@@ -81,6 +81,18 @@ export default async function VaultEntryPage({ params }: Props) {
     .eq('user_id', entry.user_id);
   const related = ((relatedData ?? []) as unknown as RelatedRow[]).filter(r => r.movie);
 
+  // A member viewing the owner's film: link their own rating if they've logged it.
+  let viewerEntry: { id: string; total: number | null } | null = null;
+  if (sessionUserId && !isEntryOwner) {
+    const { data } = await supabase
+      .from('entries')
+      .select('id, total')
+      .eq('movie_id', entry.movie_id)
+      .eq('user_id', sessionUserId)
+      .maybeSingle();
+    viewerEntry = data ?? null;
+  }
+
   const current = entry;
   const currentTotal = current.total ?? 0;
 
@@ -105,6 +117,7 @@ export default async function VaultEntryPage({ params }: Props) {
       isOwner={isEntryOwner}
       isSiteOwner={isSiteOwner}
       canStream={!!user}
+      viewerEntry={viewerEntry}
     />
   );
 }

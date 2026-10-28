@@ -9,6 +9,7 @@ import ComingSoonWidget from '@/components/home/ComingSoonWidget';
 import RouletteTrigger from '@/components/home/RouletteTrigger';
 import ActivityFeed, { ActivityFeedSkeleton } from '@/components/home/ActivityFeed';
 import RecentlyViewedRow, { RECENT_HINT_COOKIE } from '@/components/home/RecentlyViewedRow';
+import MemberCorner from '@/components/home/MemberCorner';
 import PageHeader from '@/components/ui/PageHeader';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getOwnerEntries } from '@/lib/data';
@@ -83,12 +84,19 @@ export default async function HomePage() {
       {!user && (
         <div className="guest-notice-banner">
           <p className="guest-notice-text">
-            You&apos;re browsing as a guest — this is {ownerName}&apos;s personal horror collection.
+            You&apos;re viewing {ownerName}&apos;s horror collection. Members can stream and keep their own vault.
           </p>
           <Link href="/login" className="btn-secondary guest-notice-link">
             Sign in
           </Link>
         </div>
+      )}
+
+      {/* Friends get their own rows first; the owner's home stays the showcase. */}
+      {user && user.id !== process.env.OWNER_USER_ID && (
+        <Suspense fallback={null}>
+          <MemberCorner userId={user.id} />
+        </Suspense>
       )}
 
       <RecentlyViewedRow reserve={hasRecent} />
@@ -98,7 +106,7 @@ export default async function HomePage() {
       )}
 
       <Suspense fallback={null}>
-        <ComingSoonWidget />
+        <ComingSoonWidget linkable={!!user} />
       </Suspense>
 
       <Suspense fallback={<ActivityFeedSkeleton />}>

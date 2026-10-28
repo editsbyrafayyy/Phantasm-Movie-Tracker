@@ -61,11 +61,14 @@ export async function proxy(req: NextRequest) {
     return res;
   }
 
-  // Members-only routes. /stream (discovery) and /stream/tmdb/<id> (info page) are
-  // public; only the player at /stream/<id> needs an account.
-  const membersOnly = ['/add', '/update', '/profile', '/admin', '/stats', '/watchlist', '/api/add-movie', '/api/stats'];
-  const isStreamPlayer = pathname.startsWith('/stream/') && !pathname.startsWith('/stream/tmdb/');
-  if ((isStreamPlayer || membersOnly.some(p => pathname.startsWith(p))) && !user) {
+  // Members-only routes. Guests only browse the owner's showcase: everything under
+  // /stream (hub, info pages, player) and the APIs behind it need an account.
+  const membersOnly = [
+    '/add', '/update', '/profile', '/admin', '/stats', '/watchlist', '/stream',
+    '/api/add-movie', '/api/stats', '/api/stream/', '/api/tmdb/', '/api/omdb-search', '/api/watch-progress',
+  ];
+  const isMembersOnly = membersOnly.some(p => pathname === p || pathname.startsWith(p.endsWith('/') ? p : `${p}/`));
+  if (isMembersOnly && !user) {
     // API callers get a JSON 401 instead of an HTML redirect
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

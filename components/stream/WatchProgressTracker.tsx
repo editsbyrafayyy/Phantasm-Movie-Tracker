@@ -11,6 +11,10 @@
  * This component listens for those (plus flat shapes) on player routes only and
  * adds progress to the SAME history entry. It never touches the player itself,
  * only adds fields to the stored entry, and never throws.
+ *
+ * The entry is also mirrored to /api/watch-progress for the signed-in user, so
+ * "Continue watching" follows the account across devices and never shows one
+ * person's list to another on a shared browser.
  */
 
 import { useEffect } from 'react';
@@ -22,6 +26,9 @@ const WRITE_INTERVAL_MS = 5000;
 const COMPLETE_AT = 90; // percent
 /** How far before route entry the player's own history write may be stamped. */
 const ENTRY_SLACK_MS = 15000;
+const SYNC_INTERVAL_MS = 20000;
+/** Give the player time to write its entry before the first server sync. */
+const FIRST_SYNC_MS = 4000;
 
 interface StoredEntry {
   id: string;
@@ -180,6 +187,20 @@ function findEntryIndex(list: StoredEntry[], routeId: string, enteredAt: number)
   return idx;
 }
 
+/** Best-effort server copy of this user's entry; keepalive survives page unloads. */
+function pushProgress(entry: StoredEntry) {
+  try {
+    const { id, title, poster_url, type, progress, currentTime, duration, completed, season, episode } = entry;
+    if (typeof title !== 'string' || !title) return;
+    fetch('/api/watch-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, title, poster_url, type, progress, currentTime, duration, completed, season, episode }),
+      keepalive: true,
+    }).catch(() => { /* offline — the next sync catches up */ });
+  } catch { /* never break the page */ }
+}
+
 function percentOf(u: ProgressUpdate): number | undefined {
   if (u.currentTime !== undefined && u.duration && u.duration > 0) {
     return Math.min(100, (u.currentTime / u.duration) * 100);
@@ -205,6 +226,19 @@ export default function WatchProgressTracker() {
     let lastWrite = 0;
     let completionWritten = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let lastSync = 0;
+
+    // Mirrors the stored entry (including progress the player writes itself).
+    const sync = (force = false) => {
+      if (!force && Date.now() - lastSync < SYNC_INTERVAL_MS) return;
+      const list = readHistory();
+      if (!list) return;
+      const idx = findEntryIndex(list, routeId, enteredAt);
+      if (idx === -1) return;
+      lastSync = Date.now();
+      pushProgress(list[idx]);
+    };
+    const firstSync = setTimeout(() => sync(true), FIRST_SYNC_MS);
 
     const write = () => {
       if (timer) { clearTimeout(timer); timer = null; }
@@ -237,7 +271,9 @@ export default function WatchProgressTracker() {
         list[idx] = next;
         localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
         lastWrite = Date.now();
-        if (update.ended || (pct !== undefined && pct >= COMPLETE_AT)) completionWritten = true;
+        const finished = !!update.ended || (pct !== undefined && pct >= COMPLETE_AT);
+        if (finished) completionWritten = true;
+        sync(finished);
       } catch { /* storage full / blocked — progress is best-effort */ }
     };
 
@@ -258,13 +294,15 @@ export default function WatchProgressTracker() {
       } catch { /* never let a provider message break the page */ }
     };
 
-    const onHide = () => write();
+    const onHide = () => { write(); sync(true); };
     window.addEventListener('message', onMessage);
     window.addEventListener('pagehide', onHide);
     return () => {
       window.removeEventListener('message', onMessage);
       window.removeEventListener('pagehide', onHide);
+      clearTimeout(firstSync);
       write(); // flush on route change
+      sync(true);
     };
   }, [routeId]);
 

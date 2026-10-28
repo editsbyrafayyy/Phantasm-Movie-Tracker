@@ -210,21 +210,49 @@ export default function GenreRail({ items, descriptions, genre, onSelect, isUnre
   );
 }
 
-/** Mobile genre filter: horizontally scrolling .chip buttons (hidden on desktop). */
+/**
+ * Mobile genre filter: a tuning dial — genres set in display type on a scrolling
+ * tick track, with a fixed needle at the centre. Tap a genre and the dial turns to
+ * bring it under the needle (hidden on desktop, where the wheel does this job).
+ */
 export function GenreChips({ items, genre, onSelect, isUnrestricted }: Omit<GenreRailProps, 'descriptions'>) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const placedRef = useRef(false);
+  const active = genre ?? 'All';
+  const label = isUnrestricted ? 'Genre' : 'Subgenre';
+
+  // Centre the active genre: instantly on first paint, then with a smooth turn.
+  useEffect(() => {
+    const track = trackRef.current;
+    const el = track?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!track || !el) return;
+    const left = el.offsetLeft - (track.clientWidth - el.offsetWidth) / 2;
+    const smooth = placedRef.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    track.scrollTo({ left, behavior: smooth ? 'smooth' : 'instant' });
+    placedRef.current = true;
+  }, [active]);
+
   return (
-    <div className="browse-genre-chips" role="group" aria-label={isUnrestricted ? 'Genre' : 'Horror subgenre'}>
-      {items.map(item => (
-        <button
-          key={item}
-          type="button"
-          className="chip"
-          aria-pressed={(genre ?? 'All') === item}
-          onClick={() => onSelect(toGenre(item))}
-        >
-          {item}
-        </button>
-      ))}
+    <div className="genre-dial">
+      <p className="genre-dial-label">
+        {label} <span className="genre-dial-current">{active}</span>
+      </p>
+      <div className="genre-dial-window">
+        <div ref={trackRef} className="genre-dial-track" role="group" aria-label={label}>
+          {items.map(item => (
+            <button
+              key={item}
+              type="button"
+              className="genre-dial-item"
+              aria-pressed={active === item}
+              onClick={() => onSelect(toGenre(item))}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        <span className="genre-dial-needle" aria-hidden="true" />
+      </div>
     </div>
   );
 }

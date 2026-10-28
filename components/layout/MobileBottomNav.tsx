@@ -23,7 +23,6 @@ const MEMBER_TABS: Tab[] = [
 const GUEST_TABS: Tab[] = [
   { href: '/',       label: 'Home',    icon: HauntedHouse },
   { href: '/vault',  label: 'Vault',   icon: Coffin },
-  { href: '/stream', label: 'Stream',  icon: WatchingEye },
   { href: '/login',  label: 'Sign in', icon: SkeletonKey },
 ];
 

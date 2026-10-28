@@ -1,71 +1,50 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { gridPosterUrl } from '@/components/vault/posterSrc';
 import { Play, Trash2, ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
 import { useAuth } from '@/components/layout/AuthProvider';
 import { createClient } from '@/lib/supabase/client';
+import type { HistoryEntry } from '@/lib/watchProgress';
 
-// History is created by the player (VideoPlayerClient) and enriched with progress by
-// WatchProgressTracker. This row reads it, and only ever removes entries or adds
-// fields (`completed`) — the stored shape stays backward-compatible.
-export interface HistoryEntry {
-  id: string;           // tmdbId || imdbId
-  title: string;
-  poster_url: string | null;
-  type: string;         // 'movie' | 'tv'
-  watchedAt: number;
-  progress?: number;    // 0-100 (older entries may hold a 0-1 ratio)
-  currentTime?: number; // seconds
-  duration?: number;    // seconds
-  completed?: boolean;
-  season?: number;      // tv: last episode played
-  episode?: number;
-}
-
-const HISTORY_KEY = 'vault_watch_history';
-const TTL_MS = 30 * 24 * 60 * 60 * 1000;
+// The player (VideoPlayerClient) writes history to this browser's localStorage and
+// WatchProgressTracker mirrors it to /api/watch-progress per signed-in user. This row
+// reads the server copy, so the list follows the account and is never shared between
+// people using the same browser.
 const COMPLETE_AT = 90;
+const API = '/api/watch-progress';
 
-// ── localStorage as an external store ──────────────────────────────────────
-const listeners = new Set<() => void>();
-function subscribe(cb: () => void) {
-  listeners.add(cb);
-  const onStorage = (e: StorageEvent) => { if (e.key === null || e.key === HISTORY_KEY) cb(); };
-  window.addEventListener('storage', onStorage);
-  return () => { listeners.delete(cb); window.removeEventListener('storage', onStorage); };
-}
-function readRaw(): string | null {
-  try { return localStorage.getItem(HISTORY_KEY); } catch { return null; }
-}
-const readServer = () => null;
+/**
+ * The signed-in user's synced history (null until loaded). `initial` seeds it from a
+ * server render (home page), so the row is there on first paint with no fetch.
+ */
+function useHistory(userId: string | null, initial?: HistoryEntry[]) {
+  const [state, setState] = useState<{ userId: string | null; items: HistoryEntry[] } | null>(
+    () => (initial ? { userId: null, items: initial } : null),
+  );
 
-function parseHistory(raw: string | null): HistoryEntry[] {
-  if (!raw) return [];
-  try {
-    const all = JSON.parse(raw);
-    return Array.isArray(all) ? all.filter(e => e && typeof e.id === 'string') : [];
-  } catch { return []; }
-}
+  useEffect(() => {
+    if (!userId) return;
+    const controller = new AbortController();
+    fetch(API, { signal: controller.signal, cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : []))
+      .then((data: unknown) => {
+        const items = Array.isArray(data) ? (data as HistoryEntry[]).filter(e => e && typeof e.id === 'string') : [];
+        setState({ userId, items });
+      })
+      .catch(() => { if (!controller.signal.aborted) setState({ userId, items: [] }); });
+    return () => controller.abort();
+  }, [userId]);
 
-function writeHistory(next: HistoryEntry[]) {
-  try {
-    if (next.length) localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
-    else localStorage.removeItem(HISTORY_KEY);
-  } catch { /* ignore */ }
-  listeners.forEach(l => l());
-}
-
-function updateEntry(id: string, change: (e: HistoryEntry) => HistoryEntry | null) {
-  const all = parseHistory(readRaw());
-  const next = all.flatMap(e => {
-    if (e.id !== id) return [e];
-    const changed = change(e);
-    return changed ? [changed] : [];
-  });
-  writeHistory(next);
+  const items = state && state.userId === userId ? state.items : null;
+  // Optimistic local change; the request runs in the background.
+  const change = (next: (list: HistoryEntry[]) => HistoryEntry[], request: () => Promise<unknown>) => {
+    setState(s => (s ? { ...s, items: next(s.items) } : s));
+    request().catch(() => { /* best-effort — the next visit reloads from the server */ });
+  };
+  return { items, change };
 }
 
 /** Percent watched (0-100) when the player reported it, else null. */
@@ -81,18 +60,8 @@ function progressPct(e: HistoryEntry): number | null {
 
 function isCompleted(e: HistoryEntry): boolean {
   if (e.completed) return true;
-  if (e.type === 'tv') {
-    // Progress on a show is per episode, so only the episode checklist can finish it.
-    try {
-      const stored = localStorage.getItem(`watched:${e.id}`);
-      if (stored) {
-        const eps: Record<string, boolean> = JSON.parse(stored);
-        const keys = Object.keys(eps);
-        if (keys.length > 0 && keys.filter(k => eps[k]).length / keys.length >= 0.85) return true;
-      }
-    } catch { /* ignore */ }
-    return false;
-  }
+  // Progress on a show is per episode, so only ✓ (or removing it) finishes a series.
+  if (e.type === 'tv') return false;
   const pct = progressPct(e);
   return pct !== null && pct >= COMPLETE_AT;
 }
@@ -150,34 +119,27 @@ function useRatedIds(userId: string | null): Set<string> | null {
   return state && state.userId === userId ? state.ids : null;
 }
 
-export default function WatchHistoryRow() {
+/** `initial`: server-loaded items, already filtered for rated titles (home page). */
+export default function WatchHistoryRow({ initial }: { initial?: HistoryEntry[] }) {
   const { user, loading } = useAuth();
-  const userId = user?.id ?? null;
-  const raw = useSyncExternalStore(subscribe, readRaw, readServer);
+  const seeded = initial !== undefined;
+  const userId = seeded ? null : (user?.id ?? null);
+  const { items: history, change } = useHistory(userId, initial);
   // Snapshot "now" once per mount (labels are day-granular).
   const [now] = useState(() => Date.now());
   const ratedIds = useRatedIds(userId);
 
   const items = useMemo(() => {
-    // Wait for the vault lookup so rated titles don't flash in and out.
-    if (!ratedIds) return [];
-    return parseHistory(raw)
-      .filter(e => now - e.watchedAt < TTL_MS && !isCompleted(e) && !ratedIds.has(e.id))
+    // Wait for both lookups so rated titles don't flash in and out.
+    if (!history || (!seeded && !ratedIds)) return [];
+    return history
+      .filter(e => !isCompleted(e) && !ratedIds?.has(e.id))
       .sort((a, b) => b.watchedAt - a.watchedAt);
-  }, [raw, now, ratedIds]);
+  }, [history, ratedIds, seeded]);
 
   const scrollRef = useRef<HTMLUListElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
-  // Drop expired (>30d) entries from storage so they don't linger.
-  useEffect(() => {
-    const all = parseHistory(raw);
-    const fresh = all.filter(e => now - e.watchedAt < TTL_MS);
-    if (fresh.length !== all.length) {
-      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(fresh)); } catch { /* ignore */ }
-    }
-  }, [raw, now]);
 
   // Track scroll affordances (subscribe to scroll/resize; state set only in callbacks).
   useEffect(() => {
@@ -193,9 +155,19 @@ export default function WatchHistoryRow() {
     return () => { ro.disconnect(); el.removeEventListener('scroll', update); };
   }, [items.length]);
 
-  const clearHistory = () => writeHistory([]);
-  const removeItem = (id: string) => updateEntry(id, () => null);
-  const markWatched = (id: string) => updateEntry(id, e => ({ ...e, completed: true, progress: 100 }));
+  const clearHistory = () => change(() => [], () => fetch(API, { method: 'DELETE' }));
+  const removeItem = (id: string) => change(
+    list => list.filter(e => e.id !== id),
+    () => fetch(`${API}?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  );
+  const markWatched = (item: HistoryEntry) => change(
+    list => list.map(e => (e.id === item.id ? { ...e, completed: true, progress: 100 } : e)),
+    () => fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...item, completed: true, progress: 100 }),
+    }),
+  );
 
   const scrollByAmount = (direction: 'left' | 'right') => {
     const el = scrollRef.current;
@@ -205,7 +177,7 @@ export default function WatchHistoryRow() {
   };
 
   // Guests have no history worth resuming (the player is members-only).
-  if (loading || !userId || items.length === 0) return null;
+  if ((!seeded && (loading || !userId)) || items.length === 0) return null;
 
   return (
     <section className="watch-history-section" aria-labelledby="watch-history-heading">
@@ -289,7 +261,7 @@ export default function WatchHistoryRow() {
                 <button
                   type="button"
                   className="watch-history-action"
-                  onClick={() => markWatched(item.id)}
+                  onClick={() => markWatched(item)}
                   aria-label={`Mark ${item.title} as watched`}
                   title="Mark as watched"
                 >

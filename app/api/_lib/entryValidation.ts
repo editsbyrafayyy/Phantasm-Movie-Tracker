@@ -6,8 +6,9 @@ import { SUBGENRES, SECONDARY_TAGS } from '@/lib/config';
 export const RECOMMEND_VALUES = ['Yes', 'No', 'Peak', 'Garbage'] as const;
 
 const IMDB_ID_RE = /^tt\d{5,10}$/;
-// Legacy references produced by the TMDB paste flow in AddMovieForm / omdb-search
-const TMDB_REF_RE = /^tmdb[:-]\d{1,10}$/;
+// TMDB references (`tmdb:123`, or `tmdbtv:123` for a series) from Stream / Browse links
+// and the TMDB paste flow, used when a title has no IMDb id at hand.
+export const TMDB_REF_RE = /^tmdb(tv)?[:-](\d{1,10})$/;
 
 const MAX_CUSTOM_TAGS = 20;
 const MAX_CUSTOM_TAG_LEN = 40;
@@ -16,7 +17,7 @@ export function isValidImdbId(id: string): boolean {
   return IMDB_ID_RE.test(id);
 }
 
-/** Accepts a real IMDb ID or the legacy `tmdb:123` / `tmdb-123` reference. */
+/** Accepts a real IMDb ID or a `tmdb:123` / `tmdb-123` / `tmdbtv:123` reference. */
 export function isAcceptableMovieRef(id: unknown): id is string {
   return typeof id === 'string' && (IMDB_ID_RE.test(id) || TMDB_REF_RE.test(id));
 }

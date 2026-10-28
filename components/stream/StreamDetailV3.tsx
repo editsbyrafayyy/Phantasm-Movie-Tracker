@@ -136,7 +136,7 @@ export default function StreamDetailV3({
   const playHref = canStream ? playerHref : `/login?next=${encodeURIComponent(playerHref)}`;
   const addHref = imdbId
     ? `/add?omdbId=${imdbId}&title=${encodeURIComponent(title)}`
-    : `/add?tmdbId=${movie.id}&title=${encodeURIComponent(title)}`;
+    : `/add?tmdbId=${movie.id}&type=${mediaType}&title=${encodeURIComponent(title)}`;
   const today = useSyncExternalStore(noSubscribe, localToday, () => serverToday);
   const countdown = countdownLabel(upcomingRelease, today);
 

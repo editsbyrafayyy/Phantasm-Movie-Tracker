@@ -7,6 +7,7 @@ import type { Entry } from '@/lib/types';
 interface DetailActionsProps {
   entry:             Entry;
   canStream:         boolean;
+  viewerEntry:       { id: string; total: number | null } | null;
   isOwner:           boolean;
   isSiteOwner:       boolean;
   mustWatch:         boolean;
@@ -20,7 +21,7 @@ interface DetailActionsProps {
 
 /** Primary (watch) + secondary actions for a vault entry. */
 export default function DetailActions({
-  entry, canStream, isOwner, isSiteOwner, mustWatch, togglingMustWatch,
+  entry, canStream, viewerEntry, isOwner, isSiteOwner, mustWatch, togglingMustWatch,
   onToggleMustWatch, onSaveToStack, onCopySummary, onCopyLink, onDelete,
 }: DetailActionsProps) {
   const { movie } = entry;
@@ -29,13 +30,13 @@ export default function DetailActions({
   const addHref = movie.omdb_id
     ? `/add?omdbId=${movie.omdb_id}&title=${encodeURIComponent(title)}`
     : movie.tmdb_id
-      ? `/add?tmdbId=${movie.tmdb_id}&title=${encodeURIComponent(title)}`
+      ? `/add?tmdbId=${movie.tmdb_id}&type=${movie.media_type ?? 'movie'}&title=${encodeURIComponent(title)}`
       : `/add?title=${encodeURIComponent(title)}`;
 
   return (
     <>
-      {streamId && (
-        <Link href={canStream ? `/stream/${streamId}` : '/login'} className="btn-primary vdetail-watch-btn">
+      {streamId && canStream && (
+        <Link href={`/stream/${streamId}`} className="btn-primary vdetail-watch-btn">
           <Play size={16} fill="currentColor" aria-hidden="true" />
           Watch now
         </Link>
@@ -43,12 +44,17 @@ export default function DetailActions({
 
       {canStream && (
         <>
-          {!isOwner && (
+          {!isOwner && (viewerEntry ? (
+            <Link href={`/vault/${viewerEntry.id}`} className="btn-secondary vdetail-your-score">
+              Your score
+              <strong>{(viewerEntry.total ?? 0) > 0 ? viewerEntry.total : '—'}</strong>
+            </Link>
+          ) : (
             <Link href={addHref} className="btn-secondary">
               <Plus size={16} aria-hidden="true" />
               Add to my vault
             </Link>
-          )}
+          ))}
           <button type="button" onClick={onSaveToStack} className="btn-secondary">
             <Layers size={16} aria-hidden="true" />
             Save to stack

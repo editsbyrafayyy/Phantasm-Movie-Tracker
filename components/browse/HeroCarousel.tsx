@@ -51,13 +51,13 @@ function HeroText({ entry, eyebrow, canStream }: { entry: Entry; eyebrow: string
         </p>
       )}
       <div className="hero-actions">
-        <Link
-          href={canStream ? streamPath : `/login?next=${encodeURIComponent(streamPath)}`}
-          className="btn-watch"
-        >
-          <Play size={16} fill="currentColor" aria-hidden="true" />
-          Watch now
-        </Link>
+        {/* Streaming is members-only, so guests don't see the button at all. */}
+        {canStream && (
+          <Link href={streamPath} className="btn-watch">
+            <Play size={16} fill="currentColor" aria-hidden="true" />
+            Watch now
+          </Link>
+        )}
         <Link href={`/vault/${entry.id}`} className="btn-edit">
           View details
         </Link>

@@ -12,6 +12,8 @@ interface Props {
   films: TmdbDiscoverMovie[];
   /** YYYY-MM-DD, computed on the server. */
   today: string;
+  /** Guests get plain cards: the film pages behind them are members-only. */
+  linkable?: boolean;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,7 +49,24 @@ function countdown(iso: string, today: string): string | null {
   return `in ${days} days`;
 }
 
-export default function ComingSoonRow({ films, today: serverToday }: Props) {
+/** A link for members; a plain card for guests (same look, nothing to open). */
+function CardShell({ href, label, onClick, children }: {
+  href: string | null;
+  label: string;
+  onClick: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  children: React.ReactNode;
+}) {
+  if (!href) {
+    return <div className="stream-card-link" role="group" aria-label={label}>{children}</div>;
+  }
+  return (
+    <Link href={href} className="stream-card-link" aria-label={label} onClick={onClick} draggable={false}>
+      {children}
+    </Link>
+  );
+}
+
+export default function ComingSoonRow({ films, today: serverToday, linkable = true }: Props) {
   const today = useSyncExternalStore(noSubscribe, localToday, () => serverToday);
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -169,19 +188,17 @@ export default function ComingSoonRow({ films, today: serverToday }: Props) {
                 whileHover={{ scale: 1.03, y: -4 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-                onMouseEnter={() => router.prefetch(href)}
+                onMouseEnter={linkable ? () => router.prefetch(href) : undefined}
               >
-                <Link
-                  href={href}
-                  className="stream-card-link"
-                  aria-label={`${title}${when ? `, releases ${when}` : ''}`}
+                <CardShell
+                  href={linkable ? href : null}
+                  label={`${title}${when ? `, releases ${when}` : ''}`}
                   onClick={(e) => {
                     if (hasDragged.current) {
                       e.preventDefault();
                       hasDragged.current = false;
                     }
                   }}
-                  draggable={false}
                 >
                   <div className="stream-card-poster">
                     <Image
@@ -202,7 +219,7 @@ export default function ComingSoonRow({ films, today: serverToday }: Props) {
                       {soon && <span className="coming-soon-countdown">{soon}</span>}
                     </p>
                   )}
-                </Link>
+                </CardShell>
               </motion.div>
             );
           })}

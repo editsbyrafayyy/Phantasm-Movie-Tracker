@@ -1,4 +1,6 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import type { Metadata } from 'next';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getOwnerEntries } from '@/lib/data';
@@ -107,6 +109,8 @@ async function VaultContent() {
     entries = ((data ?? []) as unknown as GridRow[]).map(toGridEntry);
   }
 
+  if (user && entries.length === 0) return <VaultOnboarding />;
+
   return (
     <>
       <div className="vault-content vault-head">
@@ -116,6 +120,37 @@ async function VaultContent() {
         />
       </div>
       <MovieGrid entries={entries} />
+    </>
+  );
+}
+
+const ONBOARD_STEPS = [
+  { href: '/add',       title: 'Log a film',     body: 'Search any title and score it across eight categories.' },
+  { href: '/stream',    title: 'Find something', body: 'Browse by genre or mood, watch it here, then rate it from the player.' },
+  { href: '/watchlist', title: 'Save for later', body: 'Bury films in Watch Later and dig them up when you’re ready.' },
+];
+
+/** A member's first visit: what the vault is for and where to start. */
+function VaultOnboarding() {
+  return (
+    <>
+      <div className="vault-content vault-head">
+        <PageHeader title="Your" accent="vault" eyebrow="Nothing rated yet" subtitle="Every film you score lands here, with your own stats on the profile page." />
+      </div>
+      <div className="vault-content">
+        <ol className="vault-onboard">
+          {ONBOARD_STEPS.map((step, i) => (
+            <li key={step.href}>
+              <Link href={step.href} className="vault-onboard-step">
+                <span className="vault-onboard-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <span className="vault-onboard-title">{step.title}</span>
+                <span className="vault-onboard-body">{step.body}</span>
+                <ArrowRight size={18} className="vault-onboard-arrow" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </div>
     </>
   );
 }

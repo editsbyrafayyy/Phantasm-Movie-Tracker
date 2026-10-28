@@ -33,11 +33,13 @@ interface MovieDetailV3Props {
   isOwner:          boolean;
   isSiteOwner?:     boolean;
   canStream:        boolean;
+  /** The signed-in member's own rating of this film, when viewing someone else's entry. */
+  viewerEntry?:     { id: string; total: number | null } | null;
 }
 
 type ToastState = { message: string; type: ToastType; onUndo?: () => void } | null;
 
-export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwner, isSiteOwner = false, canStream }: MovieDetailV3Props) {
+export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwner, isSiteOwner = false, canStream, viewerEntry = null }: MovieDetailV3Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from') || '/vault';
@@ -173,6 +175,7 @@ export default function MovieDetailV3({ entry, similar, franchiseEntries, isOwne
           <DetailActions
             entry={entry}
             canStream={canStream}
+            viewerEntry={viewerEntry}
             isOwner={isOwner}
             isSiteOwner={isSiteOwner}
             mustWatch={mustWatch}

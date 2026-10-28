@@ -2,7 +2,8 @@ import { getComingSoonHorror } from '@/lib/tmdb';
 import PageHeader from '@/components/ui/PageHeader';
 import ComingSoonRow from './ComingSoonRow';
 
-export default async function ComingSoonWidget() {
+/** `linkable` is false for guests: they see what's coming but can't open the (members-only) pages. */
+export default async function ComingSoonWidget({ linkable }: { linkable: boolean }) {
   const films = await getComingSoonHorror();
   if (!films.length) return null;
 
@@ -19,7 +20,7 @@ export default async function ComingSoonWidget() {
           subtitle="Horror releases over the next 12 months, by release date."
         />
       </div>
-      <ComingSoonRow films={films} today={today} />
+      <ComingSoonRow films={films} today={today} linkable={linkable} />
     </section>
   );
 }

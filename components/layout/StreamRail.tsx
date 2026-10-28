@@ -13,7 +13,6 @@ interface NavItem { href: string; label: string }
 const GUEST_LINKS: NavItem[] = [
   { href: '/',       label: 'Home' },
   { href: '/vault',  label: 'Vault' },
-  { href: '/stream', label: 'Stream' },
 ];
 
 const MEMBER_LINKS: NavItem[] = [

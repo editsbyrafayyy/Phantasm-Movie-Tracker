@@ -69,8 +69,8 @@ export default function CommandPaletteModal({ onClose, onShuffle }: CommandPalet
     const nav: PaletteItem[] = [
       { key: 'home',      label: 'Home',              icon: HauntedHouse, run: go('/') },
       { key: 'vault',     label: user ? 'My Vault' : 'Vault', icon: Coffin, run: go('/vault') },
-      { key: 'stream',    label: 'Stream',            icon: WatchingEye, run: go('/stream') },
       ...(user ? [
+        { key: 'stream',  label: 'Stream',            icon: WatchingEye, run: go('/stream') },
         { key: 'watchlist', label: 'Watch Later',     icon: Gravestone, run: go('/watchlist') },
         { key: 'profile',   label: 'Profile & stats', icon: BarChart2, run: go('/profile') },
         { key: 'add',       label: 'Log a film',      icon: Plus,      run: go('/add') },

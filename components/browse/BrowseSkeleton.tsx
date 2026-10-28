@@ -36,10 +36,15 @@ export default function BrowseSkeleton() {
         </div>
 
         {/* Phones only (the rail replaces it on desktop) */}
-        <div className="browse-genre-chips" aria-hidden="true">
-          {CHIP_WIDTHS.map((w, i) => (
-            <div key={i} className="skeleton browse-skel-chip" style={{ width: w }} />
-          ))}
+        <div className="genre-dial genre-dial--skeleton" aria-hidden="true">
+          <div className="skeleton browse-skel-dial-label" />
+          <div className="genre-dial-window">
+            <div className="genre-dial-track">
+              {CHIP_WIDTHS.map((w, i) => (
+                <div key={i} className="skeleton browse-skel-dial-item" style={{ width: w }} />
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="browse-toolbar" aria-hidden="true">

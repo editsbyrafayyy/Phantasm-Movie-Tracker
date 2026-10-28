@@ -55,7 +55,7 @@ export default function BrowseCard({ movie, mediaType, from, canSave }: BrowseCa
       {canSave && (
         <div className="browse-card-actions">
           <Link
-            href={`/add?tmdbId=${movie.id}&title=${encodeURIComponent(title)}`}
+            href={`/add?tmdbId=${movie.id}&type=${mediaType}&title=${encodeURIComponent(title)}`}
             className="browse-card-action"
             aria-label={`Rate and add ${title} to your vault`}
             title="Rate & add to vault"

@@ -38,7 +38,9 @@ export default function AddMovieForm() {
   const title  = searchParams.get('title') ?? '';
   const omdbId = searchParams.get('omdbId') ?? '';
   const tmdbId = searchParams.get('tmdbId') ?? '';
-  const ref    = omdbId || (tmdbId ? `tmdb:${tmdbId}` : '');
+  // `type=tv` marks a series — TMDB movie and TV ids overlap.
+  const tmdbTag = searchParams.get('type') === 'tv' ? 'tmdbtv' : 'tmdb';
+  const ref    = omdbId || (tmdbId ? `${tmdbTag}:${tmdbId}` : '');
   return <AddMovieFormInner key={`${title}|${ref}`} initialTitle={title} initialRef={ref} />;
 }
 

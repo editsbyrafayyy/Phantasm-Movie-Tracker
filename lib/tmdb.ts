@@ -186,6 +186,18 @@ export async function fetchTmdbDetail(
   }
 }
 
+/** Top-billed cast (8) in the shape stored on movies.cast_list. */
+export function tmdbCastList(detail: TmdbMovieDetail | null) {
+  return detail?.credits?.cast
+    ?.sort((a, b) => a.order - b.order)
+    .slice(0, 8)
+    .map(c => ({
+      name: c.name,
+      character: c.character,
+      profile_path: tmdbProfileUrl(c.profile_path)
+    })) ?? null;
+}
+
 /**
  * Convenience: find by IMDb ID, or search then fetch detail.
  * Returns { backdrop_url, poster_url, tmdb_id, cast_list } or nulls.
@@ -230,14 +242,7 @@ export async function enrichFromTmdb(
 
   const detail = await fetchTmdbDetail(result.id, resolvedType);
 
-  const cast_list = detail?.credits?.cast
-    ?.sort((a, b) => a.order - b.order)
-    .slice(0, 8)
-    .map(c => ({
-      name: c.name,
-      character: c.character,
-      profile_path: tmdbProfileUrl(c.profile_path)
-    })) ?? null;
+  const cast_list = tmdbCastList(detail);
 
   return {
     tmdb_id:      result.id,
