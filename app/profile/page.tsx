@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { OWNER_ID } from '@/lib/guards';
-import { RECOMMEND_COLOR } from '@/lib/config';
 import { computeProfileStats } from '@/lib/profileStats';
 import PageHeader      from '@/components/ui/PageHeader';
 import CalendarHeatmap from '@/components/stats/CalendarHeatmap';
@@ -17,6 +16,7 @@ import YearCard        from '@/components/profile/stats/YearCard';
 import TopTenRow       from '@/components/profile/stats/TopTenRow';
 import HotTakes        from '@/components/profile/stats/HotTakes';
 import HabitsCard      from '@/components/profile/stats/HabitsCard';
+import VerdictBar      from '@/components/profile/stats/VerdictBar';
 import { SubgenreCard, CategoryCard, DirectorsCard, DecadesCard } from '@/components/profile/stats/TasteCards';
 import type { Entry, Profile } from '@/lib/types';
 
@@ -68,7 +68,6 @@ export default async function ProfilePage() {
   });
 
   const stats = computeProfileStats(entries);
-  const verdictTotal = stats.verdicts.reduce((s, v) => s + v.count, 0);
 
   const headline = [
     { label: 'Films rated',   value: stats.rated },
@@ -111,23 +110,7 @@ export default async function ProfilePage() {
               ))}
             </dl>
 
-            {verdictTotal > 0 && (
-              <div className="profile-verdicts">
-                <div className="stat-stack-bar" aria-hidden="true">
-                  {stats.verdicts.map(v => (
-                    <span key={v.label} style={{ width: `${(v.count / verdictTotal) * 100}%`, background: RECOMMEND_COLOR[v.label] }} />
-                  ))}
-                </div>
-                <ul className="stat-legend">
-                  {stats.verdicts.map(v => (
-                    <li key={v.label} className="stat-legend-item">
-                      <span className="stat-legend-dot" style={{ background: RECOMMEND_COLOR[v.label] }} />
-                      {v.label} <strong>{v.count}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <VerdictBar verdicts={stats.verdicts} />
           </>
         )}
       </section>

@@ -13,9 +13,13 @@ import type { Entry } from '@/lib/types';
 interface CategoryRowProps {
   label:   string;
   entries: Entry[];
+  /** A line of curator's voice under the heading. */
+  note?:     string;
+  /** Per-entry caption replacing the year line (keyed by entry id). */
+  captions?: Record<string, string>;
 }
 
-export default function CategoryRow({ label, entries }: CategoryRowProps) {
+export default function CategoryRow({ label, entries, note, captions }: CategoryRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -87,6 +91,7 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
         <div className="category-header-title-group">
           {label && <h2 className="category-heading">{label}</h2>}
           <span className="category-count">{entries.length} film{entries.length > 1 ? 's' : ''}</span>
+          {note && <p className="category-note">{note}</p>}
         </div>
 
         {entries.length > 3 && (
@@ -181,7 +186,9 @@ export default function CategoryRow({ label, entries }: CategoryRowProps) {
                   </div>
 
                   <p className="stream-card-title category-card-title">{movie.title}</p>
-                  {movie.year && (
+                  {captions?.[entry.id] ? (
+                    <p className="stream-card-year category-card-meta">{captions[entry.id]}</p>
+                  ) : movie.year && (
                     <p className="stream-card-year category-card-meta">
                       {movie.year}{movie.runtime_min ? ` · ${movie.runtime_min} min` : ''}
                     </p>

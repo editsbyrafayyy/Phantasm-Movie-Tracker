@@ -23,23 +23,23 @@ export function SubgenreCard({ data }: { data: ProfileStats['subgenres'] }) {
 }
 
 /** Rating categories as a share of their maximum — what films earn from you. */
-export function CategoryCard({ data }: { data: ProfileStats['categories'] }) {
+export function CategoryCard({ data, who }: { data: ProfileStats['categories']; who?: string }) {
   if (!data.length) return null;
   return (
     <section className="stat-card" aria-labelledby="pstat-cats">
-      <h3 id="pstat-cats" className="stat-card-label">What you reward</h3>
+      <h3 id="pstat-cats" className="stat-card-label">{who ? `What ${who} rewards` : 'What you reward'}</h3>
       <p className="stat-card-desc">Average score in each category, as a share of its maximum.</p>
       <BarList rows={data.map(c => ({ name: c.label, pct: c.pct, value: `${c.pct}%` }))} />
     </section>
   );
 }
 
-export function DirectorsCard({ data }: { data: ProfileStats['directors'] }) {
+export function DirectorsCard({ data, who }: { data: ProfileStats['directors']; who?: string }) {
   if (!data.length) return null;
   const max = data[0].count;
   return (
     <section className="stat-card" aria-labelledby="pstat-directors">
-      <h3 id="pstat-directors" className="stat-card-label">Directors you return to</h3>
+      <h3 id="pstat-directors" className="stat-card-label">{who ? `Directors ${who} returns to` : 'Directors you return to'}</h3>
       <BarList
         noteLabel="Avg"
         rows={data.map(d => ({ name: d.name, pct: (d.count / max) * 100, value: d.count, note: fmtAvg(d.avg) }))}

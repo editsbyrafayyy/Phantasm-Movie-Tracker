@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Film, BarChart2, Plus } from 'lucide-react';
+import { Search, Film, BarChart2, Plus, Skull } from 'lucide-react';
 import { HauntedHouse, Coffin, WatchingEye, Gravestone, Planchette, type IconComponent } from '@/components/ui/HorrorIcons';
 import Modal from '@/components/ui/Modal';
 import { useAuth } from '@/components/layout/AuthProvider';
@@ -75,6 +75,7 @@ export default function CommandPaletteModal({ onClose, onShuffle }: CommandPalet
         { key: 'profile',   label: 'Profile & stats', icon: BarChart2, run: go('/profile') },
         { key: 'add',       label: 'Log a film',      icon: Plus,      run: go('/add') },
       ] : []),
+      { key: 'taste',     label: `${process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy'}’s taste`, icon: Skull, run: go('/taste') },
       { key: 'shuffle',   label: 'Film roulette',     icon: Planchette, run: () => { onClose(); onShuffle(); } },
     ].filter(item => !q || item.label.toLowerCase().includes(q));
 

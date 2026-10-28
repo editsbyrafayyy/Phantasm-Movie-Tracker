@@ -10,6 +10,7 @@ import RouletteTrigger from '@/components/home/RouletteTrigger';
 import ActivityFeed, { ActivityFeedSkeleton } from '@/components/home/ActivityFeed';
 import RecentlyViewedRow, { RECENT_HINT_COOKIE } from '@/components/home/RecentlyViewedRow';
 import MemberCorner from '@/components/home/MemberCorner';
+import DareSection from '@/components/home/DareSection';
 import PageHeader from '@/components/ui/PageHeader';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getOwnerEntries } from '@/lib/data';
@@ -64,6 +65,23 @@ export default async function HomePage() {
   const mustWatchEntries = entries.filter(e => e.must_watch === true);
   const remainingEntries = entries.filter(e => e.must_watch !== true);
 
+  const byScore = (a: Entry, b: Entry) => (b.total ?? 0) - (a.total ?? 0);
+  const peak = entries.filter(e => e.recommend === 'Peak').sort(byScore);
+  // Guests get a way in: the must-watch picks, or the best of the Peak shelf.
+  const startHere = mustWatchEntries.length >= 4 ? mustWatchEntries : peak.slice(0, 10);
+  const shame = entries.filter(e => e.recommend === 'Garbage').sort((a, b) => (a.total ?? 0) - (b.total ?? 0)).slice(0, 15);
+
+  // Hot takes: biggest disagreements with IMDb, either direction.
+  const takes = entries
+    .filter(e => (e.total ?? 0) > 0 && e.movie.imdb_rating)
+    .map(e => ({ e, delta: (e.total ?? 0) - Number(e.movie.imdb_rating) }))
+    .filter(t => Math.abs(t.delta) >= 1.5)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, 12);
+  const takeCaptions = Object.fromEntries(takes.map(({ e, delta }) => [
+    e.id, `IMDb ${Number(e.movie.imdb_rating).toFixed(1)} · ${delta > 0 ? '+' : '−'}${Math.abs(delta).toFixed(1)}`,
+  ]));
+
   // Top-rated entries with BOTH poster AND backdrop for the hero carousel
   const slides = remainingEntries
     .filter(e => e.movie.backdrop_url && e.movie.poster_url)
@@ -86,9 +104,10 @@ export default async function HomePage() {
           <p className="guest-notice-text">
             You&apos;re viewing {ownerName}&apos;s horror collection. Members can stream and keep their own vault.
           </p>
-          <Link href="/login" className="btn-secondary guest-notice-link">
-            Sign in
-          </Link>
+          <span className="guest-notice-actions">
+            <Link href="/taste" className="btn-ghost guest-notice-link">{ownerName}&rsquo;s taste</Link>
+            <Link href="/login" className="btn-secondary guest-notice-link">Sign in</Link>
+          </span>
         </div>
       )}
 
@@ -101,13 +120,32 @@ export default async function HomePage() {
 
       <RecentlyViewedRow reserve={hasRecent} />
 
-      {mustWatchEntries.length > 0 && (
+      {!user && startHere.length > 0 ? (
+        <CategoryRow label="Start here" note="New to the vault? Begin with these." entries={startHere} />
+      ) : mustWatchEntries.length > 0 && (
         <CategoryRow label="Must watch" entries={mustWatchEntries} />
       )}
 
       <Suspense fallback={null}>
         <ComingSoonWidget linkable={!!user} />
       </Suspense>
+
+      {peak.length > 0 && (
+        <CategoryRow label="Rated Peak" note="The highest verdict in the vault." entries={peak.slice(0, 15)} />
+      )}
+
+      {takes.length > 0 && (
+        <CategoryRow
+          label="Hot takes"
+          note={`Where ${ownerName} and IMDb disagree the most.`}
+          entries={takes.map(t => t.e)}
+          captions={takeCaptions}
+        />
+      )}
+
+      {shame.length > 0 && (
+        <CategoryRow label="Hall of shame" note="Rated Garbage. You’ve been warned." entries={shame} />
+      )}
 
       <Suspense fallback={<ActivityFeedSkeleton />}>
         <ActivityFeed />
@@ -132,6 +170,8 @@ export default async function HomePage() {
           canAdd={!!user}
         />
       </section>
+
+      {user?.id !== process.env.OWNER_USER_ID && <DareSection />}
     </div>
   );
 }

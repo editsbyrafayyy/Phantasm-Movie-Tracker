@@ -8,6 +8,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import AdminActions from '@/components/admin/AdminActions';
 import ResetPasswordForm from '@/components/admin/ResetPasswordForm';
 import CatalogFixButton from '@/components/admin/CatalogFixButton';
+import AdminDares, { type PendingDare } from '@/components/admin/AdminDares';
 import { CATALOG_FIELDS, missingArtwork, missingDetails, missingImdb, needsFix, type CatalogMovie } from '@/lib/catalogHealth';
 
 export const metadata: Metadata = {
@@ -59,7 +60,7 @@ export default async function AdminPage() {
   const service = createServiceClient();
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
-  const [membersRes, entriesRes, moviesRes, listRes, watchlistRes] = await Promise.all([
+  const [membersRes, entriesRes, moviesRes, listRes, watchlistRes, daresRes] = await Promise.all([
     service.from('profiles').select('id, username, display_name, role, created_at').order('created_at'),
     selectAll<EntryRow>((a, b) => service
       .from('entries')
@@ -73,7 +74,9 @@ export default async function AdminPage() {
       .range(a, b) as unknown as PromiseLike<{ data: CatalogMovie[] | null; error: unknown }>),
     selectAll<{ movie_id: string }>((a, b) => service.from('list_items').select('movie_id').order('movie_id').range(a, b)),
     service.from('watchlist').select('id', { count: 'exact', head: true }),
+    service.from('dares').select('tmdb_id, title, year, poster_path, votes').eq('status', 'pending').order('votes', { ascending: false }).limit(50),
   ]);
+  const dares = (daresRes.data ?? []) as PendingDare[];
 
   const members = (membersRes.data ?? []) as MemberRow[];
   const entries = entriesRes.data;
@@ -219,6 +222,12 @@ export default async function AdminPage() {
             </div>
           )}
           {needsFixCount > 0 && <CatalogFixButton total={needsFixCount} />}
+        </section>
+
+        <section className="stat-card" aria-labelledby="admin-dares">
+          <h2 id="admin-dares" className="stat-card-label">Dares {dares.length > 0 && <span className="health-count">{dares.length}</span>}</h2>
+          <p className="stat-card-desc">Films visitors dared you to watch. Accept adds it to Watch Later.</p>
+          <AdminDares dares={dares} />
         </section>
 
         <section className="stat-card" aria-labelledby="admin-maint">

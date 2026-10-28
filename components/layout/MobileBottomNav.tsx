@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Skull } from 'lucide-react';
 import { HauntedHouse, Coffin, WatchingEye, Gravestone, SkeletonKey, type IconComponent } from '@/components/ui/HorrorIcons';
 import { useAuth } from '@/components/layout/AuthProvider';
 
@@ -23,6 +23,7 @@ const MEMBER_TABS: Tab[] = [
 const GUEST_TABS: Tab[] = [
   { href: '/',       label: 'Home',    icon: HauntedHouse },
   { href: '/vault',  label: 'Vault',   icon: Coffin },
+  { href: '/taste',  label: 'Taste',   icon: Skull },
   { href: '/login',  label: 'Sign in', icon: SkeletonKey },
 ];
 

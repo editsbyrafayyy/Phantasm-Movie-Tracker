@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { SCORE_FIELDS } from '@/lib/config';
 import { scoreBarVariant } from '@/lib/motion';
+import ScoreGuide from './ScoreGuide';
 import type { Entry } from '@/lib/types';
 
 const fieldValue = (entry: Entry, key: string) => (entry[key as keyof Entry] as number | null) ?? null;
@@ -42,6 +43,11 @@ export default function ScoreBreakdown({ entry }: { entry: Entry }) {
           Not scored yet. The breakdown appears once this film is rated.
         </p>
       )}
+
+      <details className="vdetail-howto">
+        <summary>How the score works</summary>
+        <ScoreGuide />
+      </details>
     </section>
   );
 }
