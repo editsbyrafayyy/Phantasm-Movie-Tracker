@@ -6184,3 +6184,30 @@ html { scrollbar-color: #2a2a2a transparent; scrollbar-width: thin; }
   .dare-panel { padding: 26px 20px 22px; }
   .dare-header .page-header-title { font-size: 44px; }
 }
+
+/* Top 10: films and series ranked separately */
+.pstat-top-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.pstat-top-head .stat-card-label { margin: 0; }
+.pstat-top-toggle { height: 32px; grid-template-columns: repeat(2, minmax(64px, 1fr)); }
+.pstat-top-toggle .browse-segment { font-size: 12px; padding: 0 12px; }
+.pstat-top-row { animation: page-in 240ms var(--ease-out) backwards; }
+
+/* Marks a series among films in the home rows (scores aren't like-for-like) */
+.category-card-series {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  padding: 4px 7px 3px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--text-dim);
+  background: rgba(8, 8, 8, 0.78);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}

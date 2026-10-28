@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 const ENTRY_FIELDS = [
   'id', 'subgenre', 'recommend', 'total', 'created_at',
   'atmosphere', 'story', 'characters', 'pacing', 'visuals', 'thrill', 'sound', 'impact',
-  'movie:movies (title, poster_url, runtime_min, year, director, imdb_rating)',
+  'movie:movies (title, poster_url, runtime_min, year, director, imdb_rating, media_type)',
 ].join(', ');
 
 export default async function ProfilePage() {
@@ -120,7 +120,7 @@ export default async function ProfilePage() {
             <PageHeader as="section" title="Your" accent="taste" eyebrow="Statistics" className="profile-section-head" />
             <div className="profile-grid">
               {stats.year && <YearCard data={stats.year} />}
-              <TopTenRow films={stats.topRated} />
+              <TopTenRow films={stats.topRated} series={stats.topSeries} />
               <SubgenreCard data={stats.subgenres} />
               <CategoryCard data={stats.categories} />
               <HotTakes above={stats.hotTakes.above} below={stats.hotTakes.below} />

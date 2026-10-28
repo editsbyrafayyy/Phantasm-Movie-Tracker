@@ -83,8 +83,9 @@ export default async function HomePage() {
   ]));
 
   // Top-rated entries with BOTH poster AND backdrop for the hero carousel
+  // Films only: a series' score covers a whole season, so it doesn't rank against films.
   const slides = remainingEntries
-    .filter(e => e.movie.backdrop_url && e.movie.poster_url)
+    .filter(e => e.movie.media_type !== 'tv' && e.movie.backdrop_url && e.movie.poster_url)
     .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
     .slice(0, 8);
 

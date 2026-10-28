@@ -59,7 +59,7 @@ export default async function TastePage() {
 
           <section className="profile-section" aria-label="Statistics">
             <div className="profile-grid">
-              <TopTenRow films={stats.topRated} who={OWNER} />
+              <TopTenRow films={stats.topRated} series={stats.topSeries} who={OWNER} />
               <HotTakes above={stats.hotTakes.above} below={stats.hotTakes.below} who={OWNER} />
               <SubgenreCard data={stats.subgenres} />
               <CategoryCard data={stats.categories} who={OWNER} />

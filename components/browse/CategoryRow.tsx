@@ -184,6 +184,8 @@ export default function CategoryRow({ label, entries, heading, captions }: Categ
 
                     <div className="stream-card-overlay" />
 
+                    {movie.media_type === 'tv' && <span className="category-card-series">Series</span>}
+
                     {/* Vault score */}
                     {entry.total !== null && entry.total > 0 && (
                       <span className="movie-card-score" aria-label={`Score ${entry.total} out of 10`}>

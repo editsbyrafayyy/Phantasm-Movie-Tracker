@@ -42,7 +42,8 @@ export interface ProfileStats {
   } | null;
   subgenres:  { name: string; count: number; avg: number | null }[];
   categories: { label: string; pct: number; avg: number; max: number }[];
-  topRated:   FilmRef[];
+  topRated:   FilmRef[];   // films only
+  topSeries:  FilmRef[];   // series ranked separately — never mixed with films
   hotTakes:   { above: HotTake[]; below: HotTake[] };
   directors:  { name: string; count: number; avg: number | null }[];
   decades:    { label: string; count: number; avg: number | null }[];
@@ -140,7 +141,10 @@ export function computeProfileStats(entries: Entry[], now = new Date()): Profile
   }).sort((a, b) => b.pct - a.pct);
 
   // ── Highlights ──────────────────────────────────────────────────────────
-  const topRated = [...rated].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 10).map(ref);
+  const byTotal = (a: Entry, b: Entry) => (b.total ?? 0) - (a.total ?? 0);
+  const isSeries = (e: Entry) => e.movie?.media_type === 'tv';
+  const topRated = rated.filter(e => !isSeries(e)).sort(byTotal).slice(0, 10).map(ref);
+  const topSeries = rated.filter(isSeries).sort(byTotal).slice(0, 10).map(ref);
 
   const takes: HotTake[] = rated
     .filter(e => (e.movie?.imdb_rating ?? 0) > 0)
@@ -200,6 +204,7 @@ export function computeProfileStats(entries: Entry[], now = new Date()): Profile
     subgenres,
     categories,
     topRated,
+    topSeries,
     hotTakes,
     directors,
     decades,

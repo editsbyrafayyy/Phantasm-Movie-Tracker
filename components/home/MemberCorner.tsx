@@ -18,7 +18,7 @@ export default async function MemberCorner({ userId }: { userId: string }) {
     loadWatchProgress(supabase, userId),
     supabase
       .from('entries')
-      .select('id, user_id, movie_id, subgenre, recommend, total, must_watch, created_at, movie:movies (id, title, year, poster_url, backdrop_url, omdb_id, tmdb_id)')
+      .select('id, user_id, movie_id, subgenre, recommend, total, must_watch, created_at, movie:movies (id, title, year, poster_url, backdrop_url, omdb_id, tmdb_id, media_type)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
   ]);
