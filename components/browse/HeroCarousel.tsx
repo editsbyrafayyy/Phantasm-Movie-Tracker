@@ -15,7 +15,6 @@ const CircularGallery = dynamic(() => import('@/components/ui/CircularGallery'),
 interface HeroCarouselProps {
   slides:      Entry[];
   canStream:   boolean;
-  ownerName:   string;
   totalFilms:  number;
 }
 
@@ -72,7 +71,6 @@ const MOBILE_AUTOPLAY_MS = 6000;
 export default function HeroCarousel({
   slides,
   canStream,
-  ownerName,
   totalFilms,
 }: HeroCarouselProps) {
   // current drives both desktop (MorphSlider) and mobile (CircularGallery)
@@ -128,7 +126,7 @@ export default function HeroCarousel({
   if (!slides.length) return null;
 
   const entry = slides[Math.min(current, slides.length - 1)];
-  const eyebrow = `Top rated by ${ownerName} · ${totalFilms} films`;
+  const eyebrow = `My top rated · ${totalFilms} films logged`;
 
   const dots = slides.length > 1 && (
     <div className="hero-dots" role="group" aria-label="Choose featured film">

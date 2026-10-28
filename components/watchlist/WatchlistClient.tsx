@@ -147,7 +147,7 @@ export default function WatchlistClient({ items, loadError = false }: WatchlistC
           <Gravestone size={40} aria-hidden="true" />
           <p className="empty-state-title">Nothing buried here yet</p>
           <p className="empty-state-body">
-            Hit the bookmark on any film or show to save it here for later.
+            Tap the gravestone on any film or show and it&rsquo;ll wait here until you get to it.
           </p>
           <Link href="/stream" className="btn-primary">Open Stream</Link>
         </div>

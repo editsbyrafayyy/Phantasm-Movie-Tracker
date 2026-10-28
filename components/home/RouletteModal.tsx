@@ -296,7 +296,7 @@ export default function RouletteModal({ entries, canStream, onClose }: RouletteM
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <p className="roulette-idle-text">Spin for a random pick from the vault</p>
+                  <p className="roulette-idle-text">Spin and I&apos;ll pick something from the vault</p>
                 </motion.div>
               )}
             </AnimatePresence>

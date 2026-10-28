@@ -45,7 +45,7 @@ export default function ScoreBreakdown({ entry }: { entry: Entry }) {
       )}
 
       <details className="vdetail-howto">
-        <summary>How the score works</summary>
+        <summary>How the scoring works</summary>
         <ScoreGuide />
       </details>
     </section>

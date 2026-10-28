@@ -34,7 +34,7 @@ const SUBGENRE_ORDER = [
 
 export const metadata = {
   title: 'Phantasm — Horror Film Tracker',
-  description: 'Horror films rated across 8 criteria, with a stream page for finding the next one.',
+  description: 'My horror movie tracker. Every film I have watched, scored across eight categories, plus a place for my friends to log theirs.',
 };
 
 export default async function HomePage() {
@@ -96,14 +96,13 @@ export default async function HomePage() {
       <HeroCarousel
         slides={slides}
         canStream={!!user}
-        ownerName={ownerName}
         totalFilms={entries.length}
       />
 
       {!user && (
         <div className="guest-notice-banner">
           <p className="guest-notice-text">
-            You&apos;re viewing {ownerName}&apos;s horror collection. Members can stream and keep their own vault.
+            You&apos;re looking at my horror collection. My friends get accounts to stream and keep their own vaults. Everyone else, feel free to look around and disagree with my ratings.
           </p>
           <Link href="/taste" className="btn-secondary guest-notice-link">
             See {ownerName}&rsquo;s taste
@@ -121,7 +120,7 @@ export default async function HomePage() {
       <RecentlyViewedRow reserve={hasRecent} />
 
       {!user && startHere.length > 0 ? (
-        <CategoryRow label="Start here" heading={{ title: 'Start', accent: 'here', subtitle: 'New to the vault? Begin with these.' }} entries={startHere} />
+        <CategoryRow label="Start here" heading={{ title: 'Start', accent: 'here', subtitle: 'First time here? I’d start with these.' }} entries={startHere} />
       ) : mustWatchEntries.length > 0 && (
         <CategoryRow label="Must watch" entries={mustWatchEntries} />
       )}
@@ -135,7 +134,7 @@ export default async function HomePage() {
       {peak.length > 0 && (
         <CategoryRow
           label="Rated Peak"
-          heading={{ title: 'Rated', accent: 'peak', subtitle: 'The highest verdict in the vault.' }}
+          heading={{ title: 'Rated', accent: 'peak', subtitle: 'The highest verdict I give out. Not many films get it.' }}
           entries={peak.slice(0, 15)}
         />
       )}
@@ -143,7 +142,7 @@ export default async function HomePage() {
       {takes.length > 0 && (
         <CategoryRow
           label="Hot takes"
-          heading={{ title: 'Hot', accent: 'takes', subtitle: `Where ${ownerName} and IMDb disagree the most.` }}
+          heading={{ title: 'Hot', accent: 'takes', subtitle: 'Where IMDb and I don’t agree, sometimes by a lot.' }}
           entries={takes.map(t => t.e)}
           captions={takeCaptions}
         />
@@ -152,7 +151,7 @@ export default async function HomePage() {
       {shame.length > 0 && (
         <CategoryRow
           label="Hall of shame"
-          heading={{ title: 'Hall of', accent: 'shame', subtitle: 'Rated Garbage. You’ve been warned.' }}
+          heading={{ title: 'Hall of', accent: 'shame', subtitle: 'Rated Garbage. I watched these so you don’t have to.' }}
           entries={shame}
         />
       )}
@@ -167,7 +166,7 @@ export default async function HomePage() {
             as="section"
             title="From the"
             accent="vault"
-            subtitle={`Every film ${ownerName} has scored, grouped by subgenre.`}
+            subtitle="Everything I’ve logged, sorted by subgenre."
             actions={<Suspense fallback={null}><RouletteTrigger entries={entries} canStream={!!user} /></Suspense>}
             className="home-vault-header"
           />

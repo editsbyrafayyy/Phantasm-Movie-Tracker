@@ -2,8 +2,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import DareBox, { type TopDare } from './DareBox';
 import { createServiceClient } from '@/lib/supabase/server';
 
-const OWNER = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
-
 /** "Dare me to watch": visitors pick a film for the owner; the most-dared are listed. */
 export default async function DareSection() {
   let top: TopDare[] = [];
@@ -26,10 +24,10 @@ export default async function DareSection() {
           eyebrow="Your move"
           title="Dare me"
           accent="to watch"
-          subtitle={`Think something belongs in the vault? Pick a horror, thriller or sci-fi film and dare ${OWNER} to watch it.`}
+          subtitle="Think I’m missing something? Pick a horror, thriller or sci-fi film and dare me to watch it. I can’t promise I’ll like it."
           className="dare-header"
         />
-        <DareBox owner={OWNER} top={top} />
+        <DareBox top={top} />
       </div>
     </section>
   );

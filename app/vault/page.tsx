@@ -125,9 +125,9 @@ async function VaultContent() {
 }
 
 const ONBOARD_STEPS = [
-  { href: '/add',       title: 'Log a film',     body: 'Search any title and score it across eight categories.' },
-  { href: '/stream',    title: 'Find something', body: 'Browse by genre or mood, watch it here, then rate it from the player.' },
-  { href: '/watchlist', title: 'Save for later', body: 'Bury films in Watch Later and dig them up when you’re ready.' },
+  { href: '/add',       title: 'Log a film',     body: 'Search for anything you’ve watched and score it. Same eight categories I use.' },
+  { href: '/stream',    title: 'Find something', body: 'Pick a genre or a mood, watch it right here, then rate it straight from the player.' },
+  { href: '/watchlist', title: 'Save for later', body: 'Put things in Watch Later so you don’t forget about them.' },
 ];
 
 /** A member's first visit: what the vault is for and where to start. */
@@ -135,7 +135,7 @@ function VaultOnboarding() {
   return (
     <>
       <div className="vault-content vault-head">
-        <PageHeader title="Your" accent="vault" eyebrow="Nothing rated yet" subtitle="Every film you score lands here, with your own stats on the profile page." />
+        <PageHeader title="Your" accent="vault" eyebrow="Nothing rated yet" subtitle="Anything you rate ends up here. Your stats show up on your profile once there’s enough to work with." />
       </div>
       <div className="vault-content">
         <ol className="vault-onboard">

@@ -36,7 +36,7 @@ const playfairDisplay = Playfair_Display({
 
 export const metadata: Metadata = {
   title:       'Phantasm — Horror Film Tracker',
-  description: 'Log and rate horror films from any device. Your personal mobile-first horror film collection.',
+  description: 'My horror movie tracker. It started as a Google Sheet; now my friends and I log everything we watch here.',
   icons: {
     icon: [
       { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },

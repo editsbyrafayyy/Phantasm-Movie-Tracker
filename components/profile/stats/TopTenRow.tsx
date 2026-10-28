@@ -14,14 +14,14 @@ const KINDS: { value: Kind; label: string }[] = [
 /**
  * Top-rated films and series, ranked separately (a season of TV and a 90-minute film
  * shouldn't compete). The toggle only appears once a series has been rated.
- * `who`: whose list this is on a public page (default: the signed-in reader's own).
+ * `voice="me"` on the owner's public page; the reader's own list otherwise.
  */
-export default function TopTenRow({ films, series = [], who }: { films: FilmRef[]; series?: FilmRef[]; who?: string }) {
+export default function TopTenRow({ films, series = [], voice = 'you' }: { films: FilmRef[]; series?: FilmRef[]; voice?: 'you' | 'me' }) {
   const [kind, setKind] = useState<Kind>(films.length ? 'films' : 'series');
   if (!films.length && !series.length) return null;
 
   const list = kind === 'films' ? films : series;
-  const owner = who ? `${who}’s` : 'Your';
+  const owner = voice === 'me' ? 'My' : 'Your';
 
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;

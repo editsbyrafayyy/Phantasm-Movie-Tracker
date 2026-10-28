@@ -187,13 +187,13 @@ export default function MovieGrid({ entries }: MovieGridProps) {
         entries.length === 0 ? (
           <div className="empty-state">
             <p className="empty-state-title">Your vault is empty</p>
-            <p className="empty-state-body">Rate your first film to start building your collection.</p>
+            <p className="empty-state-body">Rate your first film and it&rsquo;ll show up here.</p>
             <Link href="/add" className="btn-primary">Log a film</Link>
           </div>
         ) : (
           <div className="empty-state">
             <p className="empty-state-title">Nothing lurking here</p>
-            <p className="empty-state-body">Try a different search or loosen your filters.</p>
+            <p className="empty-state-body">Nothing fits that. Try loosening the filters a bit.</p>
             <button type="button" className="btn-secondary" onClick={clearAll}>Clear filters</button>
           </div>
         )

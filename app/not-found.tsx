@@ -6,7 +6,7 @@ export default function NotFound() {
       <p className="app-status-code" aria-hidden="true">404</p>
       <h1 className="empty-state-title app-status-title">This page is dead</h1>
       <p className="empty-state-body">
-        Whatever was here is gone, and it&apos;s not coming back. Check the link, or head somewhere safer.
+        Either the link is wrong, or I deleted whatever used to be here. Probably the second one.
       </p>
       <div className="app-status-actions">
         <Link href="/" className="btn-primary">Go home</Link>

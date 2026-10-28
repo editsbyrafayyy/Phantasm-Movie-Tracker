@@ -20,7 +20,7 @@ export default function Error({
       <p className="page-header-eyebrow">Something broke</p>
       <h1 className="empty-state-title app-status-title">This page didn&apos;t load</h1>
       <p className="empty-state-body">
-        An unexpected error interrupted things. Try again, or head back home.
+        Something broke on my end. Trying again usually fixes it, and if it doesn&apos;t, that one&apos;s on me.
       </p>
       <div className="app-status-actions">
         <button type="button" onClick={() => reset()} className="btn-primary">

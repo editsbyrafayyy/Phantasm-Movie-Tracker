@@ -85,7 +85,7 @@ export default function CalendarHeatmap({ dates, year }: { dates: string[]; year
     <div className="stat-card stat-card-wide heatmap-card">
       <div className="heatmap-head">
         <div>
-          <h3 className="stat-card-label">Rating activity — {year}</h3>
+          <h3 className="stat-card-label">Rating activity in {year}</h3>
           <p className="stat-card-desc">
             {totalRated > 0 ? (
               <><strong>{totalRated}</strong> film{totalRated !== 1 ? 's' : ''} rated across <strong>{activeDays}</strong> day{activeDays !== 1 ? 's' : ''} this year.</>

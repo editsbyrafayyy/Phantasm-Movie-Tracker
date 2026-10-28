@@ -133,7 +133,7 @@ export default async function ProfilePage() {
       ) : (
         <div className="empty-state">
           <p className="empty-state-title">The vault is silent</p>
-          <p className="empty-state-body">Rate a few films and your statistics will show up here.</p>
+          <p className="empty-state-body">Rate a few films and this page starts filling itself in.</p>
           <Link href="/add" className="btn-primary">Log a film</Link>
         </div>
       )}

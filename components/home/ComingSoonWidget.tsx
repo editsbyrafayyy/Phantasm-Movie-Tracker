@@ -17,7 +17,7 @@ export default async function ComingSoonWidget({ linkable }: { linkable: boolean
           as="section"
           title="Coming"
           accent="soon"
-          subtitle="Horror releases over the next 12 months, by release date."
+          subtitle="Horror coming out over the next year. Some of these will end up in the vault."
         />
       </div>
       <ComingSoonRow films={films} today={today} linkable={linkable} />

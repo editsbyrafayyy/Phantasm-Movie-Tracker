@@ -3,7 +3,6 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { DARE_LIMITS, checkDareToken, hashIp, ownerRatedTmdbIds, screenFilm } from '@/lib/dares';
 
-const OWNER = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
 const fail = (error: string, status: number) => NextResponse.json({ error }, { status });
 
 /**
@@ -57,17 +56,17 @@ export async function POST(req: NextRequest) {
   if ((site.count ?? 0) >= DARE_LIMITS.globalPerDay) return fail('The dare box is full for today.', 429);
 
   const status = (existing.data as { status: string } | null)?.status;
-  if (status === 'dismissed') return fail(`${OWNER} already passed on this one.`, 409);
-  if (status === 'accepted') return fail(`Already accepted — it’s on ${OWNER}’s list.`, 409);
+  if (status === 'dismissed') return fail('I already passed on this one.', 409);
+  if (status === 'accepted') return fail('Already on my list. I’ll get to it.', 409);
   if (!status) {
     const { count: pending } = await service.from('dares').select('tmdb_id', { count: 'exact', head: true }).eq('status', 'pending');
     if ((pending ?? 0) >= DARE_LIMITS.maxPending) return fail('The dare box is full. Check back soon.', 429);
   }
 
-  if ((await ownerRatedTmdbIds([tmdbId])).has(tmdbId)) return fail('Already rated — find it in the vault.', 409);
+  if ((await ownerRatedTmdbIds([tmdbId])).has(tmdbId)) return fail('I’ve already rated that one. It’s in the vault.', 409);
 
   const film = await screenFilm(tmdbId);
-  if (!film) return fail('Only released horror, thriller and sci-fi films can be dared.', 422);
+  if (!film) return fail('That one can’t be dared. It has to be a horror, thriller or sci-fi film that’s already out.', 422);
 
   const { error: eventError } = await service.from('dare_events').insert({ ip_hash: ipHash, tmdb_id: tmdbId });
   if (eventError?.code === '23505') return fail('You’ve already dared this one.', 409);

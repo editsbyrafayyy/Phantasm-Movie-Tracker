@@ -293,7 +293,7 @@ export default function VaultFilter({ entries, subgenreOrder, ownerName = 'Rafay
           {filteredEntries.length === 0 && (
             <div className="empty-state">
               <p className="empty-state-title">Nothing stirs here</p>
-              <p className="empty-state-body">No films match the selected verdict and genre.</p>
+              <p className="empty-state-body">I haven&rsquo;t rated anything that fits both of those.</p>
             </div>
           )}
         </>

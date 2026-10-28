@@ -11,7 +11,7 @@ interface Result { id: number; title: string; year: number | null; poster: strin
  * Search + dare. Visitors can only pick a film from the screened search results —
  * there is no free-text field. The hidden `website` input is a bot honeypot.
  */
-export default function DareBox({ owner, top }: { owner: string; top: TopDare[] }) {
+export default function DareBox({ top }: { top: TopDare[] }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ q: string; items: Result[] } | null>(null);
   const [sent, setSent] = useState<Record<number, 'sending' | 'sent'>>({});
@@ -56,7 +56,7 @@ export default function DareBox({ owner, top }: { owner: string; top: TopDare[] 
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error || 'Could not send that dare.');
       setSent(s => ({ ...s, [film.id]: 'sent' }));
-      setMessage({ text: `Dared. ${owner} will see “${film.title}”.`, ok: true });
+      setMessage({ text: `Dare sent. I’ll see “${film.title}” next time I check.`, ok: true });
     } catch (err) {
       setSent(s => { const next = { ...s }; delete next[film.id]; return next; });
       setMessage({ text: err instanceof Error ? err.message : 'Could not send that dare.', ok: false });
@@ -112,7 +112,7 @@ export default function DareBox({ owner, top }: { owner: string; top: TopDare[] 
             })}
           </ul>
         ) : (
-          <p className="dare-empty">Nothing eligible matches that. Only released horror, thriller and sci-fi films can be dared.</p>
+          <p className="dare-empty">Nothing that fits. It has to be a horror, thriller or sci-fi film that&rsquo;s already out.</p>
         ))}
       </div>
 

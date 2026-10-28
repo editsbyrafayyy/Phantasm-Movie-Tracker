@@ -26,7 +26,7 @@ export default async function Image() {
           <div style={{ display: 'flex', fontFamily: display, fontSize: 30, letterSpacing: 6, color: '#e63232' }}>PHANTASM</div>
           <div style={{ display: 'flex', fontFamily: display, fontSize: 96, lineHeight: 1 }}>{`${OWNER}’s horror vault`}</div>
           <div style={{ display: 'flex', fontSize: 28, color: '#a0a0a0' }}>
-            {`${entries.length} films rated, ranked and judged.`}
+            {`Every horror film I’ve watched, rated. ${entries.length} so far.`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 20 }}>

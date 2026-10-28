@@ -19,7 +19,7 @@ export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: `${OWNER}’s taste — Phantasm`,
-  description: `How ${OWNER} rates horror: top 10, favourite subgenres, hot takes against IMDb and more.`,
+  description: 'How I rate horror: my top 10, the subgenres I keep coming back to, and where IMDb and I disagree.',
 };
 
 /** Public read-only stats for the owner's collection — the profile page's stats, for everyone. */
@@ -39,8 +39,8 @@ export default async function TastePage() {
       <PageHeader
         title={`${OWNER}’s`}
         accent="taste"
-        eyebrow="The curator"
-        subtitle={`Every number here comes from ${OWNER}’s own ratings — what lands, what doesn’t, and where the internet gets it wrong.`}
+        eyebrow="My ratings, in numbers"
+        subtitle="Everything on this page is pulled from my own ratings. It started as a Google Sheet I used to track horror movies with friends, and ended up as whatever this is now."
       />
 
       {entries.length > 0 ? (
@@ -59,16 +59,16 @@ export default async function TastePage() {
 
           <section className="profile-section" aria-label="Statistics">
             <div className="profile-grid">
-              <TopTenRow films={stats.topRated} series={stats.topSeries} who={OWNER} />
-              <HotTakes above={stats.hotTakes.above} below={stats.hotTakes.below} who={OWNER} />
+              <TopTenRow films={stats.topRated} series={stats.topSeries} voice="me" />
+              <HotTakes above={stats.hotTakes.above} below={stats.hotTakes.below} voice="me" />
               <SubgenreCard data={stats.subgenres} />
-              <CategoryCard data={stats.categories} who={OWNER} />
-              <DirectorsCard data={stats.directors} who={OWNER} />
+              <CategoryCard data={stats.categories} voice="me" />
+              <DirectorsCard data={stats.directors} voice="me" />
               <DecadesCard data={stats.decades} />
               {stats.year && <YearCard data={stats.year} />}
               <HabitsCard pace={stats.pace} runtime={stats.runtime} />
               <section className="stat-card" aria-labelledby="taste-scoring">
-                <h3 id="taste-scoring" className="stat-card-label">How the scoring works</h3>
+                <h3 id="taste-scoring" className="stat-card-label">How I score</h3>
                 <ScoreGuide />
               </section>
               <CalendarHeatmap year={new Date().getFullYear()} dates={entries.map(e => e.created_at)} />
@@ -78,7 +78,7 @@ export default async function TastePage() {
       ) : (
         <div className="empty-state">
           <p className="empty-state-title">The vault is silent</p>
-          <p className="empty-state-body">Nothing has been rated yet.</p>
+          <p className="empty-state-body">I haven&rsquo;t rated anything yet. Check back soon.</p>
         </div>
       )}
 

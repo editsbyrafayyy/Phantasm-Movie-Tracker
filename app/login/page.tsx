@@ -67,7 +67,7 @@ function LoginForm() {
         {/* Headline */}
         <PageHeader
           title="Sign in"
-          subtitle="Phantasm is invite-only. Use the account the owner set up for you."
+          subtitle="Phantasm is invite-only. Use the account I set up for you."
           className="login-header"
         />
 

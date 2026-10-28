@@ -23,23 +23,23 @@ export function SubgenreCard({ data }: { data: ProfileStats['subgenres'] }) {
 }
 
 /** Rating categories as a share of their maximum — what films earn from you. */
-export function CategoryCard({ data, who }: { data: ProfileStats['categories']; who?: string }) {
+export function CategoryCard({ data, voice = 'you' }: { data: ProfileStats['categories']; voice?: 'you' | 'me' }) {
   if (!data.length) return null;
   return (
     <section className="stat-card" aria-labelledby="pstat-cats">
-      <h3 id="pstat-cats" className="stat-card-label">{who ? `What ${who} rewards` : 'What you reward'}</h3>
-      <p className="stat-card-desc">Average score in each category, as a share of its maximum.</p>
+      <h3 id="pstat-cats" className="stat-card-label">{voice === 'me' ? 'What I reward' : 'What you reward'}</h3>
+      <p className="stat-card-desc">{voice === 'me' ? 'My' : 'Your'} average in each category, as a share of what it&rsquo;s worth.</p>
       <BarList rows={data.map(c => ({ name: c.label, pct: c.pct, value: `${c.pct}%` }))} />
     </section>
   );
 }
 
-export function DirectorsCard({ data, who }: { data: ProfileStats['directors']; who?: string }) {
+export function DirectorsCard({ data, voice = 'you' }: { data: ProfileStats['directors']; voice?: 'you' | 'me' }) {
   if (!data.length) return null;
   const max = data[0].count;
   return (
     <section className="stat-card" aria-labelledby="pstat-directors">
-      <h3 id="pstat-directors" className="stat-card-label">{who ? `Directors ${who} returns to` : 'Directors you return to'}</h3>
+      <h3 id="pstat-directors" className="stat-card-label">{voice === 'me' ? 'Directors I keep going back to' : 'Directors you keep going back to'}</h3>
       <BarList
         noteLabel="Avg"
         rows={data.map(d => ({ name: d.name, pct: (d.count / max) * 100, value: d.count, note: fmtAvg(d.avg) }))}
