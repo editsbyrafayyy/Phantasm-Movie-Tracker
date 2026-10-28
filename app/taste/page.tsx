@@ -9,13 +9,12 @@ import HotTakes        from '@/components/profile/stats/HotTakes';
 import HabitsCard      from '@/components/profile/stats/HabitsCard';
 import VerdictBar      from '@/components/profile/stats/VerdictBar';
 import ScoreGuide      from '@/components/vault/detail/ScoreGuide';
-import DareSection     from '@/components/home/DareSection';
 import { SubgenreCard, CategoryCard, DirectorsCard, DecadesCard } from '@/components/profile/stats/TasteCards';
 import type { Entry } from '@/lib/types';
 
 const OWNER = process.env.NEXT_PUBLIC_OWNER_USERNAME ?? 'Rafayyy';
 
-// Stats follow the owner's cache tag; this keeps "Most dared" fresh too.
+// Refresh alongside the owner's cached entries.
 export const revalidate = 300;
 
 export const metadata: Metadata = {
@@ -83,7 +82,6 @@ export default async function TastePage() {
         </div>
       )}
 
-      <DareSection />
     </div>
   );
 }

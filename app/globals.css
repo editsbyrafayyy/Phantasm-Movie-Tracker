@@ -4200,6 +4200,8 @@ select:focus-visible {
 .home-section-head .page-header { margin-bottom: 16px; }
 @media (max-width: 640px) {
   .home-section-head { padding: 0 24px; }
+  /* Touch: rows are swiped, so section-head arrows would only add a stray line */
+  .home-section-head .category-nav-btns { display: none; }
 }
 
 .home-vault-section {
@@ -6089,15 +6091,6 @@ html { scrollbar-color: #2a2a2a transparent; scrollbar-width: thin; }
 /* No account header above it here, so no divider either */
 .taste-hero .profile-headline { border-top: 0; padding-top: 0; }
 
-/* Curator's note under a home row heading */
-.category-note {
-  flex-basis: 100%;
-  margin: 2px 0 0;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 14px;
-  color: var(--text-dim);
-}
 @media (max-width: 640px) {
   .guest-notice-banner { flex-wrap: wrap; }
   .guest-notice-link { margin-left: auto; }
@@ -6183,7 +6176,6 @@ html { scrollbar-color: #2a2a2a transparent; scrollbar-width: thin; }
 .dare-top-votes { flex-shrink: 0; font-size: 12px; color: var(--text-muted); }
 .admin-dares { margin-top: 4px; }
 .admin-dare-actions { display: flex; gap: 6px; }
-.taste-page .dare-section { padding: 0; margin-top: 48px; }
 @media (max-width: 900px) {
   .dare-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
 }

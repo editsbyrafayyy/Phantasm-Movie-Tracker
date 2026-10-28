@@ -9,17 +9,18 @@ import { Film, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SUBGENRE_HEX } from '@/lib/config';
 import type { Entry } from '@/lib/types';
+import PageHeader from '@/components/ui/PageHeader';
 
 interface CategoryRowProps {
   label:   string;
   entries: Entry[];
-  /** A line of curator's voice under the heading. */
-  note?:     string;
+  /** Curated rows get a full section header (Bebas title + Playfair accent) instead of the small label. */
+  heading?:  { title: string; accent?: string; subtitle?: string };
   /** Per-entry caption replacing the year line (keyed by entry id). */
   captions?: Record<string, string>;
 }
 
-export default function CategoryRow({ label, entries, note, captions }: CategoryRowProps) {
+export default function CategoryRow({ label, entries, heading, captions }: CategoryRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -85,38 +86,44 @@ export default function CategoryRow({ label, entries, note, captions }: Category
 
   if (entries.length === 0) return null;
 
+  const nav = entries.length > 3 && (
+    <div className="category-nav-btns">
+      <button
+        type="button"
+        className="category-nav-btn"
+        onClick={() => scrollByAmount('left')}
+        disabled={!canScrollLeft}
+        aria-label={`Scroll ${label || 'row'} left`}
+      >
+        <ChevronLeft size={16} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="category-nav-btn"
+        onClick={() => scrollByAmount('right')}
+        disabled={!canScrollRight}
+        aria-label={`Scroll ${label || 'row'} right`}
+      >
+        <ChevronRight size={16} aria-hidden="true" />
+      </button>
+    </div>
+  );
+
   return (
     <section className="category-section">
-      <div className="category-header">
-        <div className="category-header-title-group">
-          {label && <h2 className="category-heading">{label}</h2>}
-          <span className="category-count">{entries.length} film{entries.length > 1 ? 's' : ''}</span>
-          {note && <p className="category-note">{note}</p>}
+      {heading ? (
+        <div className="home-section-head">
+          <PageHeader as="section" title={heading.title} accent={heading.accent} subtitle={heading.subtitle} actions={nav} />
         </div>
-
-        {entries.length > 3 && (
-          <div className="category-nav-btns">
-            <button
-              type="button"
-              className="category-nav-btn"
-              onClick={() => scrollByAmount('left')}
-              disabled={!canScrollLeft}
-              aria-label={`Scroll ${label || 'row'} left`}
-            >
-              <ChevronLeft size={16} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="category-nav-btn"
-              onClick={() => scrollByAmount('right')}
-              disabled={!canScrollRight}
-              aria-label={`Scroll ${label || 'row'} right`}
-            >
-              <ChevronRight size={16} aria-hidden="true" />
-            </button>
+      ) : (
+        <div className="category-header">
+          <div className="category-header-title-group">
+            {label && <h2 className="category-heading">{label}</h2>}
+            <span className="category-count">{entries.length} film{entries.length > 1 ? 's' : ''}</span>
           </div>
-        )}
-      </div>
+          {nav}
+        </div>
+      )}
 
       {/* Carousel Wrapper with Dynamic Edge Gradient Masks */}
       <div className={`category-carousel-wrapper${canScrollLeft ? ' has-left-fade' : ''}${canScrollRight ? ' has-right-fade' : ''}`}>

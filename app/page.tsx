@@ -120,7 +120,7 @@ export default async function HomePage() {
       <RecentlyViewedRow reserve={hasRecent} />
 
       {!user && startHere.length > 0 ? (
-        <CategoryRow label="Start here" note="New to the vault? Begin with these." entries={startHere} />
+        <CategoryRow label="Start here" heading={{ title: 'Start', accent: 'here', subtitle: 'New to the vault? Begin with these.' }} entries={startHere} />
       ) : mustWatchEntries.length > 0 && (
         <CategoryRow label="Must watch" entries={mustWatchEntries} />
       )}
@@ -132,20 +132,28 @@ export default async function HomePage() {
       </Suspense>
 
       {peak.length > 0 && (
-        <CategoryRow label="Rated Peak" note="The highest verdict in the vault." entries={peak.slice(0, 15)} />
+        <CategoryRow
+          label="Rated Peak"
+          heading={{ title: 'Rated', accent: 'peak', subtitle: 'The highest verdict in the vault.' }}
+          entries={peak.slice(0, 15)}
+        />
       )}
 
       {takes.length > 0 && (
         <CategoryRow
           label="Hot takes"
-          note={`Where ${ownerName} and IMDb disagree the most.`}
+          heading={{ title: 'Hot', accent: 'takes', subtitle: `Where ${ownerName} and IMDb disagree the most.` }}
           entries={takes.map(t => t.e)}
           captions={takeCaptions}
         />
       )}
 
       {shame.length > 0 && (
-        <CategoryRow label="Hall of shame" note="Rated Garbage. You’ve been warned." entries={shame} />
+        <CategoryRow
+          label="Hall of shame"
+          heading={{ title: 'Hall of', accent: 'shame', subtitle: 'Rated Garbage. You’ve been warned.' }}
+          entries={shame}
+        />
       )}
 
       <Suspense fallback={<ActivityFeedSkeleton />}>
