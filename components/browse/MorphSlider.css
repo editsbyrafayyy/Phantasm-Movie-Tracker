@@ -29,6 +29,20 @@
   height: 100%;
 }
 
+/* Static backdrop when WebGL is unavailable */
+.morph-slider-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: morph-fallback-in var(--ms-swap, 0.7s) ease both;
+}
+
+@keyframes morph-fallback-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .morph-slider-caption {
   position: absolute;
   left: 22px;

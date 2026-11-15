@@ -491,24 +491,43 @@ const MorphSlider = forwardRef(function MorphSlider({
   const [reducedMotion] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   );
+  // WebGL can be unavailable (hardware acceleration off, blocklisted GPU, too many
+  // contexts). Then the stage shows a plain backdrop and navigation stays in React.
+  const [failed, setFailed] = useState(false);
   const onSlideChangeRef = useRef(onSlideChange);
   useEffect(() => { onSlideChangeRef.current = onSlideChange; });
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  const countRef = useRef(items.length);
+  countRef.current = items.length;
 
   const optsRef = useRef();
   optsRef.current = { transition, duration, ease, intensity, scale, aberration, drift, overlayColor, loop };
 
+  // Reads only refs, so these stay stable for the lifetime of the slider.
+  const goStatic = useCallback((i) => {
+    const n = countRef.current;
+    if (!n) return;
+    const next = optsRef.current.loop ? ((i % n) + n) % n : Math.max(0, Math.min(n - 1, i));
+    if (next === indexRef.current) return;
+    setIndex(next);
+    onSlideChangeRef.current?.(next);
+  }, []);
+  const goNext = useCallback(() => (engineRef.current ? engineRef.current.next() : goStatic(indexRef.current + 1)), [goStatic]);
+  const goPrev = useCallback(() => (engineRef.current ? engineRef.current.prev() : goStatic(indexRef.current - 1)), [goStatic]);
+  const goTo = useCallback((i) => (engineRef.current ? engineRef.current.goToIndex(i) : goStatic(i)), [goStatic]);
+
   // Expose imperative controls to parent via ref (or controlRef when loaded through next/dynamic)
-  const api = () => ({
-    next: () => engineRef.current?.next(),
-    prev: () => engineRef.current?.prev(),
-    goTo: (i) => engineRef.current?.goToIndex(i),
-  });
-  useImperativeHandle(ref, api, []);
-  useImperativeHandle(controlRef, api, []);
+  const api = () => ({ next: goNext, prev: goPrev, goTo });
+  useImperativeHandle(ref, api, [goNext, goPrev, goTo]);
+  useImperativeHandle(controlRef, api, [goNext, goPrev, goTo]);
 
   useEffect(() => {
-    if (!containerRef.current) return undefined;
-    const engine = new MorphEngine(containerRef.current, {
+    const container = containerRef.current;
+    if (!container) return undefined;
+    let engine;
+    try {
+      engine = new MorphEngine(container, {
       items,
       startIndex,
       reducedMotion,
@@ -521,20 +540,26 @@ const MorphSlider = forwardRef(function MorphSlider({
         onSlideChangeRef.current?.(i);
       },
       onActiveChange: setActive,
-    });
+      });
+    } catch (err) {
+      console.warn('MorphSlider: WebGL unavailable, showing a static backdrop.', err);
+      container.querySelectorAll('canvas').forEach(c => c.remove());
+      setFailed(true);
+      return undefined;
+    }
     engineRef.current = engine;
     return () => { engine.destroy(); engineRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, startIndex]);
 
-  const handleNext = useCallback(() => engineRef.current?.next(), []);
-  const handlePrev = useCallback(() => engineRef.current?.prev(), []);
+  const handleNext = goNext;
+  const handlePrev = goPrev;
 
   useEffect(() => {
     if (!autoplay || reducedMotion || hovering || !active) return undefined;
-    const id = setTimeout(() => engineRef.current?.next(), Math.max(autoplayDelay, 1) * 1000);
+    const id = setTimeout(goNext, Math.max(autoplayDelay, 1) * 1000);
     return () => clearTimeout(id);
-  }, [autoplay, autoplayDelay, reducedMotion, hovering, active, index]);
+  }, [autoplay, autoplayDelay, reducedMotion, hovering, active, index, goNext]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -593,7 +618,12 @@ const MorphSlider = forwardRef(function MorphSlider({
         aria-label="Image morph slider"
         tabIndex={0}
         onKeyDown={onKeyDown}
-      />
+      >
+        {failed && items[index]?.image && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={index} src={items[index].image} alt="" className="morph-slider-fallback" draggable={false} />
+        )}
+      </div>
 
       {showCaptions && hasCaptions && (
         <div className="morph-slider-caption" aria-live="polite">
@@ -636,7 +666,7 @@ const MorphSlider = forwardRef(function MorphSlider({
               aria-selected={i === index}
               aria-label={`Go to slide ${i + 1}`}
               className={`morph-slider-dot ${i === index ? 'is-active' : ''}`}
-              onClick={() => engineRef.current?.goToIndex(i)}
+              onClick={() => goTo(i)}
             />
           ))}
         </div>

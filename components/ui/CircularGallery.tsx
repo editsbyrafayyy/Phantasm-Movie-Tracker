@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- OGL scene objects are untyped in this port */
 
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './CircularGallery.css';
 
 interface GalleryItem {
@@ -575,6 +575,8 @@ export default function CircularGallery({
   const onChangeRef = useRef(onChange);
   const lastSentIndexRef = useRef<number>(-1);
   const startIndexRef = useRef(currentIndex);
+  // No WebGL (hardware acceleration off, blocklisted GPU): show the current poster flat.
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -582,14 +584,24 @@ export default function CircularGallery({
   });
 
   useEffect(() => {
-    if (!containerRef.current || !items?.length) return;
-    const app = new App(containerRef.current, {
-      items,
-      bend,
-      borderRadius,
-      scrollSpeed,
-      scrollEase
-    });
+    const container = containerRef.current;
+    if (!container || !items?.length) return;
+    let app: App;
+    try {
+      app = new App(container, {
+        items,
+        bend,
+        borderRadius,
+        scrollSpeed,
+        scrollEase
+      });
+    } catch (err) {
+      console.warn('CircularGallery: WebGL unavailable, showing a static poster.', err);
+      container.querySelectorAll('canvas').forEach(c => c.remove());
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- one-time capability fallback */
+      setFailed(true);
+      return;
+    }
     app.onChangeCallback = (index) => {
       lastSentIndexRef.current = index;
       onChangeRef.current?.(index);
@@ -652,6 +664,11 @@ export default function CircularGallery({
       tabIndex={0}
       role="region"
       aria-label="Featured films. Swipe or use the left and right arrow keys to browse."
-    />
+    >
+      {failed && items?.[currentIndex ?? 0]?.image && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={currentIndex} src={items[currentIndex ?? 0].image} alt="" className="circular-gallery-fallback" draggable={false} />
+      )}
+    </div>
   );
 }

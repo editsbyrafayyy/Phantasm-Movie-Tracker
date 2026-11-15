@@ -13,3 +13,19 @@
   outline: 2px solid var(--red);
   outline-offset: 4px;
 }
+
+/* Static poster when WebGL is unavailable */
+.circular-gallery-fallback {
+  display: block;
+  height: 100%;
+  aspect-ratio: 2 / 3;
+  margin: 0 auto;
+  object-fit: cover;
+  border-radius: 10px;
+  animation: circular-gallery-fallback-in 0.4s ease both;
+}
+
+@keyframes circular-gallery-fallback-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
