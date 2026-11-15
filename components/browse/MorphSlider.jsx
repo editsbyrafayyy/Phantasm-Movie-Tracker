@@ -619,10 +619,17 @@ const MorphSlider = forwardRef(function MorphSlider({
         tabIndex={0}
         onKeyDown={onKeyDown}
       >
-        {failed && items[index]?.image && (
+        {/* Stacked so slides crossfade; the active one drifts in slowly. */}
+        {failed && items.map((item, i) => item.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img key={index} src={items[index].image} alt="" className="morph-slider-fallback" draggable={false} />
-        )}
+          <img
+            key={i}
+            src={item.image}
+            alt=""
+            className={`morph-slider-fallback${i === index ? ' is-active' : ''}`}
+            draggable={false}
+          />
+        ) : null)}
       </div>
 
       {showCaptions && hasCaptions && (
